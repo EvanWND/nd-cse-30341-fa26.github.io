@@ -1,0 +1,39 @@
+{
+    "q1": {
+        "type": "multiple",
+        "question": "\n<p>According to the authors of \"Operating Systems: Three Easy Pieces\", what\nare the <b>three key ideas</b> in Operating Systems?</p>\n",
+        "responses": {
+            "virtualization": "Virtualization",
+            "scalability": "Scalability",
+            "persistence": "Persistence",
+            "telemetry": "Telemetry",
+            "security": "Security",
+            "performance": "Performance",
+            "userexperience": "User Experience",
+            "concurrency": "Concurrency"
+        }
+    },
+    "q2": {
+        "type": "blank",
+        "question": "\n<p><b>(1)</b> ____ is when the OS takes a physical resource (such as the\n<b>(2)</b> ____, or <b>(3)</b> ____, or a <b>(4)</b> ____) and transforms\nit into a more general, powerful, and easy-to-use form.</p>\n"
+    },
+    "q3": {
+        "type": "blank",
+        "question": "\n<p>User applications interact with the OS via <b>(1)</b> ____, which are\ninitiated through a special hardware instruction called a <b>(2)</b> ____.\nDuring one of these service requests, we transition from <b>(3)</b> ____\nmode to <b>(4)</b> ____ mode.</p>\n"
+    },
+    "q4": {
+        "type": "blank",
+        "question": "\n<p>With the advent of <b>(1)</b> ____ it became possible to run multiple\njobs at a time and thus improve CPU <b>(2)</b> ____.  Because the OS now\nhad to manage multiple tasks, it became necessary to provide <b>(3)</b>\n____ so one program would not be able to access the memory of another\nprogram.  Moreover, having multiple applications running at the same time\nmeans the OS has to provide mechanisms and policies for dealing with\n<b>(4)</b> ____ issues.</p>\n"
+    },
+    "q5": {
+        "type": "order",
+        "question": "\n<p>Order the following stages of a typical x86 <b>boot sequence</b> from\n<b>first</b> to <b>last</b>.</p>\n",
+        "responses": {
+            "init": "Init System (systemd)",
+            "bootloader": "Bootloader (GRUB)",
+            "mbr": "Master Boot Record (MBR)",
+            "bios": "BIOS / UEFI",
+            "kernel": "OS Kernel (Linux)"
+        }
+    }
+}

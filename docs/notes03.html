@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Favicon -->
+<link rel="icon" type="image/png" sizes="32x32" href="static/ico/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="static/ico/favicon-16x16.png">
+<link rel="manifest" href="static/ico/site.webmanifest">
+<!-- Stylesheets -->
+<link rel="stylesheet" href="static/css/domer.css">
+<title>Notes 03: System Calls</title>
+</head>
+<body>
+<header>
+<a class="logo" href="notes03.html">
+    <h1>Notes 03: System Calls</h1>
+</a>
+<nav>
+    <ul>
+        <li><a href="index.html"><h4>Home</h4></a></li>
+        </ul>
+</nav></header>
+<main>
+<h2 id="review">Review<a class="headerlink" href="#review" title="Permanent link">&para;</a></h2>
+<ul>
+<li>
+<div class="flex-col" markdown="1">
+<p>What is an <strong class="caution">operating system</strong>?</p>
+<ul>
+<li>
+<p><strong>Taxonomy</strong>: (<em>purpose</em>)</p>
+</li>
+<li>
+<p><strong>Structure</strong>: (<em>monolithic vs microkernel</em>)</p>
+</li>
+</ul>
+</li>
+<li>
+<div class="flex-col" markdown="1">
+<p>Three big themes of <strong class="caution">operating systems</strong>.</p>
+<ul>
+<li>
+<p><strong class="success">Virtualization</strong>: Abstract hardware (<em>eg.
+processes -&gt; CPU</em>)</p>
+</li>
+<li>
+<p><strong class="danger">Concurrency</strong>: Multiple things happen at
+once... <strong>race conditions</strong></p>
+</li>
+<li>
+<p><strong class="info">Persistence</strong>: Ensure data remains available</p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong class="warning">System Calls</strong>: How <strong
+class="special">applications</strong> interact with the <strong
+class="caution">operating system</strong>.</p>
+</li>
+</ul>
+<h2 id="review-house-of-cards">Review: <span class="gold">House of Cards</span><a class="headerlink" href="#review-house-of-cards" title="Permanent link">&para;</a></h2>
+<div class="centered">
+
+<img src="static/img/slides00-house-of-cards.png" class="transparent responsive">
+
+</div>
+
+<h2 id="system-call-overview">System Call: <span class="gold">Overview</span><a class="headerlink" href="#system-call-overview" title="Permanent link">&para;</a></h2>
+<p>A <strong class="info">system call</strong> occurs when a
+<strong class="special">user application</strong> requests a
+<strong class="warning">service or resource</strong> from the
+<strong class="caution">operating system kernel</strong>.</p>
+<table class="bordered centered">
+<tbody>
+<tr class="success-bg">
+  <td height="60px"><b>I/O</b></td><td>open, read, write, close, lseek</td>
+</tr>
+<tr class="caution-bg">
+  <td height="60px"><b>File</b></td><td>stat, chmod, chown, unlink</td>
+</tr>
+<tr class="info-bg">
+  <td height="60px"><b>Directory</b></td><td>opendir, readdir, closedir</td>
+</tr>
+</tbody>
+</table>
+
+<div class="alert warning-bg centered">
+<p>To track the <strong class="warning">system calls</strong> made by an
+application, we can use: <strong class="info">strace</strong>.</p>
+</div>
+<div class="alert info-bg centered">
+<p>Many of the utilities we use are thin wrappers for system calls: <a href="https://man7.org/linux/man-pages/man2/chmod.2.html">chmod</a>, <a href="https://man7.org/linux/man-pages/man2/stat.2.html">stat</a>.</p>
+</div>
+<div class="codehilite"><pre><span></span><code>$<span class="w"> </span>strace<span class="w"> </span>chmod<span class="w"> </span>-x<span class="w"> </span>hello<span class="w">         </span><span class="c1"># Thin wrapper</span>
+$<span class="w"> </span>strace<span class="w"> </span>ls<span class="w">                     </span><span class="c1"># More complex wrapper</span>
+</code></pre></div>
+
+<div class="alert special-bg">
+<p>To see API definitions of <strong class="warning">system calls</strong>, look
+at:</p>
+<ul>
+<li><code>/usr/include/bits/syscall.h</code></li>
+<li><code>/usr/include/asm/unistd_{32,64}.h</code></li>
+</ul>
+</div>
+<div class="codehilite"><pre><span></span><code>$<span class="w"> </span>grep<span class="w"> </span>-R<span class="w"> </span>waitpid<span class="w"> </span>/usr/include<span class="w">  </span><span class="c1"># Search for waitpid number</span>
+</code></pre></div>
+
+<h2 id="system-call-demonstration">System Call: <span class="gold">Demonstration</span><a class="headerlink" href="#system-call-demonstration" title="Permanent link">&para;</a></h2>
+<div class="codehilite"><pre><span></span><code><span class="cm">/* hello.c */</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdlib.h&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;unistd.h&gt;</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w">                </span><span class="c1">// man 2 write</span>
+<span class="w">    </span><span class="n">write</span><span class="p">(</span><span class="n">STDOUT_FILENO</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;hello, world</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">13</span><span class="p">);</span>
+<span class="w">    </span><span class="n">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="na">.section</span><span class="w">    </span><span class="no">.data</span>
+<span class="nl">string:</span>
+<span class="w">    </span><span class="na">.ascii</span><span class="w">  </span><span class="s">&quot;hello, world\n&quot;</span>
+<span class="nl">string_end:</span>
+<span class="w">    </span><span class="na">.equ</span><span class="w"> </span><span class="no">len</span><span class="p">,</span><span class="w"> </span><span class="no">string_end</span><span class="w"> </span><span class="p">-</span><span class="w"> </span><span class="no">string</span>
+
+<span class="na">.section</span><span class="w">    </span><span class="no">.text</span>
+<span class="na">.globl</span><span class="w">      </span><span class="no">main</span>
+<span class="nl">main:</span>
+<span class="w">    </span><span class="c1"># write(1, &quot;hello, world\n&quot;, 13)</span>
+<span class="w">    </span><span class="nf">movl</span><span class="w">    </span><span class="no">$4</span><span class="p">,</span><span class="w"> </span><span class="nv">%eax</span><span class="w">        </span><span class="c1"># System call number 4</span>
+<span class="w">    </span><span class="nf">movl</span><span class="w">    </span><span class="no">$1</span><span class="p">,</span><span class="w"> </span><span class="nv">%ebx</span><span class="w">        </span><span class="c1"># stdout has file descriptor 1</span>
+<span class="w">    </span><span class="nf">movl</span><span class="w">    </span><span class="no">$string</span><span class="p">,</span><span class="w"> </span><span class="nv">%ecx</span><span class="w">   </span><span class="c1"># hello, world string</span>
+<span class="w">    </span><span class="nf">movl</span><span class="w">    </span><span class="no">$len</span><span class="p">,</span><span class="w"> </span><span class="nv">%edx</span><span class="w">      </span><span class="c1"># string length</span>
+<span class="w">    </span><span class="nf">int</span><span class="w">     </span><span class="no">$0x80</span><span class="w">           </span><span class="c1"># Trap</span>
+
+<span class="w">    </span><span class="c1"># exit(0)</span>
+<span class="w">    </span><span class="nf">movl</span><span class="w">    </span><span class="no">$1</span><span class="p">,</span><span class="w"> </span><span class="nv">%eax</span><span class="w">        </span><span class="c1"># System call number 1</span>
+<span class="w">    </span><span class="nf">movl</span><span class="w">    </span><span class="no">$0</span><span class="p">,</span><span class="w"> </span><span class="nv">%ebx</span><span class="w">        </span><span class="c1"># Argument is 0</span>
+<span class="w">    </span><span class="nf">int</span><span class="w">     </span><span class="no">$0x80</span><span class="w">           </span><span class="c1"># Trap</span>
+</code></pre></div>
+
+<div class="alert warning-bg">
+<p>To request <strong>system call</strong>:</p>
+<ol>
+<li>
+<p>Record <strong>system call number</strong> in appropriate register.</p>
+</li>
+<li>
+<p>Record <strong>argument(s)</strong> in appropriate register(s).</p>
+</li>
+<li>
+<p>Trigger the <strong>interrupt / trap</strong>.</p>
+</li>
+</ol>
+<div class="codehilite"><pre><span></span><code>$<span class="w"> </span>strace<span class="w"> </span>./hello-asm<span class="w">  </span><span class="c1"># Doesn&#39;t work b/c it&#39;s 32-bit!!!</span>
+</code></pre></div>
+
+</div>
+<div class="codehilite"><pre><span></span><code><span class="na">.section</span><span class="w">    </span><span class="no">.data</span>
+<span class="nl">string:</span>
+<span class="w">    </span><span class="na">.ascii</span><span class="w">  </span><span class="s">&quot;hello, world\n&quot;</span>
+<span class="nl">string_end:</span>
+<span class="w">    </span><span class="na">.equ</span><span class="w"> </span><span class="no">len</span><span class="p">,</span><span class="w"> </span><span class="no">string_end</span><span class="w"> </span><span class="p">-</span><span class="w"> </span><span class="no">string</span>
+
+<span class="na">.section</span><span class="w">    </span><span class="no">.text</span>
+<span class="na">.globl</span><span class="w">      </span><span class="no">main</span>
+<span class="nl">main:</span>
+<span class="w">    </span><span class="c1"># write(1, &quot;hello, world\n&quot;, 13)</span>
+<span class="w">    </span><span class="nf">mov</span><span class="w">     </span><span class="no">$1</span><span class="p">,</span><span class="w"> </span><span class="nv">%rax</span><span class="w">        </span><span class="c1"># System call number 1 (write)</span>
+<span class="w">    </span><span class="nf">mov</span><span class="w">     </span><span class="no">$1</span><span class="p">,</span><span class="w"> </span><span class="nv">%rdi</span><span class="w">        </span><span class="c1"># file descriptor 1 (stdout)</span>
+<span class="w">    </span><span class="nf">mov</span><span class="w">     </span><span class="no">$string</span><span class="p">,</span><span class="w"> </span><span class="nv">%rsi</span><span class="w">   </span><span class="c1"># string content</span>
+<span class="w">    </span><span class="nf">mov</span><span class="w">     </span><span class="no">$len</span><span class="p">,</span><span class="w"> </span><span class="nv">%rdx</span><span class="w">      </span><span class="c1"># string length</span>
+<span class="w">    </span><span class="nf">syscall</span><span class="w">                 </span><span class="c1"># Trap / Interrupt</span>
+
+<span class="w">    </span><span class="c1"># exit(0)</span>
+<span class="w">    </span><span class="nf">mov</span><span class="w">     </span><span class="no">$60</span><span class="p">,</span><span class="w"> </span><span class="nv">%rax</span><span class="w">       </span><span class="c1"># System call 60 (exit)</span>
+<span class="w">    </span><span class="nf">mov</span><span class="w">     </span><span class="no">$0</span><span class="p">,</span><span class="w"> </span><span class="nv">%rdi</span><span class="w">        </span><span class="c1"># exit status</span>
+<span class="w">    </span><span class="nf">syscall</span><span class="w">                 </span><span class="c1"># Trap / Interrupt</span>
+</code></pre></div>
+
+<div class="alert caution-bg">
+<ol>
+<li>
+<p>64-bit version uses <strong>syscall</strong> mechanism instead of <strong>int</strong>.</p>
+</li>
+<li>
+<p>64-bit version uses different <strong>registers</strong></p>
+</li>
+<li>
+<p>64-bit version has different <strong>syscall numbers</strong>!!!</p>
+</li>
+</ol>
+</div>
+<h2 id="system-call-address-space">System Call: <span class="gold">Address Space</span><a class="headerlink" href="#system-call-address-space" title="Permanent link">&para;</a></h2>
+<div class="centered">
+
+<img src="static/img/notebook03-address-space.png" class="transparent responsive">
+
+</div>
+
+<div class="alert caution-bg">
+<p><strong>Program</strong> is an image of memory layout!</p>
+</div>
+<h2 id="system-call-user-vs-kernel-mode">System Call: <span class="gold">User vs Kernel Mode</span><a class="headerlink" href="#system-call-user-vs-kernel-mode" title="Permanent link">&para;</a></h2>
+<p>An <strong class="caution">interrupt</strong>, <strong
+class="caution">trap</strong>, or <strong class="caution">exception</strong>
+is an <strong class="caution">event</strong> that forces the <strong
+class="info">processor</strong> to transition from <strong class="success">
+user</strong> mode to <strong class="danger"> kernel</strong> mode.</p>
+<div class="centered">
+
+<img src="static/img/notebook03-user-vs-kernel-mode.png" class="transparent responsive">
+
+</div>
+
+<h2 id="system-call-processor-events">System Call: <span class="gold">Processor Events</span><a class="headerlink" href="#system-call-processor-events" title="Permanent link">&para;</a></h2>
+<p>A variety of <strong class="warning">events</strong> or <strong
+class="warning">exceptions</strong> can cause a <strong>transition</strong> from <strong
+class="success">user mode</strong> to <strong class="danger">kernel
+mode</strong>:</p>
+<table class="bordered font-small">
+<thead>
+    <th>Class</th>
+    <th>Cause</th>
+    <th>Async/Sync</th>
+    <th>Return Behavior</th>
+</thead>
+<tbody>
+    <tr class="info-bg">
+        <td>Interrupt</td>
+        <td>Signal from I/O device</td>
+        <td>Async</td>
+        <td>Always return to next instruction</td>
+    </tr>
+    <tr class="warning-bg">
+        <td><strong>Trap</strong></td>
+        <td><strong>Intentional exception</strong></td>
+        <td><strong>Sync</strong></td>
+        <td><strong>Always return to next instruction</strong></td>
+    </tr>
+    <tr class="special-bg">
+        <td>Fault</td>
+        <td>Potentially recoverable error</td>
+        <td>Sync</td>
+        <td>Might return to next instruction</td>
+    </tr>
+    <tr class="danger-bg">
+        <td>Abort</td>
+        <td>Nonrecoverable error</td>
+        <td>Sync</td>
+        <td>Never returns</td>
+    </tr>
+</tbody>
+</table>
+
+<div class="centered">
+<p>When these <strong class="info">events</strong>, the <strong
+class="info">processor</strong> consults the <strong class="caution">interrupt
+vector table</strong> or <strong class="caution">trap table</strong> to
+determine what to do next (<em>what <strong class="caution">handler</strong> code
+to execute</em>).</p>
+</div>
+<h2 id="system-call-skit">System Call: <span class="gold">Skit</span><a class="headerlink" href="#system-call-skit" title="Permanent link">&para;</a></h2>
+<div class="flex-row">
+<div class="flex-col">
+<ol>
+<li>
+<p><strong class="caution"> Kernel</strong> registers handlers in <strong
+class="warning"> trap table</strong>.</p>
+</li>
+<li>
+<p><strong class="success"> User process</strong>:</p>
+<ul>
+<li>
+<p>Records <strong class="warning">system call number</strong></p>
+</li>
+<li>
+<p>Records <strong class="warning">arguments</strong></p>
+</li>
+<li>
+<p>Triggers <strong class="info">trap</strong></p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong class="info">Processor</strong> uses <strong class="warning">trap
+table</strong> to select handler.</p>
+</li>
+<li>
+<p><strong class="caution">Kernel</strong> performs handler.</p>
+</li>
+</ol>
+</div>
+<div class="flex-col-33">
+<table class="bordered centered">
+<thead>
+    <th class="info-bg">#</th>
+    <th class="success-bg">Syscall</th>
+</thead>
+<tbody>
+<tr>
+    <td class="info-bg"><b>1</b></td>
+    <td class="success-bg">read(n)<br><i class="font-small">Read passage</i></td>
+</tr>
+<tr>
+    <td class="info-bg"><b>2</b></td>
+    <td class="success-bg">write(s, n)<br><i class="font-small">Write passage</i></td>
+</tr>
+<tr>
+    <td class="info-bg"><b>3</b></td>
+    <td class="success-bg">kill(pid, sig)<br><i class="font-small">Send signal to process</i></td>
+</tr>
+<tr>
+    <td class="info-bg"><b>4</b></td>
+    <td class="success-bg">exit(status)<br><i class="font-small">Terminate process</i></td>
+</tr>
+</thead>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<h2 id="system-call-traps">System Call: <span class="gold">Traps</span><a class="headerlink" href="#system-call-traps" title="Permanent link">&para;</a></h2>
+<p>To perform a <strong class="info">system call</strong>, a <strong
+class="special">user application</strong> performs a <strong
+class="warning">trap</strong> to <strong>interrupt</strong> the <strong
+class="info">processor</strong> and force it to look up the appropriate <strong
+class="caution">handler function</strong> in the <strong class="caution">trap
+table</strong>.</p>
+<div class="flex-row">
+<div class="flex-col centered">
+<p><img src="static/img/slides03-system-call-trap.png" class="transparent responsive"></p>
+</div>
+<div class="flex-col-25 centered">
+<p>The <strong class="caution">trap table</strong> is loaded during <strong
+class="danger">boot</strong> by the <strong class="caution">kernel</strong>,
+which registers which <strong class="caution">handler functions</strong> to
+execute based on the <strong class="info">system call</strong> number.</p>
+</div>
+</div>
+<h2 id="reading-02-sha1sum">Reading 02: <span class="gold">sha1sum</span><a class="headerlink" href="#reading-02-sha1sum" title="Permanent link">&para;</a></h2>
+<div class="codehilite"><pre><span></span><code><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">argv</span><span class="p">[])</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">failures</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+
+<span class="w">    </span><span class="cm">/* For each argument, compute sha1sum and display result */</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">argc</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kt">char</span><span class="w"> </span><span class="n">cksum</span><span class="p">[</span><span class="n">SHA_DIGEST_LENGTH</span><span class="o">*</span><span class="mi">2</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">];</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">sha1sum_file</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="w"> </span><span class="n">cksum</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Unable to compute checksum for %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">argv</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+<span class="w">            </span><span class="n">failures</span><span class="o">++</span><span class="p">;</span>
+<span class="w">            </span><span class="k">continue</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">        </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;%s  %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">cksum</span><span class="p">,</span><span class="w"> </span><span class="n">argv</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">failures</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="kt">bool</span><span class="w"> </span><span class="nf">sha1sum_file</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">path</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">cksum</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kt">bool</span><span class="w"> </span><span class="n">result</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span>
+<span class="w">    </span><span class="n">EVP_MD_CTX</span><span class="w"> </span><span class="o">*</span><span class="n">ctx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">NULL</span><span class="p">;</span>
+
+<span class="w">    </span><span class="cm">/* Open file reading */</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">rfd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span><span class="w"> </span><span class="n">O_RDONLY</span><span class="p">);</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">rfd</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">      </span><span class="c1">// Must check if system call fails!</span>
+<span class="w">        </span><span class="k">goto</span><span class="w"> </span><span class="n">failure</span><span class="p">;</span><span class="w">   </span><span class="c1">// Use goto to centralize cleanup</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="cm">/* Create and initialize context */</span>
+<span class="w">    </span><span class="n">ctx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">EVP_MD_CTX_new</span><span class="p">();</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">ctx</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="o">!</span><span class="n">EVP_DigestInit_ex</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span><span class="w"> </span><span class="n">EVP_sha1</span><span class="p">(),</span><span class="w"> </span><span class="nb">NULL</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">goto</span><span class="w"> </span><span class="n">failure</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="cm">/* Read data into buffer and update context */</span>
+<span class="w">    </span><span class="kt">char</span><span class="w"> </span><span class="n">buffer</span><span class="p">[</span><span class="n">BUFSIZ</span><span class="p">];</span><span class="w">  </span><span class="c1">// Allocate buffer to store partial</span>
+<span class="w">    </span><span class="kt">ssize_t</span><span class="w"> </span><span class="n">nread</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w">    </span><span class="c1">// contents of file</span>
+
+<span class="w">    </span><span class="k">while</span><span class="w"> </span><span class="p">((</span><span class="n">nread</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">read</span><span class="p">(</span><span class="n">rfd</span><span class="p">,</span><span class="w"> </span><span class="n">buffer</span><span class="p">,</span><span class="w"> </span><span class="n">BUFSIZ</span><span class="p">))</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">EVP_DigestUpdate</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span><span class="w"> </span><span class="n">buffer</span><span class="p">,</span><span class="w"> </span><span class="n">nread</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">goto</span><span class="w"> </span><span class="n">failure</span><span class="p">;</span><span class="w"> </span><span class="c1">// Read partial contents of file</span>
+<span class="w">        </span><span class="p">}</span><span class="w">                 </span><span class="c1">// into buffer and update digest</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">nread</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">goto</span><span class="w"> </span><span class="n">failure</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="cm">/* Compute SHA1 */</span>
+<span class="w">    </span><span class="kt">uint8_t</span><span class="w"> </span><span class="n">digest</span><span class="p">[</span><span class="n">SHA_DIGEST_LENGTH</span><span class="p">];</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">EVP_DigestFinal_ex</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span><span class="w"> </span><span class="n">digest</span><span class="p">,</span><span class="w"> </span><span class="nb">NULL</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">goto</span><span class="w"> </span><span class="n">failure</span><span class="p">;</span><span class="w">     </span><span class="c1">// Compute SHA1 on buffer</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="cm">/* Convert digest to hexadecimal digest */</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">SHA_DIGEST_LENGTH</span><span class="p">;</span><span class="w"> </span><span class="n">b</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">snprintf</span><span class="p">(</span><span class="n">cksum</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">2</span><span class="o">*</span><span class="n">b</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;%02x&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">digest</span><span class="p">[</span><span class="n">b</span><span class="p">]);</span>
+<span class="w">                          </span><span class="c1">// Convert raw bytes into ASCII</span>
+<span class="w">    </span><span class="p">}</span><span class="w">                     </span><span class="c1">// hexadecimal representation</span>
+
+<span class="w">    </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span>
+
+<span class="nl">failure</span><span class="p">:</span>
+<span class="w">    </span><span class="cm">/* Clean up */</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">rfd</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="n">close</span><span class="p">(</span><span class="n">rfd</span><span class="p">);</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span><span class="w"> </span><span class="n">EVP_MD_CTX_free</span><span class="p">(</span><span class="n">ctx</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">result</span><span class="p">;</span><span class="w">        </span><span class="c1">// Need -lcrypto when linking</span>
+<span class="p">}</span>
+</code></pre></div>
+</main>
+<footer>
+Built using <a href="https://python.org">Python</a>
+and <a href="https://jinja.palletsprojects.com">Jinja</a>
+with colors from 
+<a href="https://onmessage.nd.edu/university-branding/colors/">Notre Dame</a>, 
+<a href="https://spreadsheet.dev/how-to-get-the-hexadecimal-codes-of-colors-in-google-sheets">Google Docs</a>, and 
+<a href="https://nordtheme.com">Nord Theme</a>,
+and icons from <a href="https://pictogrammers.com/library/mdi/">Material Design Icons</a>.</footer>
+</body>
+</html>

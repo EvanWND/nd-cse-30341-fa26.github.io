@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Favicon -->
+<link rel="icon" type="image/png" sizes="32x32" href="static/ico/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="static/ico/favicon-16x16.png">
+<link rel="manifest" href="static/ico/site.webmanifest">
+<!-- Stylesheets -->
+<link rel="stylesheet" href="static/css/domer.css">
+<title>Reading 04: Threads, Locks</title>
+</head>
+<body>
+<header>
+<a class="logo" href="reading04.html">
+    <h1>Reading 04: Threads, Locks</h1>
+</a>
+<nav>
+    <ul>
+        <li><a href="index.html"><h4>Home</h4></a></li>
+        </ul>
+</nav></header>
+<main>
+<p><strong>Everyone</strong>:</p>
+<p>For the past couple of weeks, we have studied how an operating system
+virtualizes the CPU by providing <a href="https://en.wikipedia.org/wiki/Process_(computing)">processes</a> and <a href="https://en.wikipedia.org/wiki/Scheduling_(computing)">scheduling</a> policies.  By
+enabling users to execute multiple jobs simultaneously, the OS enables
+better utilization of the hardware and allows for more sophisticated
+workflows.  Unfortunately, this <a href="https://en.wikipedia.org/wiki/Computer_multitasking">multiprogramming</a> ability comes with the
+cost of complexity due to issues related to <a href="https://en.wikipedia.org/wiki/Concurrency_(computer_science)">concurrency</a>.</p>
+<p>Last week, we briefly examined <a href="https://en.wikipedia.org/wiki/Event-driven_programming">event-based programming</a> as an approach to
+implementing <a href="https://en.wikipedia.org/wiki/Concurrency_(computer_science)">concurrency</a> within a single <a href="https://en.wikipedia.org/wiki/Process_(computing)">process</a>.  Unfortunately, we
+saw that there are limits to this approach, and so this week, we will
+introduce <a href="http://man7.org/linux/man-pages/man7/pthreads.7.html">pthreads</a> as an alternative method of implementing
+<a href="https://en.wikipedia.org/wiki/Concurrency_(computer_science)">concurrency</a>.  Afterwards, we will further explore how to tackle the
+challenges of <a href="https://en.wikipedia.org/wiki/Thread_(computing)">thread</a>-based <a href="https://en.wikipedia.org/wiki/Concurrency_(computer_science)">concurrency</a> with tools such as <a href="https://en.wikipedia.org/wiki/Lock_(computer_science)">locks</a>,
+<a href="https://en.wikipedia.org/wiki/Monitor_(synchronization)">condition variables</a>, and <a href="https://en.wikipedia.org/wiki/Semaphore_(programming)">semaphores</a>.</p>
+<div class="alert info-bg">
+<h4 id="book-embed_icon-tldr"><i class="icon icon-medium"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>book</title><path d="M18,22A2,2 0 0,0 20,20V4C20,2.89 19.1,2 18,2H12V9L9.5,7.5L7,9V2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18Z" /></svg>
+</i> TL;DR<a class="headerlink" href="#book-embed_icon-tldr" title="Permanent link">&para;</a></h4>
+<p>For this reading assignment, you are to read about how to implement
+<a href="https://en.wikipedia.org/wiki/Concurrency_(computer_science)">concurrency</a> using <a href="https://en.wikipedia.org/wiki/Thread_(computing)">threads</a> and <a href="https://en.wikipedia.org/wiki/Lock_(computer_science)">locks</a>, submit your responses to the
+<a href="static/json/reading04.json">Reading 04 Quiz</a>, and then modify your <a href="reading03.html">Reading 03</a> program to use
+<a href="http://man7.org/linux/man-pages/man7/pthreads.7.html">pthreads</a>.</p>
+</div>
+<h2 id="reading">Reading<a class="headerlink" href="#reading" title="Permanent link">&para;</a></h2>
+<div class="flex-row">
+<div class="flex-col">
+<p>The readings for this week are:</p>
+<ol>
+<li>
+<div class="flex-col" markdown="1">
+<p><a href="http://pages.cs.wisc.edu/~remzi/OSTEP/">Operating Systems: Three Easy Pieces</a></p>
+<ol>
+<li><a href="http://pages.cs.wisc.edu/~remzi/OSTEP/dialogue-concurrency.pdf">Dialogue</a></li>
+<li><a href="http://pages.cs.wisc.edu/~remzi/OSTEP/threads-intro.pdf">Concurrency and Threads</a></li>
+<li><a href="http://pages.cs.wisc.edu/~remzi/OSTEP/threads-api.pdf">Thread API</a></li>
+<li><a href="http://pages.cs.wisc.edu/~remzi/OSTEP/threads-locks.pdf">Locks</a></li>
+<li><a href="http://pages.cs.wisc.edu/~remzi/OSTEP/threads-events.pdf">Event-based Concurrency</a></li>
+</ol>
+</li>
+</ol>
+<h3 id="optional-readings">Optional Readings<a class="headerlink" href="#optional-readings" title="Permanent link">&para;</a></h3>
+<ol>
+<li>
+<div class="flex-col" markdown="1">
+<p><a href="https://dl.acm.org/doi/10.1145/850657.850658">On the duality of operating system structures</a></p>
+<ul>
+<li><a href="https://www.usenix.org/conference/hotos-ix/why-events-are-bad-idea-high-concurrency-servers">Why events are a bad idea</a></li>
+<li><a href="https://web.stanford.edu/~ouster/cgi-bin/papers/threads.pdf">Why threads are a bad idea</a></li>
+</ul>
+</li>
+<li>
+<p><a href="https://jvns.ca/blog/2017/06/03/async-io-on-linux--select--poll--and-epoll/">Async IO on Linux: select, poll, and epoll</a></p>
+</li>
+</ol>
+</div>
+<div class="flex-col-25 centered">
+  <img src="static/img/ostep.jpg">
+</div>
+</div>
+<h2 id="quiz">Quiz<a class="headerlink" href="#quiz" title="Permanent link">&para;</a></h2>
+<p>Once you have done the readings, answer the following <a href="static/json/reading04.json">Reading 04 Quiz</a>
+questions:</p>
+<div id="quiz-questions"></div>
+
+<div id="quiz-responses"></div>
+
+<script src="static/js/dredd-quiz.js"></script>
+<script>
+loadQuiz('static/json/reading04.json');
+</script>
+
+<pre style="display: none;" id="dr-container" class="codehilite"><code id="dredd-response"></code></pre>
+
+<h2 id="program">Program<a class="headerlink" href="#program" title="Permanent link">&para;</a></h2>
+<p>For this week's program, you are to modify the <code>program.c</code> from <a href="reading03.html">Reading
+03</a> such that you use separate <a href="https://en.wikipedia.org/wiki/Thread_(computing)">threads</a> instead of <a href="https://en.wikipedia.org/wiki/Process_(computing)">processes</a> to compute
+the <a href="https://en.wikipedia.org/wiki/SHA-1">SHA1</a> digest for each argument. In other words, for each file
+argument, you need to create a thread that computes and displays the <a href="https://en.wikipedia.org/wiki/SHA-1">SHA1</a>
+digest of the contents of the file. The main thread should collect the exit
+statuses of its worker threads and return <code>0</code> if all the threads were
+successful.  Otherwise, it should return the number of threads that failed
+as its own exit status.</p>
+<h3 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h3>
+<p>The usage and output of your program should be the same as <a href="https://man7.org/linux/man-pages/man1/sha1sum.1.html">sha1sum</a>:</p>
+<div class="codehilite"><pre><span></span><code>$<span class="w"> </span>./program<span class="w"> </span>Makefile<span class="w">  </span><span class="c1"># Compute SHA1 of Makefile</span>
+50bb7f7ccf1ca089f3c5eaff5fe95e56ddbe53a5<span class="w">  </span>Makefile
+
+$<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="nv">$?</span><span class="w">             </span><span class="c1"># Check exit status</span>
+<span class="m">0</span>
+
+$<span class="w"> </span>./program<span class="w"> </span>asdf<span class="w">      </span><span class="c1"># Handle invalid files</span>
+
+$<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="nv">$?</span><span class="w">             </span><span class="c1"># Check exit status</span>
+<span class="m">1</span>
+</code></pre></div>
+
+<h3 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">&para;</a></h3>
+<ul>
+<li>
+<p>Your code must compile cleanly with no warnings.</p>
+</li>
+<li>
+<p>Your program may only use I/O system calls such as <a href="http://man7.org/linux/man-pages/man2/open.2.html">open</a>, <a href="http://man7.org/linux/man-pages/man2/read.2.html">read</a>, and
+  <a href="http://man7.org/linux/man-pages/man2/close.2.html">close</a> to access the contents of each file.</p>
+</li>
+<li>
+<p>Your program must use the <a href="https://docs.openssl.org/3.3/man3/EVP_DigestInit/">EVP_MD_CTX_new</a>, <a href="https://docs.openssl.org/3.3/man3/EVP_DigestInit/">EVP_DigestInit_ex</a>,
+  <a href="https://docs.openssl.org/3.3/man3/EVP_DigestInit/">EVP_DigestUpdate</a>, and <a href="https://docs.openssl.org/3.3/man3/EVP_DigestInit/">EVP_DigestFinal_ex</a> functions provided by
+  <a href="https://www.openssl.org">OpenSSL</a>.</p>
+</li>
+<li>
+<p>Your program must not have any resource leaks or memory errors as
+  detected by <a href="https://www.valgrind.org/">valgrind</a>.</p>
+</li>
+<li>
+<p>Your program must use <a href="https://man7.org/linux/man-pages/man3/pthread_create.3.html">pthread_create</a> and <a href="https://man7.org/linux/man-pages/man3/pthread_join.3.html">pthread_join</a>.</p>
+</li>
+<li>
+<p>Each thread must run concurrently (ie. without waiting for another
+  thread to complete first).</p>
+</li>
+</ul>
+<div class="alert warning-bg">
+<p><strong>Note</strong>: To link properly to the <a href="https://www.openssl.org">OpenSSL</a> functions, you will need to add
+  <code>-lcrypto</code> to the <code>LIBS</code> variable in your <code>Makefile</code>.</p>
+<p>You will also need to add the <code>-pthread</code> flags to your <code>CFLAGS</code>.</p>
+</div>
+<h3 id="hints">Hints<a class="headerlink" href="#hints" title="Permanent link">&para;</a></h3>
+<p>You should not need to modify your original <code>sha1sum_file</code> function from
+<a href="reading03.html">Reading 03</a>.  Instead, you should convert your existing <code>sha1sum_process</code>
+function into a similar <code>sha1sum_thread</code> function:</p>
+<div class="codehilite"><pre><span></span><code><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="nf">sha1sum_thread</span><span class="p">(</span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">arg</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="p">)</span><span class="n">arg</span><span class="p">;</span>
+<span class="w">    </span><span class="p">...</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">sha1sum_file</span><span class="p">(</span><span class="n">path</span><span class="p">,</span><span class="w"> </span><span class="n">cksum</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="p">...</span><span class="w">   </span><span class="c1">// Failure</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="p">...</span><span class="w">       </span><span class="c1">// Success</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>Once you have a <code>sha1sum_thread</code> function, you will need to modify the
+<code>main</code> function as follows:</p>
+<div class="codehilite"><pre><span></span><code>function main():
+    pthread_t thread[argc - 1]  # Thread array
+
+    For each argument:
+        Create a thread stored in thread[i] that runs sha1sum_thread
+
+    For each thread in thread array:
+        Join thread[i]
+        Update the overall program status
+</code></pre></div>
+
+<h2 id="submission">Submission<a class="headerlink" href="#submission" title="Permanent link">&para;</a></h2>
+<p>To submit you work, follow the same process outlined in <a href="reading01.html">Reading 01</a>:</p>
+<div class="codehilite"><pre><span></span><code>$<span class="w"> </span>git<span class="w"> </span>switch<span class="w"> </span>master<span class="w">                   </span><span class="c1"># Make sure we are in master branch</span>
+
+$<span class="w"> </span>git<span class="w"> </span>pull<span class="w"> </span>--rebase<span class="w">                   </span><span class="c1"># Make sure we are up-to-date with GitHub</span>
+
+$<span class="w"> </span>git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>reading04<span class="w">           </span><span class="c1"># Create reading04 branch and check it out</span>
+
+$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>reading04<span class="w">                        </span><span class="c1"># Go into reading04 folder</span>
+$<span class="w"> </span><span class="nv">$EDITOR</span><span class="w"> </span>answers.json<span class="w">                </span><span class="c1"># Edit your answers.json file</span>
+
+$<span class="w"> </span>../.scripts/check.py<span class="w">                </span><span class="c1"># Check reading04 quiz</span>
+Checking<span class="w"> </span>reading04<span class="w"> </span>quiz<span class="w"> </span>...
+<span class="w">      </span>Q1<span class="w">  </span><span class="m">5</span>.00<span class="w"> </span>/<span class="w">  </span><span class="m">5</span>.00
+<span class="w">      </span>Q2<span class="w">  </span><span class="m">3</span>.00<span class="w"> </span>/<span class="w">  </span><span class="m">3</span>.00
+<span class="w">      </span>Q3<span class="w">  </span><span class="m">8</span>.00<span class="w"> </span>/<span class="w">  </span><span class="m">8</span>.00
+<span class="w">      </span>Q4<span class="w">  </span><span class="m">3</span>.00<span class="w"> </span>/<span class="w">  </span><span class="m">3</span>.00
+<span class="w">      </span>Q5<span class="w">  </span><span class="m">4</span>.00<span class="w"> </span>/<span class="w">  </span><span class="m">4</span>.00
+<span class="w">      </span>Q6<span class="w">  </span><span class="m">3</span>.00<span class="w"> </span>/<span class="w">  </span><span class="m">3</span>.00
+<span class="w">      </span>Q7<span class="w">  </span><span class="m">5</span>.00<span class="w"> </span>/<span class="w">  </span><span class="m">5</span>.00
+<span class="w">      </span>Q8<span class="w">  </span><span class="m">3</span>.00<span class="w"> </span>/<span class="w">  </span><span class="m">3</span>.00
+<span class="w">      </span>Q9<span class="w">  </span><span class="m">6</span>.00<span class="w"> </span>/<span class="w">  </span><span class="m">6</span>.00
+<span class="w">  </span>--------------------
+<span class="w">   </span>Score<span class="w"> </span><span class="m">40</span>.00<span class="w"> </span>/<span class="w"> </span><span class="m">40</span>.00
+<span class="w">   </span>Grade<span class="w">  </span><span class="m">1</span>.00<span class="w"> </span>/<span class="w">  </span><span class="m">1</span>.00
+<span class="w">  </span>Status<span class="w"> </span>Success
+
+$<span class="w"> </span>git<span class="w"> </span>add<span class="w"> </span>answers.json<span class="w">                </span><span class="c1"># Add answers.json to staging area</span>
+$<span class="w"> </span>git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;Reading 04: Quiz&quot;</span><span class="w">    </span><span class="c1"># Commit work</span>
+
+$<span class="w"> </span><span class="nv">$EDITOR</span><span class="w"> </span>program.c<span class="w">                   </span><span class="c1"># Edit your program.c file</span>
+
+$<span class="w"> </span>make<span class="w"> </span>test-program<span class="w">                   </span><span class="c1"># Check reading04 program</span>
+Testing<span class="w"> </span>reading04<span class="w"> </span>program<span class="w"> </span>...
+<span class="w"> </span>I/O<span class="w"> </span>System<span class="w"> </span>Calls<span class="w">                                             </span>...<span class="w"> </span>Success
+<span class="w"> </span>I/O<span class="w"> </span>Functions<span class="w">                                                </span>...<span class="w"> </span>Success
+<span class="w"> </span>Memory<span class="w"> </span>Functions<span class="w">                                             </span>...<span class="w"> </span>Success
+<span class="w"> </span>Crypto<span class="w"> </span>Functions<span class="w">                                             </span>...<span class="w"> </span>Success
+<span class="w"> </span>Process<span class="w"> </span>System<span class="w"> </span>Calls<span class="w">                                         </span>...<span class="w"> </span>Success
+<span class="w"> </span>Thread<span class="w"> </span>Functions<span class="w">                                             </span>...<span class="w"> </span>Success
+<span class="w"> </span>program<span class="w">                                                      </span>...<span class="w"> </span>Success
+<span class="w"> </span>program<span class="w"> </span>Makefile<span class="w">                                             </span>...<span class="w"> </span>Success
+<span class="w"> </span>program<span class="w"> </span>Makefile<span class="w"> </span>README.md<span class="w">                                   </span>...<span class="w"> </span>Success
+<span class="w"> </span>program<span class="w"> </span>Makefile<span class="w"> </span>README.md<span class="w"> </span>program.c<span class="w">                         </span>...<span class="w"> </span>Success
+<span class="w"> </span>program<span class="w"> </span>Makefile<span class="w"> </span>README.md<span class="w"> </span>program.c<span class="w"> </span>asdf<span class="w">                    </span>...<span class="w"> </span>Success
+<span class="w"> </span>program<span class="w"> </span>Makefile<span class="w"> </span>asdf<span class="w"> </span>README.md<span class="w"> </span>program.c<span class="w"> </span>fsda<span class="w">               </span>...<span class="w"> </span>Success
+<span class="w"> </span>program<span class="w"> </span>Makefile<span class="w"> </span>README.md<span class="w"> </span>/bin/ls<span class="w"> </span>/bin/bash<span class="w">                 </span>...<span class="w"> </span>Success
+<span class="w">   </span>Score<span class="w"> </span><span class="m">13</span>.00<span class="w"> </span>/<span class="w"> </span><span class="m">13</span>.00
+<span class="w">   </span>Grade<span class="w">  </span><span class="m">1</span>.00<span class="w"> </span>/<span class="w">  </span><span class="m">1</span>.00
+<span class="w">  </span>Status<span class="w"> </span>Success
+
+$<span class="w"> </span>git<span class="w"> </span>add<span class="w"> </span>program.c<span class="w">                   </span><span class="c1"># Add program.c to staging area</span>
+$<span class="w"> </span>git<span class="w"> </span>add<span class="w"> </span>Makefile<span class="w">                    </span><span class="c1"># Add Makefile to staging area</span>
+$<span class="w"> </span>git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;Reading 04: Code&quot;</span><span class="w">    </span><span class="c1"># Commit work</span>
+
+$<span class="w"> </span>git<span class="w"> </span>push<span class="w"> </span>-u<span class="w"> </span>origin<span class="w"> </span>reading04<span class="w">        </span><span class="c1"># Push branch to GitHub</span>
+</code></pre></div>
+
+<div class="alert warning-bg">
+<h3 id="lifebuoy-embed_icon-acknowledgments"><i class="icon icon-medium"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>lifebuoy</title><path d="M19.79,15.41C20.74,13.24 20.74,10.75 19.79,8.59L17.05,9.83C17.65,11.21 17.65,12.78 17.06,14.17L19.79,15.41M15.42,4.21C13.25,3.26 10.76,3.26 8.59,4.21L9.83,6.94C11.22,6.35 12.79,6.35 14.18,6.95L15.42,4.21M4.21,8.58C3.26,10.76 3.26,13.24 4.21,15.42L6.95,14.17C6.35,12.79 6.35,11.21 6.95,9.82L4.21,8.58M8.59,19.79C10.76,20.74 13.25,20.74 15.42,19.78L14.18,17.05C12.8,17.65 11.22,17.65 9.84,17.06L8.59,19.79M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,8A4,4 0 0,0 8,12A4,4 0 0,0 12,16A4,4 0 0,0 16,12A4,4 0 0,0 12,8Z" /></svg>
+</i> Acknowledgments<a class="headerlink" href="#lifebuoy-embed_icon-acknowledgments" title="Permanent link">&para;</a></h3>
+<p>If you collaborated with any other students, or received help from TAs or AI
+tools on this assignment, please record this support in the <code>README.md</code> in
+the <code>reading04</code> folder and include it with your <strong>Pull Request</strong>.</p>
+</div>
+<div class="alert success-bg">
+<h3 id="account-question-embed_icon-graders"><i class="icon icon-medium"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>account-question</title><path d="M13,8A4,4 0 0,1 9,12A4,4 0 0,1 5,8A4,4 0 0,1 9,4A4,4 0 0,1 13,8M17,18V20H1V18C1,15.79 4.58,14 9,14C13.42,14 17,15.79 17,18M20.5,14.5V16H19V14.5H20.5M18.5,9.5H17V9A3,3 0 0,1 20,6A3,3 0 0,1 23,9C23,9.97 22.5,10.88 21.71,11.41L21.41,11.6C20.84,12 20.5,12.61 20.5,13.3V13.5H19V13.3C19,12.11 19.6,11 20.59,10.35L20.88,10.16C21.27,9.9 21.5,9.47 21.5,9A1.5,1.5 0 0,0 20,7.5A1.5,1.5 0 0,0 18.5,9V9.5Z" /></svg>
+</i> Graders<a class="headerlink" href="#account-question-embed_icon-graders" title="Permanent link">&para;</a></h3>
+<p>Once you have committed your work and pushed it to <a href="https://github.com">GitHub</a>, remember to
+create a <strong>pull request</strong> and assign it to the appropriate <strong>teaching
+assistant</strong> from the <a href="reading04_tas.html">Reading 04 TA List</a>.</p>
+<p><strong>Note</strong>: this list changes each week, so be sure to consult the appropriate
+list for each assignment.</p>
+</div>
+</main>
+<footer>
+Built using <a href="https://python.org">Python</a>
+and <a href="https://jinja.palletsprojects.com">Jinja</a>
+with colors from 
+<a href="https://onmessage.nd.edu/university-branding/colors/">Notre Dame</a>, 
+<a href="https://spreadsheet.dev/how-to-get-the-hexadecimal-codes-of-colors-in-google-sheets">Google Docs</a>, and 
+<a href="https://nordtheme.com">Nord Theme</a>,
+and icons from <a href="https://pictogrammers.com/library/mdi/">Material Design Icons</a>.</footer>
+</body>
+</html>

@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Favicon -->
+<link rel="icon" type="image/png" sizes="32x32" href="static/ico/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="static/ico/favicon-16x16.png">
+<link rel="manifest" href="static/ico/site.webmanifest">
+<!-- Stylesheets -->
+<link rel="stylesheet" href="static/css/domer.css">
+<title>Notes 00, 01: Syllabus, Hardware, Boot</title>
+</head>
+<body>
+<header>
+<a class="logo" href="notes00-01.html">
+    <h1>Notes 00, 01: Syllabus, Hardware, Boot</h1>
+</a>
+<nav>
+    <ul>
+        <li><a href="index.html"><h4>Home</h4></a></li>
+        </ul>
+</nav></header>
+<main>
+<h2 id="syllabus">Syllabus<a class="headerlink" href="#syllabus" title="Permanent link">&para;</a></h2>
+<h3 id="syllabus-ice-breaker">Syllabus: <strong class="gold">Ice Breaker</strong><a class="headerlink" href="#syllabus-ice-breaker" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Go row by row (<em>asking people their name</em>)</li>
+</ul>
+<h3 id="syllabus-whoami">Syllabus: <strong class="gold">Whoami?</strong><a class="headerlink" href="#syllabus-whoami" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Triple Domer</strong>, <strong>Children</strong></li>
+<li>Introduce <strong>TAs</strong> (<em>if present</em>)</li>
+</ul>
+<h3 id="syllabus-motivation">Syllabus: <strong class="gold">Motivation</strong><a class="headerlink" href="#syllabus-motivation" title="Permanent link">&para;</a></h3>
+<ul>
+<li>
+<p>Understanding how <strong>software</strong> interacts with <strong>hardware</strong> is crucial for
+<strong>SECURITY</strong> and <strong>performance</strong></p>
+</li>
+<li>
+<div class="flex-col">
+<p><strong>House of Cards</strong>:</p>
+<ul>
+<li>Applications: shell, filters (grep, sed, regular expressions)</li>
+<li>Standard Library: <code>printf</code>, system calls</li>
+<li>Operating System: kernel (<em>focus on principles</em>)</li>
+</ul>
+</li>
+</ul>
+<h3 id="syllabus-logistics">Syllabus: <strong class="gold">Logistics</strong><a class="headerlink" href="#syllabus-logistics" title="Permanent link">&para;</a></h3>
+<ul>
+<li>
+<p>Explain why we have <strong>Readings</strong> (<em>need regular practice</em>)</p>
+</li>
+<li>
+<p><strong>Honor Code</strong>: encouraged to <strong>work together</strong> and teach each other but
+<strong>sharing solutions is not helping</strong>; use <strong>AI</strong> as if they were a <strong>TA</strong></p>
+</li>
+</ul>
+<h2 id="computer-hardware">Computer Hardware<a class="headerlink" href="#computer-hardware" title="Permanent link">&para;</a></h2>
+<h3 id="computer-hardware-house-of-cards">Computer Hardware: <strong class="gold">House of Cards</strong><a class="headerlink" href="#computer-hardware-house-of-cards" title="Permanent link">&para;</a></h3>
+<div class="centered">
+  <img src="static/img/slides00-house-of-cards.png" class="responsive transparent" style="padding: 10;">
+</div>
+
+<h3 id="computer-hardware-a-computer-is">Computer Hardware: <strong class="gold">A Computer is...</strong><a class="headerlink" href="#computer-hardware-a-computer-is" title="Permanent link">&para;</a></h3>
+<p>A general purpose <strong class="caution">information processing</strong>
+machine.</p>
+<div class="centered">
+    <img src="static/img/slides01-personal-computers.png" class="responsive">
+</div>
+
+<p>A <strong class="caution">digital computer</strong> is an electronic device that
+processes <strong class="special">binary data</strong>.</p>
+<h3 id="computer-hardware-architecture">Computer Hardware: <strong class="gold">Architecture</strong><a class="headerlink" href="#computer-hardware-architecture" title="Permanent link">&para;</a></h3>
+<div class="centered">
+
+<img src="static/img/slides01-logical-construction.png" class="responsive transparent">
+
+</div>
+
+<h3 id="computer-hardware-devices">Computer Hardware: <strong class="gold">Devices</strong><a class="headerlink" href="#computer-hardware-devices" title="Permanent link">&para;</a></h3>
+<div class="flex-row">
+<div class="flex-col centered">
+<p><a title="Fred the Oyster, CC BY-SA 4.0 &lt;https://creativecommons.org/licenses/by-sa/4.0&gt;, via Wikimedia Commons" href="https://commons.wikimedia.org/wiki/File:Chipset_schematic.svg"><img width="475" alt="Chipset schematic" src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Chipset_schematic.svg/500px-Chipset_schematic.svg.png?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=thumbnail" class="transparent"></a></p>
+</div>
+<div class="flex-col">
+<p>A modern <strong class="caution">computer</strong> is a collection of smaller
+<strong class="special">specialized</strong> computing devices that <strong
+class="success">work together</strong> by <strong
+class="danger">communicating</strong> using a variety of protocols and
+interfaces.</p>
+</div>
+</div>
+<h3 id="computer-hardware-components">Computer Hardware: <strong class="gold">Components</strong><a class="headerlink" href="#computer-hardware-components" title="Permanent link">&para;</a></h3>
+<div class="flex-row">
+<div class="flex-col">
+<p><strong class="success">Identify</strong> the following <strong
+class="caution">components</strong> in the provided computers:</p>
+<ol>
+<li><strong class="success">Processor</strong></li>
+<li><strong class="caution">Memory</strong></li>
+<li><strong class="danger">Storage</strong></li>
+<li><strong class="special">I/O</strong></li>
+</ol>
+</div>
+<div class="flex-col-25">
+<p><img src="https://www.techspot.com/articles-info/254/images/18b.jpg" width="240"></p>
+<p><img src="https://c1.neweggimages.com/productimage/nb640/11-153-127-02.jpg" width="240"></p>
+<p><img src="https://i.ebayimg.com/images/g/MEcAAOSwvnRkMj6B/s-l400.jpg" width="240"></p>
+</div>
+</div>
+<h2 id="boot-sequence">Boot Sequence<a class="headerlink" href="#boot-sequence" title="Permanent link">&para;</a></h2>
+<h3 id="boot-sequence-bios-uefi">Boot Sequence: <span class="gold">BIOS / UEFI</span><a class="headerlink" href="#boot-sequence-bios-uefi" title="Permanent link">&para;</a></h3>
+<div class="flex-row">
+<div class="flex-col-25 centered">
+
+<img src="static/img/slides01-boot-sequence.png" class="responsive transparent">
+
+</div>
+<div class="flex-col">
+<h4 id="bios-uefi">BIOS / UEFI<a class="headerlink" href="#bios-uefi" title="Permanent link">&para;</a></h4>
+<p>The <strong class="info">Basic I/O System (<em>BIOS</em>)</strong> or <strong
+class="info">Unified Extensible Firmeware Interface (<em>UEFI</em>)</strong> is the
+first program (ie. <strong class="special"><em>firmware</em></strong>) that is
+executed by the <strong class="caution">processor</strong> when the computer is
+powered on:</p>
+<ul>
+<li>
+<p>Usually stored in <strong class="danger">ROM</strong></p>
+</li>
+<li>
+<p>Performs some basic <strong class="caution">system integrity</strong> checks</p>
+</li>
+<li>
+<p>Searches for <strong class="danger">device to boot</strong> or <strong
+  class="success">primary bootloader</strong></p>
+</li>
+</ul>
+<h4 id="demonstration">Demonstration<a class="headerlink" href="#demonstration" title="Permanent link">&para;</a></h4>
+<ol>
+<li>
+<p>View <info>UEFI</info> (<strong>F12</strong>)</p>
+</li>
+<li>
+<p>View <success>bootloader</success> (<strong>space</strong>)</p>
+</li>
+<li>
+<p>Reboot with <strong>nosplash</strong></p>
+</li>
+<li>
+<p>Reboot with <strong>init=/usr/bin/python3</strong></p>
+</li>
+</ol>
+</div>
+</div>
+<h3 id="boot-sequence-mbr-gpt-bootloader">Boot Sequence: <span class="gold">MBR / GPT, Bootloader</span><a class="headerlink" href="#boot-sequence-mbr-gpt-bootloader" title="Permanent link">&para;</a></h3>
+<div class="flex-row">
+<div class="flex-col-25 centered">
+<p><img src="static/img/slides01-boot-sequence.png" class="responsive transparent"></p>
+</div>
+<div class="flex-col">
+<h4 id="mbr-gpt">MBR / GPT<a class="headerlink" href="#mbr-gpt" title="Permanent link">&para;</a></h4>
+<p>The <strong class="danger">Master Boot Record (MBR)</strong> or <strong
+class="danger">GUID Partition Table (GPT)</strong> is a special <strong
+class="primary">data structure</strong> that records the organization of the
+<strong class="danger">storage</strong> device.</p>
+<ul>
+<li>
+<p>The <strong class="primary">partition table</strong> maps how the storage
+  device is divided into separate <strong class="warning">partitions</strong></p>
+</li>
+<li>
+<p><strong class="danger">MBR</strong> is limited to <strong
+  class="special">4</strong> <strong class="warning">partitions</strong>, while <strong
+  class="danger">GPT</strong> is limited to <strong
+  class="special">128</strong> <strong class="warning">partitions</strong></p>
+</li>
+<li>
+<p><strong class="danger">MBR</strong> contains a small <em>primary</em> <strong
+  class="success">bootloader</strong> program whose job is to locate the active
+  boot <strong class="special">partition</strong> and launch the next <strong
+  class="success">bootloader</strong></p>
+</li>
+</ul>
+<h4 id="bootloader">Bootloader<a class="headerlink" href="#bootloader" title="Permanent link">&para;</a></h4>
+<p>The <em>secondary</em> <strong class="success">bootloader</strong> is a program that
+loads the <strong class="caution">operarting system kernel</strong> and an
+optional <strong class="caution">RAM</strong> disk.</p>
+<ul>
+<li>
+<p>Because this program is not restricted to the <strong
+  class="danger">MBR</strong>, it can be larger and support features such as
+  multiple filesystem support and graphical menus</p>
+</li>
+<li>
+<p>The <strong class="caution">RAM</strong> disk is a <em>temporary</em> <strong
+  class="caution">in-memory</strong> <strong
+  class="primary">filesystem</strong> with essential <strong>drivers</strong> and <strong>tools</strong>
+  for loading the physical <strong class="danger">storage devices</strong></p>
+</li>
+<li>
+<p><strong>Examples</strong>: <a href="https://www.gnu.org/software/grub/">GRUB</a>, <a href="https://www.freedesktop.org/software/systemd/man/latest/systemd-boot.html">systemd-boot</a>, <a href="https://github.com/limine-bootloader/limine">Limine</a></p>
+</li>
+</ul>
+</div>
+</div>
+<h3 id="boot-sequence-kernel-init">Boot Sequence: <span class="gold">Kernel / Init</span><a class="headerlink" href="#boot-sequence-kernel-init" title="Permanent link">&para;</a></h3>
+<div class="flex-row">
+<div class="flex-col-25 centered">
+<p><img src="static/img/slides01-boot-sequence.png" class="responsive transparent"></p>
+</div>
+<div class="flex-col">
+<h4 id="kernel">Kernel<a class="headerlink" href="#kernel" title="Permanent link">&para;</a></h4>
+<p>The <strong class="success">kernel</strong> is the core of the <strong
+class="primary">operating system</strong> whose job is to provide <strong
+class="caution">abstractions</strong> such as <em>processes</em>, <em>threads</em>, <em>virtual
+memory</em>, and <em>filesystems</em> such that <strong
+class="special">applications</strong> can efficiently utilize the underlying
+<strong class="info">hardware</strong> and interact with each other.</p>
+<p>On <strong>Linux</strong> and <strong>macOS</strong>, to see the <strong>kernel</strong> messages since <strong>boot</strong>, use:</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Print kernel messages</span>
+$<span class="w"> </span>dmesg
+</code></pre></div>
+
+<h4 id="init">Init<a class="headerlink" href="#init" title="Permanent link">&para;</a></h4>
+<p><strong class="special">Init</strong> is the first user-space application and
+is in charge of <strong>configuring</strong>, <strong>executing</strong>, and <strong>supervising</strong> user-space
+daemons and services.</p>
+<ul>
+<li>
+<p><strong class="success">System Bootstrapping</strong>: Mount file systems,
+  configure networking, start services</p>
+</li>
+<li>
+<p><strong class="caution">Service Management</strong>: Starts, stops, and monitors
+  system services</p>
+</li>
+<li>
+<p><strong class="danger">Process Reaping</strong>: Adopts orphan <strong
+  class="success">processes</strong> and cleans up their resources when
+  terminated</p>
+</li>
+</ul>
+<p><strong>Examples</strong>: <strong>sysvinit</strong>, <a href="https://systemd.io/">systemd</a>, <a href="https://github.com/OpenRC/openrc">openrc</a>, <a href="https://smarden.org/runit/">runit</a></p>
+</div>
+</div>
+<h2 id="an-operating-system-is">An Operating System is ...<a class="headerlink" href="#an-operating-system-is" title="Permanent link">&para;</a></h2>
+<p>A set of <strong class="caution">abstractions</strong> (<em>processes</em>, <em>threads</em>,
+<em>virtual memory</em>, <em>filesystems</em>) that enable <strong
+class="special">applications</strong> to effectively and efficiently utilize
+<strong class="info">hardware</strong> resources and interact with each other.</p>
+<div class="flex-row">
+<div class="flex-col">
+<ul>
+<li>
+<p><strong class="info">Computer Architecture</strong></p>
+</li>
+<li>
+<p><strong class="caution">Data Structures</strong></p>
+</li>
+<li>
+<p><strong class="success">Algorithms</strong></p>
+</li>
+</ul>
+</div>
+<div class="flex-col">
+<p><img src="static/img/house-of-cards.png" class="responsive transparent" width="500"></p>
+</div>
+</div>
+</main>
+<footer>
+Built using <a href="https://python.org">Python</a>
+and <a href="https://jinja.palletsprojects.com">Jinja</a>
+with colors from 
+<a href="https://onmessage.nd.edu/university-branding/colors/">Notre Dame</a>, 
+<a href="https://spreadsheet.dev/how-to-get-the-hexadecimal-codes-of-colors-in-google-sheets">Google Docs</a>, and 
+<a href="https://nordtheme.com">Nord Theme</a>,
+and icons from <a href="https://pictogrammers.com/library/mdi/">Material Design Icons</a>.</footer>
+</body>
+</html>

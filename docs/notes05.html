@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Favicon -->
+<link rel="icon" type="image/png" sizes="32x32" href="static/ico/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="static/ico/favicon-16x16.png">
+<link rel="manifest" href="static/ico/site.webmanifest">
+<!-- Stylesheets -->
+<link rel="stylesheet" href="static/css/domer.css">
+<title>Notes 05: Scheduling (FIFO, Round Robin)</title>
+</head>
+<body>
+<header>
+<a class="logo" href="notes05.html">
+    <h1>Notes 05: Scheduling (FIFO, Round Robin)</h1>
+</a>
+<nav>
+    <ul>
+        <li><a href="index.html"><h4>Home</h4></a></li>
+        </ul>
+</nav></header>
+<main>
+<h2 id="review">Review<a class="headerlink" href="#review" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Exam 01</strong> next week... preceded by <strong>Interview 01</strong>.</li>
+</ul>
+<blockquote>
+<p>The purpose of <a href="project01.html">Project 01</a> is to create <strong>shell</strong> that executes and
+manages <strong>processes</strong>.</p>
+</blockquote>
+<ul>
+<li>
+<div class="flex-col" markdown="1">
+<p><strong>Two Queues</strong>:</p>
+<ul>
+<li><strong>Running</strong>: <strong>processes</strong> are given CPU time.</li>
+<li><strong>Waiting</strong>: <strong>processes</strong> are not given CPU time.</li>
+</ul>
+</li>
+<li>
+<p><strong>Individual Quiz</strong>: prepare for <strong>Exam 01</strong>.</p>
+</li>
+<li>
+<p><strong>Interview 01</strong>: based on <a href="project01.html">Project 01</a>.</p>
+</li>
+</ul>
+<div class="alert info-bg">
+<p><strong>Demonstrate</strong> scheduler in action with <a href="https://pnutz.h4x0r.space/courses/cse.30341.fa26/project01.html#reference-implementation">video</a></p>
+</div>
+<h2 id="scheduling-questions">Scheduling: <span class="gold">Questions</span><a class="headerlink" href="#scheduling-questions" title="Permanent link">&para;</a></h2>
+<ol>
+<li>
+<p>What is the purpose of a <strong class="caution">scheduler</strong>?</p>
+</li>
+<li>
+<p>When does a <strong class="caution">scheduler</strong> execute?</p>
+</li>
+<li>
+<p>What are some common <strong class="warning">scheduling policies</strong>?</p>
+</li>
+<li>
+<p>How do we <strong class="danger">evaluate</strong> a <strong
+class="warning">scheduling policy</strong>?</p>
+</li>
+</ol>
+<h2 id="scheduling-purpose">Scheduling: <span class="gold">Purpose</span><a class="headerlink" href="#scheduling-purpose" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>What is the purpose of a <strong class="success">scheduler</strong>?</p>
+</blockquote>
+<ul>
+<li>
+<p>The <strong class="success">scheduler</strong> determines which <strong
+class="primary">process</strong> runs next.</p>
+</li>
+<li>
+<p>The decision making process is called a <strong class="warning">scheduling
+policy</strong> (<i class="muted">discipline</i>).</p>
+</li>
+</ul>
+<div class="alert info-bg">
+<p>For <a href="project01.html">Project 01</a>: Need to consider <strong>multi-core</strong>!</p>
+</div>
+<div class="alert success-bg">
+<p><strong>OS kernel</strong> wants to maximize <strong>resource utilization</strong>.</p>
+</div>
+<h2 id="process-life-cycle-review">Process: <span class="gold">Life Cycle</span> (<i class="muted">Review</i>)<a class="headerlink" href="#process-life-cycle-review" title="Permanent link">&para;</a></h2>
+<div class="centered">
+
+<img src="static/img/slides04-process-life-cycle.png" class="transparent responsive">
+
+</div>
+
+<div class="alert info-bg">
+<p><strong>System Calls</strong>:</p>
+<ul>
+<li><code>fork</code>: <strong>allocate</strong> child process.</li>
+<li><code>exec</code>: <strong>reset</strong> address space and execution context.</li>
+<li><code>exit</code>: <strong>terminate</strong> and tell parent exit status.</li>
+<li><code>wait</code>: <strong>retrieve</strong> child exit status and <strong>deallocate</strong> child process.</li>
+</ul>
+<p><strong>Project 01</strong>:</p>
+<ul>
+<li>Use <a href="https://man7.org/linux/man-pages/man3/exec.3.html">execvp</a> to handle programs with command line arguments.</li>
+<li>Use <a href="https://man7.org/linux/man-pages/man2/wait.2.html">waitpid</a> to avoid <strong>blocking</strong>.</li>
+</ul>
+<p><strong>Reading 03</strong>:</p>
+<ul>
+<li>Explain <code>pid = wait(&amp;status)</code> and <code>WEXITSTATUS(status)</code>.</li>
+</ul>
+</div>
+<h2 id="process-states-review">Process: <span class="gold">States</span> (<i class="muted">Review</i>)<a class="headerlink" href="#process-states-review" title="Permanent link">&para;</a></h2>
+<div class="centered">
+
+<img src="static/img/slides04-process-states.png" class="transparent responsive">
+
+</div>
+
+<div class="alert caution-bg">
+<p><strong>Project 01</strong>:</p>
+<ul>
+<li>
+<p>Implement <strong>timer interrupt</strong> with <strong>interval timer</strong> and <strong>signal
+handler</strong>.</p>
+</li>
+<li>
+<p>Use <strong>signals</strong> to implement <strong>event-based</strong> loop.</p>
+</li>
+<li>
+<p>Check <code>s-&gt;event</code> and call either <code>scheduler_wait</code> (ie. <code>EVENT_CHILD</code>) or
+<code>scheduler_next</code> (ie. <code>EVENT_TIMER</code>).</p>
+</li>
+</ul>
+</div>
+<h2 id="process-context-switch-review">Process: <span class="gold">Context Switch</span> (<i class="muted">Review</i>)<a class="headerlink" href="#process-context-switch-review" title="Permanent link">&para;</a></h2>
+<div class="centered">
+
+<img src="static/img/slides04-process-context-switch.png" class="transparent responsive">
+
+</div>
+
+<div class="alert caution-bg">
+<p><strong>Project 01</strong>:</p>
+<ul>
+<li>
+<p>Implement <strong>timer interrupt</strong> with <strong>interval timer</strong> and <strong>signal
+handler</strong>.</p>
+</li>
+<li>
+<p>Use <strong>signals</strong> to implement <strong>event-based</strong> loop.</p>
+</li>
+<li>
+<p>Check <code>s-&gt;event</code> and call either <code>scheduler_wait</code> (ie. <code>EVENT_CHILD</code>) or
+<code>scheduler_next</code> (ie. <code>EVENT_TIMER</code>).</p>
+</li>
+</ul>
+</div>
+<h2 id="scheduling-overview">Scheduling: <span class="gold">Overview</span><a class="headerlink" href="#scheduling-overview" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>When does a <success>scheduler</success> execute?</p>
+</blockquote>
+<p>Whenever we need to decide which <strong class="success">process</strong> to
+run next, we invoke the <strong class="caution">scheduler</strong>:</p>
+<ol>
+<li>
+<p>A <strong class="success">process</strong> <strong
+class="danger">terminates</strong></p>
+</li>
+<li>
+<p>A <strong class="success">process</strong> <strong
+class="warning">blocks</strong></p>
+</li>
+<li>
+<p>A <strong class="info">timer interrupt</strong> (<i
+class="muted">preemptive multitasking</i>)</p>
+</li>
+</ol>
+<div class="alert danger-bg">
+<p>Happens very <strong>frequently!</strong></p>
+</div>
+<h2 id="scheduling-workload">Scheduling: <span class="gold">Workload</span><a class="headerlink" href="#scheduling-workload" title="Permanent link">&para;</a></h2>
+<p>To make <strong class="warning">scheduling policies</strong>, we need to
+consider our <strong class="danger">workload</strong>, or collection of
+<strong class="success">processes</strong> running on our system.</p>
+<p>Let's start with the following <strong class="caution">assumptions</strong>:</p>
+<ol>
+<li>
+<p>Each job runs for the <strong class="caution">same amount of time</strong>.</p>
+</li>
+<li>
+<p>All jobs <strong class="caution">arrive at the same time</strong>.</p>
+</li>
+<li>
+<p>Once started, <strong class="caution">each job runs to completion</strong>.</p>
+</li>
+<li>
+<p>All jobs <strong class="caution">only use the CPU (no I/O)</strong>.</p>
+</li>
+<li>
+<p>The <strong class="caution">run-time</strong> of each job is <strong class="caution">known</strong>.</p>
+</li>
+</ol>
+<div class="alert warning-bg">
+<p>As we explore different <strong class="warning">scheduling policies</strong>,
+we will need to address these <strong class="caution">assumptions</strong> and
+eventually relax or drop them.</p>
+</div>
+<h2 id="scheduling-metrics">Scheduling: <span class="gold">Metrics</span><a class="headerlink" href="#scheduling-metrics" title="Permanent link">&para;</a></h2>
+<p>To compare different <strong class="warning">scheduling policies</strong>, we
+need to consider different <strong class="caution">metrics</strong>:</p>
+<div class="flex-row">
+<div class="flex-col alert danger-bg centered">
+<h4 id="turnaround-time-throughput-volume"><span class="danger">Turnaround Time</span> (<i class="muted">Throughput, Volume</i>)<a class="headerlink" href="#turnaround-time-throughput-volume" title="Permanent link">&para;</a></h4>
+<p><strong></p>
+<p>T<sub>turnaround</sub> = T<sub>completion</sub> - T<sub>arrival</sub></p>
+<p></strong></p>
+<p>How soon does the job <strong class="danger">complete</strong>?</p>
+</div>
+<div class="flex-col alert success-bg centered">
+<h4 id="response-time-latency-delay"><span class="success">Response Time</span> (<i class="muted">Latency, Delay</i>)<a class="headerlink" href="#response-time-latency-delay" title="Permanent link">&para;</a></h4>
+<p><strong></p>
+<p>T<sub>response</sub> = T<sub>firstrun</sub> - T<sub>arrival</sub></p>
+<p></strong></p>
+<p>How soon does the job <strong class="success">start</strong>?</p>
+</div>
+</div>
+<h2 id="scheduling-video">Scheduling: <span class="gold">Video</span><a class="headerlink" href="#scheduling-video" title="Permanent link">&para;</a></h2>
+<div class="centered">
+
+<iframe width="560" height="315"
+src="https://www.youtube.com/embed/Psvf4qN8yao?si=7lGWqEYu6JOVbYJ9"
+title="YouTube video player" frameborder="0" allow="accelerometer; autoplay;
+clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+</div>
+
+<h2 id="fifo-overview">FIFO: <span class="gold">Overview</span><a class="headerlink" href="#fifo-overview" title="Permanent link">&para;</a></h2>
+<p>A basic <strong class="warning">scheduling policy</strong> is <strong
+class="gold">First In, First Out (FIFO)</strong>:</p>
+<div class="centered">
+
+<img src="static/img/slides05-fifo-overview.png" class="transparent responsive">
+
+</div>
+
+<div class="alert warning-bg centered">
+<p><i>Execute the jobs in the order in which they arrive.</i></p>
+</div>
+<h2 id="fifo-algorithm">FIFO: <span class="gold">Algorithm</span><a class="headerlink" href="#fifo-algorithm" title="Permanent link">&para;</a></h2>
+<div class="codehilite"><pre><span></span><code><span class="k">class</span> <span class="nc">Scheduler</span><span class="p">:</span>
+    <span class="n">running</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Process</span><span class="p">]</span>  <span class="c1"># Processes running on the CPU</span>
+    <span class="n">waiting</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Process</span><span class="p">]</span>  <span class="c1"># Processes ready to run</span>
+
+<span class="k">def</span> <span class="nf">scheduler_fifo</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="n">Scheduler</span><span class="p">):</span>
+    <span class="c1"># As long as we have less running processes than we have</span>
+    <span class="c1"># CPUs and there waiting processes, then transfer a process</span>
+    <span class="c1"># from the waiting queue to the running queue</span>
+    <span class="k">while</span> <span class="n">s</span><span class="o">.</span><span class="n">running</span><span class="o">.</span><span class="n">size</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">s</span><span class="o">.</span><span class="n">cores</span> <span class="ow">and</span> <span class="n">s</span><span class="o">.</span><span class="n">waiting</span><span class="o">.</span><span class="n">size</span><span class="p">():</span>
+        <span class="n">process</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">waiting</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+        <span class="n">StartProcess</span><span class="p">(</span><span class="n">process</span><span class="p">)</span>   <span class="c1"># TODO: Error handling</span>
+        <span class="n">s</span><span class="o">.</span><span class="n">running</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">process</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="alert info-bg">
+<p><strong>Project 01</strong></p>
+<ul>
+<li>
+<p>Make sure you do <strong>error checking</strong>!</p>
+</li>
+<li>
+<p><code>scheduler_add</code> puts process in <code>waiting</code> queue.</p>
+</li>
+<li>
+<p>Call <code>scheduler_next</code> if <code>s-&gt;event</code> is <code>EVENT_TIMER</code>.</p>
+</li>
+</ul>
+</div>
+<h2 id="fifo-example-1">FIFO: <span class="gold">Example 1</span><a class="headerlink" href="#fifo-example-1" title="Permanent link">&para;</a></h2>
+<p>Jobs <strong class="success">A</strong>, <strong class="info">B</strong>, and
+<strong class="caution">C</strong> arrive at time <code>0</code> and run for <code>5</code> seconds
+each:</p>
+<div class="centered">
+
+<img src="static/img/slides05-fifo-example.png" class="transparent responsive">
+
+</div>
+
+<div class="flex-row">
+<div class="flex-col alert danger-bg centered">
+<h4 id="average-turnaround-time"><span class="danger">Average Turnaround Time</span><a class="headerlink" href="#average-turnaround-time" title="Permanent link">&para;</a></h4>
+<p>(5 + 10 + 15) / 3 = 10 s/job</p>
+</div>
+<div class="flex-col alert success-bg centered">
+<h4 id="average-response-time"><span class="success">Average Response Time</span><a class="headerlink" href="#average-response-time" title="Permanent link">&para;</a></h4>
+<p>(0 + 5 + 10) / 3 = 5 s/job</p>
+</div>
+</div>
+<h2 id="fifo-example-2">FIFO: <span class="gold">Example 2</span><a class="headerlink" href="#fifo-example-2" title="Permanent link">&para;</a></h2>
+<div class="alert warning-bg centered">
+<p>If we relax <strong class="caution">Assumption 1</strong>, we see that <strong
+class="gold">FIFO</strong> is susceptible to the<br><strong class="danger">Convoy
+Effect</strong>, where a large job bottlenecks many smaller jobs.</p>
+</div>
+<p>Job <strong class="success">A</strong> arrives at time <code>0</code> and runs for <code>30</code>
+seconds, while <strong class="info">B</strong> and <strong
+class="caution">C</strong> also arrive at time <code>0</code> but run for <code>5</code> seconds:</p>
+<div class="centered">
+
+<img src="static/img/slides05-fifo-convoy.png" class="transparent responsive">
+
+</div>
+
+<div class="flex-row">
+<div class="flex-col alert danger-bg centered">
+<h4 id="average-turnaround-time_1"><span class="danger">Average Turnaround Time</span><a class="headerlink" href="#average-turnaround-time_1" title="Permanent link">&para;</a></h4>
+<p>(30 + 35 + 40) / 3 = 35 s/job</p>
+</div>
+<div class="flex-col alert success-bg centered">
+<h4 id="average-response-time_1"><span class="success">Average Response Time</span><a class="headerlink" href="#average-response-time_1" title="Permanent link">&para;</a></h4>
+<p>(0 + 30 + 35) / 3 ~ 22 s/job</p>
+</div>
+</div>
+<h2 id="fifo-example-3">FIFO: <span class="gold">Example 3</span><a class="headerlink" href="#fifo-example-3" title="Permanent link">&para;</a></h2>
+<p>One way to combat the <strong class="danger">Convoy Effect</strong>, is to
+rank our <strong class="gold">FIFO</strong> such that we always select the
+<strong class="warning">shortest job first (SJF)</strong> (use <i
+class="muted">priority queue</i>).</p>
+<div class="centered">
+
+<img src="static/img/slides05-fifo-sjf.png" class="transparent responsive">
+
+</div>
+
+<div class="flex-row">
+<div class="flex-col alert danger-bg centered">
+<h4 id="average-turnaround-time_2"><span class="danger">Average Turnaround Time</span><a class="headerlink" href="#average-turnaround-time_2" title="Permanent link">&para;</a></h4>
+<p>(5 + 10 + 40) / 3 ~ 18 s/job</p>
+</div>
+<div class="flex-col alert success-bg centered">
+<h4 id="average-response-time_2"><span class="success">Average Response Time</span><a class="headerlink" href="#average-response-time_2" title="Permanent link">&para;</a></h4>
+<p>(0 + 5 + 10) / 3 = 5 s/job</p>
+</div>
+</div>
+<h2 id="fifo-summary">FIFO: <span class="gold">Summary</span><a class="headerlink" href="#fifo-summary" title="Permanent link">&para;</a></h2>
+<ul>
+<li>
+<p><strong class="gold">FIFO</strong> is relatively <strong
+class="caution">straightforward</strong>.</p>
+</li>
+<li>
+<p><strong class="gold">FIFO</strong> generally has good <strong
+  class="danger">turnaround time</strong>.</p>
+</li>
+<li>
+<p><strong class="gold">FIFO</strong> generally has poor <strong
+  class="success">response time</strong>.</p>
+</li>
+<li>
+<p><strong class="gold">FIFO</strong> can suffer from problems with the <strong
+  class="danger">Convoy Effect</strong>.</p>
+</li>
+</ul>
+<h2 id="round-robin-overview">Round Robin: <span class="gold">Overview</span><a class="headerlink" href="#round-robin-overview" title="Permanent link">&para;</a></h2>
+<p>Instead of <strong class="caution">running jobs to completion</strong>, we use
+a periodic <strong class="info">timer interrupt</strong> to rotate through
+<strong class="success">processes</strong>:</p>
+<div class="centered">
+
+<img src="static/img/slides05-rdrn-overview.png" class="transparent responsive">
+
+</div>
+
+<div class="alert warning-bg centered">
+<p><i>Each <strong class="success">process</strong> is executed for a certain
+<strong class="caution">time slice</strong><br>before another <strong
+class="success">process</strong> is selected.</i></p>
+</div>
+<div class="alert success-bg centered">
+<p>This is a <strong class="warning">fair policy</strong> since it evenly divides
+the <strong class="info">processor</strong> among active <strong
+class="success">processes</strong>.</p>
+</div>
+<h2 id="round-robin-algorithm">Round Robin: <span class="gold">Algorithm</span><a class="headerlink" href="#round-robin-algorithm" title="Permanent link">&para;</a></h2>
+<div class="codehilite"><pre><span></span><code><span class="c1"># TODO: Handle errors in managing processes</span>
+<span class="k">def</span> <span class="nf">schedule_rdrn</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="n">Scheduler</span><span class="p">):</span>
+    <span class="c1"># Move a process from running queue to waiting queue</span>
+    <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">running</span><span class="o">.</span><span class="n">size</span><span class="p">()</span> <span class="o">==</span> <span class="n">s</span><span class="o">.</span><span class="n">cores</span><span class="p">:</span>
+        <span class="n">process</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">running</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+        <span class="n">PauseProcess</span><span class="p">(</span><span class="n">process</span><span class="p">)</span>       <span class="c1"># Preempt! by pausing process</span>
+        <span class="n">s</span><span class="o">.</span><span class="n">waiting</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">process</span><span class="p">)</span>
+
+    <span class="c1"># Move processes from waiting queue to running queue</span>
+    <span class="k">while</span> <span class="n">s</span><span class="o">.</span><span class="n">running</span><span class="o">.</span><span class="n">size</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">s</span><span class="o">.</span><span class="n">cores</span> <span class="ow">and</span> <span class="n">s</span><span class="o">.</span><span class="n">waiting</span><span class="o">.</span><span class="n">size</span><span class="p">():</span>
+        <span class="n">process</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">waiting</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">process</span><span class="o">.</span><span class="n">pid</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">StartProcess</span><span class="p">(</span><span class="n">process</span><span class="p">)</span>   <span class="c1"># Start new process</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ResumeProcess</span><span class="p">(</span><span class="n">process</span><span class="p">)</span>  <span class="c1"># Resume old process</span>
+
+        <span class="n">s</span><span class="o">.</span><span class="n">running</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">process</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="alert info-bg">
+<p><strong>Project 01</strong></p>
+<ul>
+<li>
+<p><code>PauseProcess</code>: send <code>SIGSTOP</code></p>
+</li>
+<li>
+<p><code>ResumeProcess</code>: send <code>SIGCONT</code></p>
+</li>
+</ul>
+</div>
+<h2 id="round-robin-example">Round Robin: <span class="gold">Example</span><a class="headerlink" href="#round-robin-example" title="Permanent link">&para;</a></h2>
+<p>Jobs <strong class="success">A</strong>, <strong class="info">B</strong>, and
+<strong class="caution">C</strong> arrive at time <code>0</code> and run for <code>5</code> seconds
+each:</p>
+<div class="centered">
+
+<img src="static/img/slides05-rdrn-overview.png" class="transparent responsive">
+
+</div>
+
+<div class="flex-row">
+<div class="flex-col alert danger-bg centered">
+<h4 id="average-turnaround-time_3"><span class="danger">Average Turnaround Time</span><a class="headerlink" href="#average-turnaround-time_3" title="Permanent link">&para;</a></h4>
+<p>(13 + 14 + 15) / 3 = 14 s/job</p>
+</div>
+<div class="flex-col alert success-bg centered">
+<h4 id="average-response-time_3"><span class="success">Average Response Time</span><a class="headerlink" href="#average-response-time_3" title="Permanent link">&para;</a></h4>
+<p>(0 + 1 + 2) / 3 = 1 s/job</p>
+</div>
+</div>
+<h2 id="round-robin-summary">Round Robin: <span class="gold">Summary</span><a class="headerlink" href="#round-robin-summary" title="Permanent link">&para;</a></h2>
+<ul>
+<li>
+<p><strong class="gold">Round Robin</strong> is relatively <strong
+  class="caution">straightforward</strong>.</p>
+</li>
+<li>
+<p><strong class="gold">Round Robin</strong> generally has poor <strong
+  class="danger">turnaround time</strong>.</p>
+</li>
+<li>
+<p><strong class="gold">Round Robin</strong> generally has good <strong
+  class="success">response time</strong>.</p>
+</li>
+<li>
+<p><strong class="gold">Round Robin</strong> requires <strong
+  class="info">preemption</strong>.</p>
+</li>
+<li>
+<p><strong class="gold">Round Robin</strong> has some <strong
+  class="warning">overhead</strong>.</p>
+</li>
+</ul>
+</main>
+<footer>
+Built using <a href="https://python.org">Python</a>
+and <a href="https://jinja.palletsprojects.com">Jinja</a>
+with colors from 
+<a href="https://onmessage.nd.edu/university-branding/colors/">Notre Dame</a>, 
+<a href="https://spreadsheet.dev/how-to-get-the-hexadecimal-codes-of-colors-in-google-sheets">Google Docs</a>, and 
+<a href="https://nordtheme.com">Nord Theme</a>,
+and icons from <a href="https://pictogrammers.com/library/mdi/">Material Design Icons</a>.</footer>
+</body>
+</html>

@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Favicon -->
+<link rel="icon" type="image/png" sizes="32x32" href="static/ico/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="static/ico/favicon-16x16.png">
+<link rel="manifest" href="static/ico/site.webmanifest">
+<!-- Stylesheets -->
+<link rel="stylesheet" href="static/css/domer.css">
+<title>Exam 01: Study Guide</title>
+</head>
+<body>
+<header>
+<a class="logo" href="studyguide01.html">
+    <h1>Exam 01: Study Guide</h1>
+</a>
+<nav>
+    <ul>
+        <li><a href="index.html"><h4>Home</h4></a></li>
+        </ul>
+</nav></header>
+<main>
+<h2 id="definitions">Definitions<a class="headerlink" href="#definitions" title="Permanent link">&para;</a></h2>
+<div class="flex-row">
+<div class="flex-col">
+<ul>
+<li>Virtualization</li>
+<li>Monolithic</li>
+<li>Microkernel</li>
+<li>Multiprogramming</li>
+<li>Timesharing</li>
+<li>BIOS</li>
+<li>MBR / GPT</li>
+<li>Bootloader</li>
+<li>Kernel</li>
+<li>Init / Systemd</li>
+</ul>
+</div>
+<div class="flex-col">
+<ul>
+<li>System Call</li>
+<li>User mode</li>
+<li>Kernel mode</li>
+<li>Trap table</li>
+<li>Process</li>
+<li>Machine State</li>
+<li>Cooperative multitasking</li>
+<li>Preemptive multitasking</li>
+<li>Signal</li>
+</ul>
+</div>
+<div class="flex-col">
+<ul>
+<li>Scheduling policy</li>
+<li>Turnaround time</li>
+<li>Response time</li>
+<li>FIFO</li>
+<li>Round Robin</li>
+<li>Convoy effect</li>
+<li>Starvation</li>
+<li>Priority Boost</li>
+<li>Voodoo Number</li>
+</ul>
+</div>
+</div>
+<h3 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">&para;</a></h3>
+<p>For each <strong>description</strong>, <strong>identify</strong> the appropriate corresponding <strong>term</strong>.</p>
+<table class="bordered">
+<thead>
+<th class="info-bg">Description</th>
+<th class="caution-bg">Term</th>
+</thead>
+<tbody>
+<tr>
+<td class="info-bg">
+  The <b>ability</b> to run several applications <b>concurrently</b> on a single machine.
+  </td>
+<td class="caution-bg" width="50%"></td>
+</tr>
+<tr>
+<td class="info-bg">
+
+  In this form of <b>multitasking</b>, there is a <b>periodic timer
+  interrupt</b> that invokes the scheduler to select another process to
+  execute.
+
+  </td>
+<td class="caution-bg" width="50%"></td>
+</tr>
+</tbody>
+</table>
+<h2 id="system-calls">System Calls<a class="headerlink" href="#system-calls" title="Permanent link">&para;</a></h2>
+<div class="flex-row">
+<div class="flex-col">
+<h3 id="key-conceptual-questions">Key Conceptual Questions:<a class="headerlink" href="#key-conceptual-questions" title="Permanent link">&para;</a></h3>
+<ol>
+<li>
+<p>What is a <strong>system call</strong>?</p>
+</li>
+<li>
+<p>What is a <strong>trap/interrupt</strong>?</p>
+</li>
+<li>
+<p>What happens during a <strong>system call</strong>?</p>
+</li>
+<li>
+<p>What are common <strong>system calls</strong>?</p>
+</li>
+</ol>
+</div>
+<div class="flex-col">
+<h3 id="examples_1">Examples<a class="headerlink" href="#examples_1" title="Permanent link">&para;</a></h3>
+<p>For each of the following, <strong>identify</strong> whether the statement is <strong>True</strong> or
+<strong>False</strong>.</p>
+<ol>
+<li>
+<p><strong>System calls</strong> are typically <strong>non-blocking</strong>.</p>
+</li>
+<li>
+<p>Performing a <strong>system call</strong> begins with a transition from <strong>kernel mode</strong>
+to <strong>user mode</strong>.</p>
+</li>
+<li>
+<p><strong>Signals</strong> cannot interrupt a <strong>system call</strong>.</p>
+</li>
+</ol>
+</div>
+</div>
+<h2 id="processes">Processes<a class="headerlink" href="#processes" title="Permanent link">&para;</a></h2>
+<div class="flex-row">
+<div class="flex-col">
+<h3 id="key-conceptual-questions_1">Key Conceptual Questions:<a class="headerlink" href="#key-conceptual-questions_1" title="Permanent link">&para;</a></h3>
+<ol>
+<li>
+<p>What are the <strong>components</strong> of a <strong>process</strong>?</p>
+</li>
+<li>
+<p>What happens when we <strong>switch</strong> from one <strong>process</strong> to another?</p>
+</li>
+<li>
+<p>What <strong>system calls</strong> can we use with <strong>processes</strong>?</p>
+</li>
+<li>
+<p>What causes a <strong>process</strong> to transition from one <strong>state</strong> to another?</p>
+</li>
+</ol>
+</div>
+<div class="flex-col">
+<h3 id="examples_2">Examples<a class="headerlink" href="#examples_2" title="Permanent link">&para;</a></h3>
+<p>For each of the following, <strong>identify</strong> whether the statement is <strong>True</strong> or <strong>False</strong>.</p>
+<ol>
+<li>
+<p>A <strong>process</strong> transitions from <strong>Blocked</strong> to <strong>Running</strong> when it is
+selected by the scheduler.</p>
+</li>
+<li>
+<p>A <strong>process</strong> transitions from <strong>Ready</strong> to <strong>Running</strong> whenever its
+<strong>system call</strong> is completed.</p>
+</li>
+<li>
+<p>During a <strong>context switch</strong>, the <strong>operating system</strong> must allocate an
+<strong>address space</strong> for the <strong>process</strong>.</p>
+</li>
+</ol>
+</div>
+</div>
+<h2 id="scheduling">Scheduling<a class="headerlink" href="#scheduling" title="Permanent link">&para;</a></h2>
+<h3 id="key-conceptual-questions_2">Key Conceptual Questions:<a class="headerlink" href="#key-conceptual-questions_2" title="Permanent link">&para;</a></h3>
+<p>Considering <strong>FIFO</strong> vs <strong>Round Robin</strong> vs <strong>MLFQ</strong>:</p>
+<ol>
+<li>
+<p>What are the <strong>strengths</strong> and <strong>weaknesses</strong> of each <strong>scheduling policy</strong>?</p>
+</li>
+<li>
+<p>How would each policy <strong>schedule</strong> a sequence of <strong>processes</strong>?</p>
+</li>
+<li>
+<p>How do you compute <strong>turnaround time</strong> and <strong>response time</strong>?</p>
+</li>
+</ol>
+<h3 id="examples_3">Examples<a class="headerlink" href="#examples_3" title="Permanent link">&para;</a></h3>
+<div class="flex-row">
+<div class="flex-col">
+<p>Consider a single-CPU machine, a timeslice of <strong>10 ms</strong>, and the following
+processes:</p>
+<div class="codehilite"><pre><span></span><code><span class="n">Process</span> <span class="n">Arrival</span> <span class="n">Time</span>    <span class="n">Run</span> <span class="n">Time</span>
+<span class="n">A</span>        <span class="mi">0</span> <span class="n">ms</span>           <span class="mi">30</span> <span class="n">ms</span>
+<span class="n">B</span>       <span class="mi">10</span> <span class="n">ms</span>           <span class="mi">20</span> <span class="n">ms</span>
+<span class="n">C</span>       <span class="mi">10</span> <span class="n">ms</span>           <span class="mi">40</span> <span class="n">ms</span>
+<span class="n">D</span>       <span class="mi">20</span> <span class="n">ms</span>           <span class="mi">10</span> <span class="n">ms</span>
+</code></pre></div>
+
+</div>
+<div class="flex-col alert warning-bg">
+<p><strong>Note</strong>: For all policies, if multiple processes arrive at the same time,
+then schedule in <strong>alphabetical</strong> order (ie. <code>A</code> before <code>B</code>).</p>
+<p><strong>Note</strong>: For <strong>Round Robin</strong> add new processes to the <strong>waiting</strong> queue
+first and then rotate.</p>
+<p><strong>Note</strong>: For <strong>MLFQ</strong>, <strong>Q0</strong> has a timeslice of <code>10ms</code>, <strong>Q1</strong> has a
+timeslice of <code>20ms</code>, and <strong>Q2</strong> has a timeslice of <code>40ms</code>.</p>
+</div>
+</div>
+<p>After using <strong>FIFO</strong>, <strong>Round Robin</strong>, and <strong>MLFQ</strong> to execute the processes
+above, complete the following table of metrics (ie. <strong>turnaround</strong> and
+<strong>response times</strong>) for the listed <strong>processes</strong>:</p>
+<table class="bordered">
+<thead>
+<th class="info-bg">Scheduling Policy</th>
+<th class="danger-bg">Process A - Turnaround</th>
+<th class="success-bg">Process C - Response</th>
+</thead>
+<tbody>
+<tr><td class="info-bg centered"><b>FIFO</b></td><td class="danger-bg"></td><td class="success-bg"></td></tr>
+<tr><td class="info-bg centered"><b>Round Robin</b></td><td class="danger-bg"></td><td class="success-bg"></td></tr>
+<tr><td class="info-bg centered"><b>MLFQ</b></td><td class="danger-bg"></td><td class="success-bg"></td></tr>
+</tbody>
+</table>
+<h2 id="project-01">Project 01<a class="headerlink" href="#project-01" title="Permanent link">&para;</a></h2>
+<h3 id="key-conceptual-questions_3">Key Conceptual Questions:<a class="headerlink" href="#key-conceptual-questions_3" title="Permanent link">&para;</a></h3>
+<p>Considering the scheduler in <strong>Project 01</strong>:</p>
+<ol>
+<li>
+<p>How are <strong>system calls</strong> used in <code>pqsh</code>?</p>
+</li>
+<li>
+<p>How are <strong>data structures</strong> used in <code>pqsh</code>?</p>
+</li>
+<li>
+<p>How are <strong>scheduling policies</strong> implemented in <code>pqsh</code>?
+</div></p>
+</li>
+</ol>
+<div class="flex-col">
+<h3 id="examples_4">Examples<a class="headerlink" href="#examples_4" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Describe</strong> what happens when the user enters in <code>"add bin/worksim 10"</code>,
+waits ten seconds, and then enters in <code>"status"</code>.</li>
+</ol>
+</div>
+</div>
+</main>
+<footer>
+Built using <a href="https://python.org">Python</a>
+and <a href="https://jinja.palletsprojects.com">Jinja</a>
+with colors from 
+<a href="https://onmessage.nd.edu/university-branding/colors/">Notre Dame</a>, 
+<a href="https://spreadsheet.dev/how-to-get-the-hexadecimal-codes-of-colors-in-google-sheets">Google Docs</a>, and 
+<a href="https://nordtheme.com">Nord Theme</a>,
+and icons from <a href="https://pictogrammers.com/library/mdi/">Material Design Icons</a>.</footer>
+</body>
+</html>

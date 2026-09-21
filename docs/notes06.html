@@ -1,0 +1,624 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Favicon -->
+<link rel="icon" type="image/png" sizes="32x32" href="static/ico/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="static/ico/favicon-16x16.png">
+<link rel="manifest" href="static/ico/site.webmanifest">
+<!-- Stylesheets -->
+<link rel="stylesheet" href="static/css/domer.css">
+<title>Notes 06: Scheduling (MLFQ, Lottery)</title>
+</head>
+<body>
+<header>
+<a class="logo" href="notes06.html">
+    <h1>Notes 06: Scheduling (MLFQ, Lottery)</h1>
+</a>
+<nav>
+    <ul>
+        <li><a href="index.html"><h4>Home</h4></a></li>
+        </ul>
+</nav></header>
+<main>
+<h2 id="logistics">Logistics<a class="headerlink" href="#logistics" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="interview01.html">Interview 01</a>: Signup for time slots</li>
+</ul>
+<h2 id="scheduling-review">Scheduling: <span class="gold">Review</span><a class="headerlink" href="#scheduling-review" title="Permanent link">&para;</a></h2>
+<ul>
+<li>
+<div class="flex-col" markdown="1">
+<p><strong>Scheduling Processes</strong></p>
+<blockquote>
+<p>We want to run multiple jobs at once, but each job needs the <strong>CPU</strong>.  So
+what we do is we abstract <strong>CPUs</strong> as <strong>process</strong> (ie. <strong>machine state</strong>)
+and store them in a <strong>queue</strong> for selection.</p>
+</blockquote>
+</li>
+<li>
+<div class="flex-col" markdown="1">
+<p><strong>Scheduling Activation</strong></p>
+<ol>
+<li><strong>Process</strong> terminates.</li>
+<li><strong>Process</strong> initiates system call.</li>
+<li><strong>Process</strong> interrupted by timer.</li>
+</ol>
+</li>
+</ul>
+<h2 id="scheduling-questions">Scheduling: <span class="gold">Questions</span><a class="headerlink" href="#scheduling-questions" title="Permanent link">&para;</a></h2>
+<ol>
+<li>
+<div class="flex-col" markdown="1">
+<p>What are the <strong class="success">strengths</strong> and <strong
+class="danger">weaknesses</strong> of:</p>
+<ul>
+<li><strong class="gold">FIFO</strong> Scheduling</li>
+<li><strong class="gold">Round Robin</strong> Scheduling</li>
+</ul>
+</li>
+<li>
+<p>How does <strong class="special">MLFQ</strong> address these <strong
+class="danger">weaknesses</strong>?</p>
+</li>
+<li>
+<p>How does <strong class="special">Lottery</strong> address these <strong
+class="danger">weaknesses</strong>?</p>
+</li>
+</ol>
+<div class="alert info-bg">
+<h4 id="review-assumptions">Review: Assumptions<a class="headerlink" href="#review-assumptions" title="Permanent link">&para;</a></h4>
+<ol>
+<li>Same amount of time</li>
+<li>Arrive at the same time</li>
+<li>Each job runs to completion</li>
+<li>Only CPU (no I/O)</li>
+<li>Run-time is known</li>
+</ol>
+</div>
+<h2 id="scheduling-example-1">Scheduling: <span class="gold">Example 1</span><a class="headerlink" href="#scheduling-example-1" title="Permanent link">&para;</a></h2>
+<p>Jobs <strong class="success">A</strong>, <strong class="info">B</strong>, and
+<strong class="caution">C</strong> arrive at time <code>0</code> and run for <code>10</code> seconds
+each:</p>
+<div class="centered">
+
+<img src="static/img/notebook06-example-1.svg" class="transparent responsive">
+
+</div>
+
+<table class="bordered">
+<thead>
+    <th>Metric</th>
+    <th>FIFO</th>
+    <th>Round Robin</th>
+</thead>
+<tbody>
+<tr class="danger-bg" height="100px">
+    <td class="centered">Turnaround</td>
+    <td class="centered" width="500px">(10 + 20 + 30) / 3 = 20</td>
+    <td class="centered" width="500px">(28 + 29 + 30) / 3 = 29</td>
+</tr>
+<tr class="success-bg" height="100px">
+    <td class="centered">Response</td>
+    <td class="centered" width="500px">(0 + 10 + 20) / 3 = 10</td>
+    <td class="centered" width="500px">(0 +  1 +  2) / 3 = 1</td>
+</tr>
+</tbody>
+</table>
+
+<div class="alert info-bg">
+<p><a href="project01.html">Project 01</a>: Track total metrics and divide by number of finished jobs.</p>
+</div>
+<h2 id="scheduling-example-2">Scheduling: <span class="gold">Example 2</span><a class="headerlink" href="#scheduling-example-2" title="Permanent link">&para;</a></h2>
+<p>Jobs <strong class="success">A</strong>, <strong class="info">B</strong>, and
+<strong class="caution">C</strong> arrive at time <code>0</code>.  <strong
+class="success">A</strong> runs for <code>10</code> seconds and <strong
+class="info">B</strong> and <strong class="caution">C</strong> for <code>1</code> second:</p>
+<div class="centered">
+
+<img src="static/img/notebook06-example-2.svg" class="transparent responsive">
+
+</div>
+
+<table class="bordered">
+<thead>
+    <th>Metric</t>
+    <th>FIFO</td>
+    <th>Round Robin</td>
+</thead>
+<tbody>
+<tr class="danger-bg" height="100px">
+    <td class="centered">Turnaround</td>
+    <td class="centered" width="500px">(10 + 11 + 12) / 3 = 11</td>
+    <td class="centered" width="500px">(12 +  2 +  3) / 3 = 5.67</td>
+</tr>
+<tr class="success-bg" height="100px">
+    <td class="centered">Response</td>
+    <td class="centered" width="500px">(0 + 10 + 11) / 3 = 7</td>
+    <td class="centered" width="500px">(0 +  1 +  2) / 3 = 1</td>
+</tr>
+</tbody>
+</table>
+
+<div class="alert warning-bg">
+<p>An example of <strong>Convoy Effect</strong>.</p>
+</div>
+<h2 id="scheduling-example-3">Scheduling: <span class="gold">Example 3</span><a class="headerlink" href="#scheduling-example-3" title="Permanent link">&para;</a></h2>
+<p>Jobs <strong class="success">A</strong>, <strong class="info">B</strong>, and
+<strong class="caution">C</strong> arrive at time <code>0</code>.  <strong
+class="success">A</strong> runs for <code>10</code> seconds and <strong
+class="info">B</strong> and <strong class="caution">C</strong> for <code>1</code> second:</p>
+</div>
+<div class="centered">
+
+<img src="static/img/notebook06-example-3.svg" class="transparent responsive">
+
+</div>
+
+<table class="bordered">
+<thead>
+    <th>Metric</t>
+    <th>FIFO</td>
+    <th>Round Robin</td>
+</thead>
+<tbody>
+<tr class="danger-bg" height="100px">
+    <td class="centered">Turnaround</td>
+    <td class="centered" width="500px">(1 +  2 + 12) / 3 = 5</td>
+    <td class="centered" width="500px">(1 +  2 + 12) / 3 = 5</td>
+</tr>
+<tr class="success-bg" height="100px">
+    <td class="centered">Response</td>
+    <td class="centered" width="500px">(0 +  1 +  2) / 3 = 1</td>
+    <td class="centered" width="500px">(0 +  1 +  2) / 3 = 1</td>
+</tr>
+</tbody>
+</table>
+
+<div class="alert danger-bg">
+<p>Must be careful of <strong>starvation</strong>.</p>
+</div>
+<h2 id="scheduling-fifo-vs-round-robin">Scheduling: <span class="gold">FIFO vs Round Robin</span><a class="headerlink" href="#scheduling-fifo-vs-round-robin" title="Permanent link">&para;</a></h2>
+<div class="flex-row">
+<div class="flex-col">
+<h4 id="fifo">FIFO<a class="headerlink" href="#fifo" title="Permanent link">&para;</a></h4>
+<ul>
+<li>
+<p>Good <strong class="danger">turnaround time</strong></p>
+</li>
+<li>
+<p>Sensitive to <strong class="danger">Convoy Effect</strong></p>
+</li>
+<li>
+<p>Try <strong class="warning">SJF</strong></p>
+</li>
+</ul>
+</div>
+<div class="flex-col">
+<h4 id="round-robin">Round Robin<a class="headerlink" href="#round-robin" title="Permanent link">&para;</a></h4>
+<ul>
+<li>
+<p>Good <strong class="success">response time</strong></p>
+</li>
+<li>
+<p>Requires <strong class="info">preemption</strong> (<i class="muted">timer interrupt</i>)</p>
+</li>
+<li>
+<p><strong class="caution">Fair</strong> (<i class="muted">divides CPU evenly</i>)</p>
+</li>
+</ul>
+</div>
+</div>
+<h2 id="mlfq-overview">MLFQ: <span class="gold">Overview</span><a class="headerlink" href="#mlfq-overview" title="Permanent link">&para;</a></h2>
+<p>A <strong class="special">Multi-Level Feedback Queue (MLFQ)</strong> tries to
+optimize both <strong class="danger">turnaround time</strong> and <strong
+class="success">response time</strong>:</p>
+<ul>
+<li>
+<p>Like <strong class="gold">FIFO</strong>, it tries to complete <strong
+  class="warning">shortest jobs first</strong>.</p>
+</li>
+<li>
+<p>Like <strong class="gold">Round Robin</strong>, it tries to be <strong
+  class="warning">fair</strong>.</p>
+</li>
+<li>
+<p>Unlike either, it will factor incorporate <strong class="info">I/O</strong>
+  and will adjust <strong class="info">priority levels</strong> over time.</p>
+</li>
+</ul>
+<h2 id="mlfq-priority-levels">MLFQ: <span class="gold">Priority Levels</span><a class="headerlink" href="#mlfq-priority-levels" title="Permanent link">&para;</a></h2>
+<div class="flex-row">
+<div class="flex-col">
+<p>To accomplish this, <strong class="special">MLFQ</strong> uses <strong
+class="special">multiple queues</strong>, where each <strong
+class="special">queue</strong> represents a particular <strong
+class="caution">priority level</strong>:</p>
+<ol>
+<li>
+<p>If <strong class="info">Priority</strong>(<code>A</code>) &gt; <strong
+  class="info">Priority</strong>(<code>B</code>), <code>A</code> runs.</p>
+</li>
+<li>
+<p>If <strong class="info">Priority</strong>(<code>A</code>) == <strong
+  class="info">Priority</strong>(<code>B</code>), <code>A</code> and <code>B</code> run in <strong
+  class="gold">Round Robin</strong>.</p>
+</li>
+<li>
+<p>A job is initially placed in the <strong class="info">highest priority
+  level</strong>.</p>
+</li>
+<li>
+<p>Once a job <strong class="warning">uses up its time allotment</strong> at a
+  given level, its <strong class="info">priority</strong> is reduced (<em>ie. it
+  is moves down one level</em>)</p>
+</li>
+<li>
+<p>After some time period <code>S</code>, <strong class="warning">move all jobs</strong>
+  in the system to the <strong class="special">topmost queue</strong>.</p>
+</li>
+</ol>
+</div>
+<div class="flex-col">
+<p><img src="static/img/slides06-mlfq-priority-levels.svg" class="transparent responsive"></p>
+</div>
+</div>
+<h2 id="mlfq-example-single-long-job">MLFQ: <span class="gold">Example</span> (<i class="muted">Single Long Job</i>)<a class="headerlink" href="#mlfq-example-single-long-job" title="Permanent link">&para;</a></h2>
+<div class="centered">
+<p><br></p>
+<p><img src="static/img/slides06-mlfq-single-long-job.svg" class="transparent responsive"></p>
+<p><br></p>
+<p><i>A <strong>single long job</strong> is broken up into discrete <strong class="info">time
+slices</strong>.<br>Over time, the job <strong class="danger">reduces in
+priority</strong> to allow new jobs an opportunity to run.</i></p>
+</div>
+<h2 id="mlfq-example-long-vs-short">MLFQ: <span class="gold">Example</span> (<i class="muted">Long vs Short</i>)<a class="headerlink" href="#mlfq-example-long-vs-short" title="Permanent link">&para;</a></h2>
+<div class="centered">
+<p><br></p>
+<p><img src="static/img/slides06-mlfq-long-vs-short.svg" class="transparent responsive"></p>
+<p><br></p>
+<p><i>When a <strong>short job</strong> arrives, it will start in the <strong
+class="special">topmost queue</strong> and be ran first.  This allows for
+<strong>short jobs</strong> have a fast <strong class="danger">turnaround</strong> and
+<strong class="success">response time</strong>.</i></p>
+</div>
+<div class="alert info-bg">
+<p>Good for <strong>interactive</strong> use cases.</p>
+</div>
+<h2 id="mlfq-example-io-vs-cpu">MLFQ: <span class="gold">Example</span> (<i class="muted">I/O vs CPU</i>)<a class="headerlink" href="#mlfq-example-io-vs-cpu" title="Permanent link">&para;</a></h2>
+<div class="centered">
+<p><br></p>
+<p><img src="static/img/slides06-mlfq-io-vs-cpu.svg" class="transparent responsive"></p>
+<p><br></p>
+<p><i>Jobs that are mostly <strong class="info">I/O</strong> will maintain a
+<strong class="special">higher priority</strong> since they do not use up their
+<strong class="warning">CPU allotment</strong> as quickly as <strong
+class="info">compute jobs</strong>.  This is good for <strong
+class="caution">interactive jobs</strong> that require good <strong
+class="success">response times</strong>.</i></p>
+</div>
+<div class="alert success-bg">
+<p><strong>Analogy</strong>: Flex points roll over.</p>
+</div>
+<h2 id="mlfq-priority-boost">MLFQ: <span class="gold">Priority Boost</span><a class="headerlink" href="#mlfq-priority-boost" title="Permanent link">&para;</a></h2>
+<div class="flex-row">
+<div class="flex-col centered">
+<h4 id="problem"><span class="danger">Problem</span><a class="headerlink" href="#problem" title="Permanent link">&para;</a></h4>
+<p>If a job is always in a lower <strong class="info">priority level</strong>
+relative to other jobs, it will <strong class="danger">starve</strong> because
+it will not have an opportunity to run.</p>
+<p><br></p>
+<h4 id="solution"><span class="success">Solution</span><a class="headerlink" href="#solution" title="Permanent link">&para;</a></h4>
+<p>Periodically provide a <strong class="warning">priority boost</strong> by
+moving all jobs to the <strong class="special">topmost queue</strong>.</p>
+<p>Exact time is a <strong class="hljs-comment">voodoo constant</strong> because
+there isn't an objective way to set it.</p>
+</div>
+<div class="flex-col centered">
+<p><img src="static/img/slides06-mlfq-priority-boost.svg" class="transparent responsive"></p>
+</div>
+</div>
+<h2 id="mlfq-accounting">MLFQ: <span class="gold">Accounting</span><a class="headerlink" href="#mlfq-accounting" title="Permanent link">&para;</a></h2>
+<p>To determine when a job should be moved down a <strong
+class="special">queue</strong> (<em>ie.  lower its <strong
+class="info">priority</strong></em>), we keep track of how much of a <strong
+class="warning">time slice</strong> or <strong
+class="warning">allotment</strong> the job has used.</p>
+<div class="centered">
+
+<img src="static/img/slides06-mlfq-accounting.svg" class="transparent responsive">
+
+</div>
+
+<ul>
+<li>
+<p>When a <strong class="warning">time allotment</strong> is used up, we lower
+the <strong class="info">priority</strong>.</p>
+</li>
+<li>
+<p>We allocate more time for jobs in lower <strong class="special">priority
+queues</strong>.</p>
+</li>
+</ul>
+<h2 id="mlfq-algorithm">MLFQ: <span class="gold">Algorithm</span><a class="headerlink" href="#mlfq-algorithm" title="Permanent link">&para;</a></h2>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">scheduler_mlfq</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="n">Scheduler</span><span class="p">):</span>
+    <span class="c1"># Preempt a running job</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">s</span><span class="o">.</span><span class="n">running</span><span class="o">.</span><span class="n">empty</span><span class="p">():</span>
+        <span class="n">p</span>     <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">running</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+        <span class="n">level</span> <span class="o">=</span> <span class="n">ExceededThreshold</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="err">?</span> <span class="nb">min</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">priority</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">MAX_LEVELS</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">priority</span>
+        <span class="n">Pausejob</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="n">MovejobToSchedulerLevel</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">level</span><span class="p">)</span>
+
+    <span class="c1"># Apply periodic priority boost</span>
+    <span class="k">if</span> <span class="n">TimeForPriorityBoost</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">level</span> <span class="ow">in</span> <span class="n">s</span><span class="o">.</span><span class="n">levels</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+            <span class="k">while</span> <span class="ow">not</span> <span class="n">level</span><span class="o">.</span><span class="n">empty</span><span class="p">():</span>
+                <span class="n">p</span> <span class="o">=</span> <span class="n">level</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+                <span class="n">MovejobToSchedulerLevel</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># Move jobs from waiting queue to top priority level</span>
+    <span class="k">while</span> <span class="n">s</span><span class="o">.</span><span class="n">waiting</span><span class="o">.</span><span class="n">size</span><span class="p">():</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">waiting</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+        <span class="n">MovejobToSchedulerLevel</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># Start or resume jobs by moving from levels to running</span>
+    <span class="k">for</span> <span class="n">level</span> <span class="ow">in</span> <span class="n">s</span><span class="o">.</span><span class="n">levels</span><span class="p">:</span>
+        <span class="k">while</span> <span class="n">level</span><span class="o">.</span><span class="n">size</span><span class="p">()</span> <span class="ow">and</span> <span class="n">s</span><span class="o">.</span><span class="n">running</span><span class="o">.</span><span class="n">size</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">NCPUS</span><span class="p">:</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="n">level</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+
+            <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">pid</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">Startjob</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">Resumejob</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+
+            <span class="n">s</span><span class="o">.</span><span class="n">running</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+</code></pre></div>
+
+<h2 id="mlfq-summary">MLFQ: <span class="gold">Summary</span><a class="headerlink" href="#mlfq-summary" title="Permanent link">&para;</a></h2>
+<ul>
+<li>
+<p><strong class="special">MLFQ</strong> is an attempt to optimize for both
+  <strong class="danger">turnaround time</strong> and <strong
+  class="success">response time</strong>.</p>
+<p><i>It prioritizes <strong class="caution">new, short, and I/O heavy
+jobs</strong> over long <strong class="info">CPU intensive
+jobs</strong>.</i></p>
+</li>
+<li>
+<p><strong class="special">MLFQ</strong> devolves into <strong
+  class="gold">Round Robin</strong>.</p>
+</li>
+<li>
+<p><strong class="special">MLFQ</strong> involves some <strong
+  class="hljs-comment">"voodoo magic"</strong> and some tricks.</p>
+</li>
+<li>
+<p><strong class="special">MLFQ</strong> (<em>or some variant</em>) has been used in
+  real world operating systems.</p>
+</li>
+</ul>
+<h2 id="exercise-scheduling-fifo">Exercise: <span class="gold">Scheduling</span> (<i class="muted">FIFO</i>)<a class="headerlink" href="#exercise-scheduling-fifo" title="Permanent link">&para;</a></h2>
+<p>Consider a single-CPU, a timeslice of <code>10 ms</code>, and the following
+<strong class="success">processes</strong>:</p>
+<table class="bordered">
+<thead>
+    <th>Process</th>
+    <th>Arrival Time</th>
+    <th>Run Time</th>
+</thead>
+<tbody>
+<tr class="info-bg">
+    <td>A</td>
+    <td>0 ms</td>
+    <td>30 ms</td>
+</tr>
+<tr class="success-bg">
+    <td>B</td>
+    <td>10 ms</td>
+    <td>20 ms</td>
+</tr>
+<tr class="caution-bg">
+    <td>C</td>
+    <td>20 ms</td>
+    <td>10 ms</td>
+</tr>
+</tbody>
+</table>
+
+<table class="bordered">
+<tbody>
+<tr class="caution-bg" height="70px">
+    <td><b>Waiting</b></td>
+    <td width="125px"></td>
+    <td width="125px">B</td>
+    <td width="125px">B, C</td>
+    <td width="125px">C</td>
+    <td width="125px">C</td>
+    <td width="125px"></td>
+    <td width="125px"></td>
+</tr>
+<tr class="success-bg" height="70px">
+    <td><b>Running</b></td>
+    <td width="125px">A</td>
+    <td width="125px">A</td>
+    <td width="125px">A</td>
+    <td width="125px">B</td>
+    <td width="125px">B</td>
+    <td width="125px">C</td>
+    <td width="125px"></td>
+</tr>
+<tr class="info-bg">
+    <td></td>
+    <td><b>00</b></td>
+    <td><b>10</b></td>
+    <td><b>20</b></td>
+    <td><b>30</b></td>
+    <td><b>40</B></TD>
+    <td><b>50</b></td>
+    <td><b>60</b></td>
+</tr>
+</tbody>
+</table>
+
+<div class="centered">
+<p><strong>Sketch</strong> out exactly when each process runs, and for how long given the<br>
+<strong class="gold">FIFO</strong> scheduling policy.</p>
+</div>
+<h2 id="exercise-scheduling-round-robin">Exercise: <span class="gold">Scheduling</span> (<i class="muted">Round Robin</i>)<a class="headerlink" href="#exercise-scheduling-round-robin" title="Permanent link">&para;</a></h2>
+<p>Consider a single-CPU, a timeslice of <code>10 ms</code>, and the following
+<strong class="success">processes</strong>:</p>
+<table class="bordered">
+<thead>
+    <th>Process</th>
+    <th>Arrival Time</th>
+    <th>Run Time</th>
+</thead>
+<tbody>
+<tr class="info-bg">
+    <td>A</td>
+    <td>0 ms</td>
+    <td>30 ms</td>
+</tr>
+<tr class="success-bg">
+    <td>B</td>
+    <td>10 ms</td>
+    <td>20 ms</td>
+</tr>
+<tr class="caution-bg">
+    <td>C</td>
+    <td>20 ms</td>
+    <td>10 ms</td>
+</tr>
+</tbody>
+</table>
+
+<table class="bordered">
+<tbody>
+<tr class="caution-bg" height="70px">
+    <td><b>Waiting</b></td>
+    <td width="125px"></td>
+    <td width="125px">A</td>
+    <td width="125px">C, B</td>
+    <td width="125px">B,A</td>
+    <td width="125px">A</td>
+    <td width="125px"></td>
+    <td width="125px"></td>
+</tr>
+<tr class="success-bg" height="70px">
+    <td><b>Running</b></td>
+    <td width="125px">A</td>
+    <td width="125px">B</td>
+    <td width="125px">A</td>
+    <td width="125px">C</td>
+    <td width="125px">B</td>
+    <td width="125px">A</td>
+    <td width="125px"></td>
+</tr>
+<tr class="info-bg">
+    <td></td>
+    <td><b>00</b></td>
+    <td><b>10</b></td>
+    <td><b>20</b></td>
+    <td><b>30</b></td>
+    <td><b>40</B></TD>
+    <td><b>50</b></td>
+    <td><b>60</b></td>
+</tr>
+</tbody>
+</table>
+
+<div class="centered">
+<p><strong>Sketch</strong> out exactly when each process runs, and for how long given the<br>
+<strong class="gold">Round Robin</strong> scheduling policy.</p>
+</div>
+<div class="alert warning-bg">
+<p><strong>Note</strong>: Append to <strong>Waiting</strong>, then <strong>rotate</strong>!</p>
+</div>
+<h2 id="exercise-scheduling-mlfq">Exercise: <span class="gold">Scheduling</span> (<i class="muted">MLFQ</i>)<a class="headerlink" href="#exercise-scheduling-mlfq" title="Permanent link">&para;</a></h2>
+<p>Consider a single-CPU, a timeslice of <code>10 ms</code>, and the following
+<strong class="success">processes</strong>:</p>
+<table class="bordered">
+<thead>
+    <th>Process</th>
+    <th>Arrival Time</th>
+    <th>Run Time</th>
+</thead>
+<tbody>
+<tr class="info-bg">
+    <td>A</td>
+    <td>0 ms</td>
+    <td>30 ms</td>
+</tr>
+<tr class="success-bg">
+    <td>B</td>
+    <td>10 ms</td>
+    <td>20 ms</td>
+</tr>
+<tr class="caution-bg">
+    <td>C</td>
+    <td>20 ms</td>
+    <td>10 ms</td>
+</tr>
+</tbody>
+</table>
+
+<table class="bordered">
+<tbody>
+<tr class="caution-bg" height="70px">
+    <td><b>Q0</b>&nbsp;(<i class="muted">10</i>)</td>
+    <td width="125px">A</td>
+    <td width="125px">B</td>
+    <td width="125px">C</td>
+    <td width="125px"></td>
+    <td width="125px"></td>
+    <td width="125px"></td>
+    <td width="125px"></td>
+</tr>
+<tr class="warning-bg" height="70px">
+    <td><b>Q1</b>&nbsp;(<i class="muted">20</i>)</td>
+    <td width="125px"></td>
+    <td width="125px">A</td>
+    <td width="125px">A, B</td>
+    <td width="125px">A, B</td>
+    <td width="125px">A, B</td>
+    <td width="125px">B</td>
+    <td width="125px"></td>
+</tr>
+<tr class="success-bg" height="70px">
+    <td><b>Running</b></td>
+    <td width="125px">A</td>
+    <td width="125px">B</td>
+    <td width="125px">C</td>
+    <td width="125px">A</td>
+    <td width="125px">A</td>
+    <td width="125px">B</td>
+    <td width="125px"></td>
+</tr>
+<tr class="info-bg">
+    <td></td>
+    <td><b>00</b></td>
+    <td><b>10</b></td>
+    <td><b>20</b></td>
+    <td><b>30</b></td>
+    <td><b>40</b></td>
+    <td><b>50</b></td>
+    <td><b>60</b></td>
+</tr>
+</tbody>
+</table>
+
+<div class="alert warning-bg">
+<p><strong>Note</strong>: Each <strong>queue</strong> has a different <strong>time allotment</strong>.</p>
+</div>
+</main>
+<footer>
+Built using <a href="https://python.org">Python</a>
+and <a href="https://jinja.palletsprojects.com">Jinja</a>
+with colors from 
+<a href="https://onmessage.nd.edu/university-branding/colors/">Notre Dame</a>, 
+<a href="https://spreadsheet.dev/how-to-get-the-hexadecimal-codes-of-colors-in-google-sheets">Google Docs</a>, and 
+<a href="https://nordtheme.com">Nord Theme</a>,
+and icons from <a href="https://pictogrammers.com/library/mdi/">Material Design Icons</a>.</footer>
+</body>
+</html>

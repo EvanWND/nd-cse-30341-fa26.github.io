@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Favicon -->
+<link rel="icon" type="image/png" sizes="32x32" href="static/ico/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="static/ico/favicon-16x16.png">
+<link rel="manifest" href="static/ico/site.webmanifest">
+<!-- Stylesheets -->
+<link rel="stylesheet" href="static/css/domer.css">
+<title>Notes 07: Event-based Concurrency</title>
+</head>
+<body>
+<header>
+<a class="logo" href="notes07.html">
+    <h1>Notes 07: Event-based Concurrency</h1>
+</a>
+<nav>
+    <ul>
+        <li><a href="index.html"><h4>Home</h4></a></li>
+        </ul>
+</nav></header>
+<main>
+<h2 id="logistics">Logistics<a class="headerlink" href="#logistics" title="Permanent link">&para;</a></h2>
+<ul>
+<li>
+<p><a href="interview01.html">Interview 01</a>: Check timeslots!</p>
+</li>
+<li>
+<p><a href="studyguide01.html">Study Guide 01</a>: Spoon feed!</p>
+</li>
+</ul>
+<h2 id="concurrency-questions">Concurrency: <span class="gold">Questions</span><a class="headerlink" href="#concurrency-questions" title="Permanent link">&para;</a></h2>
+<ol>
+<li>
+<div class="flex-col" markdown="1">
+<p>What exactly is <strong class="success">concurrency</strong>? <strong
+class="danger">parallelism</strong>?</p>
+<ul>
+<li>
+<p>What are some <strong class="caution">examples</strong>?</p>
+</li>
+<li>
+<p>What are some <strong class="special">challenges</strong>?</p>
+</li>
+</ul>
+</li>
+<li>
+<div class="flex-col" markdown="1">
+<p>How do we <strong class="caution">overlap I/O and compute</strong> within
+a single <strong class="success">process</strong>?</p>
+<ul>
+<li>
+<p>What <strong class="warning">system calls</strong> can we use?</p>
+</li>
+<li>
+<p>How do we use these <strong class="warning">system calls</strong>?</p>
+</li>
+</ul>
+</li>
+</ol>
+<h2 id="concurrency-motivation">Concurrency: <span class="gold">Motivation</span><a class="headerlink" href="#concurrency-motivation" title="Permanent link">&para;</a></h2>
+<p>We want to create an application, <code>counter</code>, that does the following:</p>
+<ul>
+<li>
+<p>Periodically <strong>increments a <code>counter</code></strong>.</p>
+</li>
+<li>
+<p>Provides a <strong>shell prompt</strong> that allows the user to enter in a <strong><code>command</code></strong>:</p>
+</li>
+</ul>
+<table class="bordered">
+<thead>
+  <th class="info-bg">Command</th>
+  <th class="success-bg">Description</th>
+</thead>
+<tbody>
+<tr>
+  <td class="info-bg centered"><b>count</b></td>
+  <td class="success-bg">Returns the current value of <code>counter</code></td>
+</tr>
+<tr>
+  <td class="info-bg centered"><b>reset</b></td>
+  <td class="success-bg">Resets counter to <code>0</code></td>
+</tr>
+<tr>
+  <td class="info-bg centered"><b>exit</b></td>
+  <td class="success-bg">Quit program</td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="concurrency-overview">Concurrency: <span class="gold">Overview</span><a class="headerlink" href="#concurrency-overview" title="Permanent link">&para;</a></h2>
+<div class="flex-row">
+<div class="flex-col">
+<p>Whenever we structure a problem such that we have <strong
+class="caution">multiple streams of execution</strong>, we have <strong
+class="success">concurrency</strong>.</p>
+<div class="centered">
+
+<img src="static/img/slides07-client-server-single.svg" class="transparent responsive">
+
+</div>
+</div>
+<div class="flex-col">
+<p>Whenever we have the <strong class="info">hardware resources</strong> to
+simultaneously execute <strong class="caution">multiple streams of
+executions</strong>, we have <strong class="danger">parallelism</strong>.</p>
+<div class="centered">
+
+<img src="static/img/slides07-client-server-multi.svg" class="transparent responsive">
+
+</div>
+</div>
+</div>
+<div class="alert warning-bg">
+<p>Issues with <strong class="success">concurrency</strong> and <strong
+class="warning">scheduling</strong>: Hard to know <strong>order of execution</strong>.</p>
+</div>
+<h2 id="concurrency-internal">Concurrency: <span class="gold">Internal</span><a class="headerlink" href="#concurrency-internal" title="Permanent link">&para;</a></h2>
+<div class="flex-row">
+<div class="flex-col-33">
+<div class="centered">
+
+<img src="static/img/slides07-process.svg" class="transparent">
+
+</div>
+<h3 id="concurrent-tasks"><strong class="success">Concurrent tasks</strong><a class="headerlink" href="#concurrent-tasks" title="Permanent link">&para;</a></h3>
+<ol>
+<li>
+<p><strong> Update counter</strong></p>
+</li>
+<li>
+<p><strong> Handle shell input</strong></p>
+</li>
+</ol>
+</div>
+<div class="flex-col">
+<p>In addition to <strong class="caution">inter-process concurrency</strong>, we
+can also have <strong class="success">internal concurrency</strong> within a
+single <strong class="success">process</strong>:</p>
+<ol>
+<li>
+<p><strong> Foreground vs Background</strong></p>
+</li>
+<li>
+<p><strong> Mixing I/O and Computation</strong></p>
+</li>
+<li>
+<p><strong> Signals</strong></p>
+</li>
+</ol>
+</div>
+</div>
+<div class="alert warning-bg">
+<h4 id="example-applications">Example Applications:<a class="headerlink" href="#example-applications" title="Permanent link">&para;</a></h4>
+<ul>
+<li>
+<p><strong>GrubHub</strong>: Display UI / Animation while requests happen in the
+background.</p>
+</li>
+<li>
+<p><strong>Instagram</strong>: Apply filter in the background.</p>
+</li>
+</ul>
+</div>
+<h2 id="concurrency-threads">Concurrency: <span class="gold">Threads</span><a class="headerlink" href="#concurrency-threads" title="Permanent link">&para;</a></h2>
+<div class="flex-row">
+<div class="flex-col">
+<p>We can implement <strong class="success">internal concurrency</strong> by
+dividing a <strong class="success">process</strong> into <strong
+class="caution">multiple streams of execution</strong>.</p>
+<h4 id="review-machine-state">Review: <strong class="success">Machine State</strong><a class="headerlink" href="#review-machine-state" title="Permanent link">&para;</a></h4>
+<ol>
+<li>
+<p><strong>Address Space</strong> [~]</p>
+</li>
+<li>
+<p><strong>Kernel State</strong> [v]</p>
+</li>
+<li>
+<p><strong>Execution Context</strong> [x]</p>
+</li>
+</ol>
+</div>
+<div class="centered">
+
+<img src="static/img/slides07-threads.svg" class="transparent responsive">
+
+</div>
+</div>
+<h2 id="concurrency-interview-question">Concurrency: <span class="gold">Interview Question</span><a class="headerlink" href="#concurrency-interview-question" title="Permanent link">&para;</a></h2>
+<div class="flex-row">
+<div class="flex-col">
+<p><strong>Given</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="kt">int</span><span class="w"> </span><span class="nf">f</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="p">;</span>
+<span class="w">    </span><span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<div class="centered">
+<p>If <strong class="caution">two threads</strong> run <code>f()</code>,<br>is there <strong
+class="danger">sharing</strong>?</p>
+<p><br></p>
+<div class="alert success-bg">
+<p>No, <code>i</code> is on the <strong>stack</strong>.</p>
+</div>
+</div>
+</div>
+<div class="flex-col">
+<p><strong>Given</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="kt">int</span><span class="w"> </span><span class="nf">g</span><span class="p">(</span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">s</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="o">*</span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">____</span><span class="p">;</span>
+<span class="w">    </span><span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<div class="centered">
+<p>If <strong class="caution">two threads</strong> run <code>g()</code>,<br>is there <strong
+class="danger">sharing</strong>?</p>
+<p><br></p>
+<div class="alert warning-bg">
+<p>Maybe, depends on what <code>s</code> is pointing to.</p>
+</div>
+</div>
+</div>
+</div>
+<h2 id="concurrency-sharing-problem">Concurrency: <span class="gold">Sharing Problem</span><a class="headerlink" href="#concurrency-sharing-problem" title="Permanent link">&para;</a></h2>
+<ol>
+<li>
+<p><strong class="danger">Shared Data</strong> -&gt; <strong
+class="danger">Critical Section</strong></p>
+</li>
+<li>
+<p><strong class="info">Uncontrolled Scheduling</strong> -&gt; <strong
+class="info">Race Condition</strong></p>
+</li>
+<li>
+<p><strong class="success">Need for Atomicity</strong> -&gt; <strong
+class="success">Mutual Execution</strong></p>
+</li>
+</ol>
+<div class="alert warning-bg">
+<p><strong>Concurrency</strong> is hard... example of non-obvious <strong>race condition</strong> from
+<strong>Project 01</strong>:</p>
+<div class="codehilite"><pre><span></span><code><span class="kt">void</span><span class="w"> </span><span class="nf">scheduler_handle_signal</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">signum</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">scheduler_wait</span><span class="p">(</span><span class="o">&amp;</span><span class="n">PQSHScheduler</span><span class="p">);</span><span class="w"> </span><span class="c1">// Can interrupt walking the list!</span>
+<span class="w">    </span><span class="n">scheduler_next</span><span class="p">(</span><span class="o">&amp;</span><span class="n">PQSHScheduler</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>Even <a href="https://access.redhat.com/security/cve/cve-2024-6409">OpenSSH</a> fell
+victim to this!!!</p>
+</div>
+<h2 id="events-overview">Events: <span class="gold">Overview</span><a class="headerlink" href="#events-overview" title="Permanent link">&para;</a></h2>
+<p>If we only need to <strong class="caution">overlap I/O and
+computation</strong>, we can use <strong class="primary">events</strong> to
+provide <strong class="success">concurrency</strong> without <strong
+class="danger">parallelism</strong>:</p>
+<div class="flex-row">
+<div class="flex-col">
+<ul>
+<li>
+<p>Register interest in <strong class="primary">events</strong> (<em>callbacks</em>).</p>
+</li>
+<li>
+<p><strong class="info">Event loop</strong> waits for <strong
+  class="primary">event</strong> and then invokes <strong
+  class="success">handlers</strong>.</p>
+</li>
+<li>
+<p><strong class="success">Handlers</strong> generally <strong>short-lived</strong> and not
+  <strong>pre-empted</strong>.</p>
+</li>
+</ul>
+</div>
+<div class="flex-col">
+<div class="centered">
+
+<img src="static/img/slides07-event-loop.svg" class="transparent responsive">
+
+</div>
+</div>
+</div>
+<h2 id="events-counterc">Events: <a href="https://github.com/nd-cse-30341-fa26/examples/blob/master/lecture07/counter.c">counter.c</a><a class="headerlink" href="#events-counterc" title="Permanent link">&para;</a></h2>
+<div class="codehilite"><pre><span></span><code><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">argv</span><span class="p">[])</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kt">bool</span><span class="w"> </span><span class="n">prompt</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span>
+<span class="w">    </span><span class="kt">int</span><span class="w">  </span><span class="n">counter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="w">    </span><span class="kt">char</span><span class="w"> </span><span class="n">buffer</span><span class="p">[</span><span class="n">BUFSIZ</span><span class="p">];</span>
+
+<span class="w">    </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="nb">true</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="cm">/* Display prompt */</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">prompt</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">fputs</span><span class="p">(</span><span class="n">PROMPT</span><span class="p">,</span><span class="w"> </span><span class="n">stdout</span><span class="p">);</span><span class="w"> </span><span class="n">fflush</span><span class="p">(</span><span class="n">stdout</span><span class="p">);</span><span class="w"> </span><span class="n">prompt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">        </span><span class="cm">/* Poll STDIN */</span>
+<span class="w">        </span><span class="k">struct</span><span class="w"> </span><span class="nc">pollfd</span><span class="w"> </span><span class="n">pfd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="n">STDIN_FILENO</span><span class="p">,</span><span class="w"> </span><span class="n">POLLIN</span><span class="o">|</span><span class="n">POLLPRI</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">};</span>
+<span class="w">        </span><span class="kt">int</span><span class="w">    </span><span class="n">result</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="n">poll</span><span class="p">(</span><span class="o">&amp;</span><span class="n">pfd</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">TIMEOUT</span><span class="p">);</span>
+
+<span class="w">        </span><span class="cm">/* Process event */</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">result</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">           </span><span class="cm">/* Error */</span>
+<span class="w">            </span><span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Unable to poll: %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">strerror</span><span class="p">(</span><span class="n">errno</span><span class="p">));</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">result</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">   </span><span class="cm">/* Update counter */</span>
+<span class="w">            </span><span class="n">counter</span><span class="o">++</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w">                    </span><span class="cm">/* Handle command */</span>
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">fgets</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span><span class="w"> </span><span class="n">BUFSIZ</span><span class="p">,</span><span class="w"> </span><span class="n">stdin</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="k">break</span><span class="p">;</span>
+<span class="w">            </span><span class="p">}</span>
+
+<span class="w">            </span><span class="n">buffer</span><span class="p">[</span><span class="n">strlen</span><span class="p">(</span><span class="n">buffer</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;count&quot;</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="n">fprintf</span><span class="p">(</span><span class="n">stdout</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Counter is %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">counter</span><span class="p">);</span>
+<span class="w">            </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;reset&quot;</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="n">counter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="w">                </span><span class="n">fputs</span><span class="p">(</span><span class="s">&quot;Counter is reset!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">stdout</span><span class="p">);</span>
+<span class="w">            </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;exit&quot;</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="n">fputs</span><span class="p">(</span><span class="s">&quot;Bye!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">stdout</span><span class="p">);</span>
+<span class="w">                </span><span class="k">break</span><span class="p">;</span>
+<span class="w">            </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Unknown command: %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">buffer</span><span class="p">);</span>
+<span class="w">            </span><span class="p">}</span>
+
+<span class="w">            </span><span class="n">prompt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<div class="alert warning-bg">
+<div class="codehilite"><pre><span></span><code>$<span class="w"> </span>yes<span class="w"> </span>count<span class="w"> </span>&gt;<span class="w"> </span>input
+
+$<span class="w"> </span>./counter<span class="w"> </span>&lt;<span class="w"> </span>input
+</code></pre></div>
+
+<ul>
+<li>
+<p><strong>DDOS</strong>!!!</p>
+</li>
+<li>
+<p><strong>Handlers</strong> should be <strong>short-lived</strong>.</p>
+</li>
+<li>
+<p><strong>Concurrency</strong>, but no <strong>parallelism</strong>.</p>
+</li>
+</ul>
+</div>
+</main>
+<footer>
+Built using <a href="https://python.org">Python</a>
+and <a href="https://jinja.palletsprojects.com">Jinja</a>
+with colors from 
+<a href="https://onmessage.nd.edu/university-branding/colors/">Notre Dame</a>, 
+<a href="https://spreadsheet.dev/how-to-get-the-hexadecimal-codes-of-colors-in-google-sheets">Google Docs</a>, and 
+<a href="https://nordtheme.com">Nord Theme</a>,
+and icons from <a href="https://pictogrammers.com/library/mdi/">Material Design Icons</a>.</footer>
+</body>
+</html>

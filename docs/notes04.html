@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Favicon -->
+<link rel="icon" type="image/png" sizes="32x32" href="static/ico/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="static/ico/favicon-16x16.png">
+<link rel="manifest" href="static/ico/site.webmanifest">
+<!-- Stylesheets -->
+<link rel="stylesheet" href="static/css/domer.css">
+<title>Notes 04: Processes</title>
+</head>
+<body>
+<header>
+<a class="logo" href="notes04.html">
+    <h1>Notes 04: Processes</h1>
+</a>
+<nav>
+    <ul>
+        <li><a href="index.html"><h4>Home</h4></a></li>
+        </ul>
+</nav></header>
+<main>
+<h2 id="review">Review<a class="headerlink" href="#review" title="Permanent link">&para;</a></h2>
+<ul>
+<li>
+<div class="flex-col" markdown="1">
+<p>What is a <strong>System Call</strong>?</p>
+<blockquote>
+<p><strong>User application</strong> requests a service, operation, or resource from
+the <strong>operating system kernel</strong>.</p>
+</blockquote>
+</li>
+<li>
+<div class="flex-col" markdown="1">
+<p>How is <strong>memory protection</strong> enforced?</p>
+<blockquote>
+<p><strong>Processor</strong> provides <strong>rings of protection</strong> (aka <strong>modes</strong>):
+- <strong>User Mode</strong>: applications have <strong>restricted</strong> hardware access.
+- <strong>Kernel Mode</strong>: operating system has <strong>unrestricted</strong> hardware access.</p>
+</blockquote>
+</li>
+<li>
+<div class="flex-col" markdown="1">
+<p>What happens during a <strong>System Call</strong>?</p>
+<ol>
+<li>
+<p><strong>User application</strong> records <strong>system call number</strong>.</p>
+</li>
+<li>
+<p><strong>User application</strong> triggers <strong>trap</strong>.</p>
+</li>
+<li>
+<p><strong>Processor</strong> receives <strong>event</strong>, transitions from <strong>user mode</strong> to
+<strong>kernel mode</strong>, and then consults the <strong>trap table</strong>.</p>
+</li>
+<li>
+<p><strong>Operating system kernel</strong> performs the <strong>trap handler</strong>.</p>
+</li>
+</ol>
+</li>
+<li>
+<p><strong>Operating system kernel</strong> is a collection of <strong>event handlers</strong>.</p>
+</li>
+</ul>
+<h2 id="process-machine-state">Process: <span class="gold">Machine State</span><a class="headerlink" href="#process-machine-state" title="Permanent link">&para;</a></h2>
+<div class="flex-row">
+<div class="flex-col">
+<p>A <strong class="success">process</strong> is a <strong>loaded</strong> instance of a
+program; it is a unit of <strong class="warning">allocation</strong>
+(<em>resources</em>, <em>privileges</em>, etc.).</p>
+<ul>
+<li>
+<p><strong class="success">Memory Address Space</strong>: code, data, heap,
+  stack.</p>
+</li>
+<li>
+<p><strong class="caution">Kernel State</strong>: permissions, file descriptors,
+  etc.</p>
+</li>
+<li>
+<p><strong class="info">Execution Context</strong>: program counter, stack
+  pointer, data registers.</p>
+</li>
+</ul>
+</div>
+<div class="flex-col-33">
+<p><img src="static/img/slides04-process-machine-state.png" class="transparent"></p>
+</div>
+</div>
+<h2 id="process-linux">Process: <span class="gold">Linux</span><a class="headerlink" href="#process-linux" title="Permanent link">&para;</a></h2>
+<ol>
+<li>
+<div class="flex-col" markdown="1">
+<p>Examine  <a href="https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/tree/include/linux/sched.h?h=linux-6.18.y#n820">struct task_struct</a> (<em>process control block</em>)</p>
+<ul>
+<li><code>stack</code>: kernel <em>stack pointer</em></li>
+<li><code>exit_code</code></li>
+<li><code>pid</code>: need to keep track of this in <a href="project01.html">Project 01</a></li>
+<li><code>parent</code></li>
+<li><code>children</code>: <em>tree</em> data structure</li>
+<li><code>start_time</code>: need to keep track of this in <a href="project01.html">Project 01</a></li>
+<li><code>signal</code>: need to register these in <a href="project01.html">Project 01</a></li>
+<li><code>thread</code>: <em>execution context</em></li>
+</ul>
+</li>
+<li>
+<div class="flex-col" markdown="1">
+<p>View process list</p>
+<div class="codehilite"><pre><span></span><code>$<span class="w"> </span>ps<span class="w"> </span>ux<span class="w">       </span><span class="c1"># User processes</span>
+$<span class="w"> </span>ps<span class="w"> </span>aux<span class="w">      </span><span class="c1"># All processes</span>
+$<span class="w"> </span>pstree<span class="w">      </span><span class="c1"># All processes (hierarchy)</span>
+</code></pre></div>
+
+</li>
+<li>
+<div class="flex-col" markdown="1">
+<p>Explore process information</p>
+<div class="codehilite"><pre><span></span><code>$<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="nv">$$</span><span class="w">               </span><span class="c1"># Process PID</span>
+$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>/proc/<span class="nv">$$</span><span class="w">           </span><span class="c1"># Process information (pseudo file system)</span>
+$<span class="w"> </span>cat<span class="w"> </span>/proc/PID/environ<span class="w"> </span><span class="c1"># Process environment variables</span>
+$<span class="w"> </span>cat<span class="w"> </span>/proc/PID/stat<span class="w">    </span><span class="c1"># Process statistics</span>
+$<span class="w"> </span>ls<span class="w"> </span>/proc/PID/fd<span class="w">       </span><span class="c1"># Process file streams</span>
+
+$<span class="w"> </span>man<span class="w"> </span>proc
+
+<span class="c1"># Write to process stderr</span>
+$<span class="w"> </span><span class="nb">echo</span><span class="w"> </span>hello<span class="w"> </span>&gt;<span class="w"> </span>/proc/PID/fd/2
+</code></pre></div>
+
+</li>
+</ol>
+<h2 id="process-dos-doom">Process: <span class="gold">DOS + Doom</span><a class="headerlink" href="#process-dos-doom" title="Permanent link">&para;</a></h2>
+<div class="centered font-large">
+
+What are the <strong class="success">advantages</strong> and <strong
+class="danger">disadvantages</strong> of the <strong class="info">DOS
+programming model</strong>?
+
+</div>
+
+<div class="centered">
+
+<img src="https://upload.wikimedia.org/wikipedia/en/d/de/Doom_ingame_1.png" class="transparent">
+
+</div>
+
+<div class="flex-row">
+<div class="flex-col success">
+<ul>
+<li>Single-tasking</li>
+<li>Dedicate all resources to application!</li>
+</ul>
+</div>
+<div class="flex-col danger">
+<ul>
+<li>Can't have background tasks</li>
+<li>If program crashes, whole system crashes</li>
+<li>Can't utilize all resources effectively (<em>idle</em>)</li>
+</ul>
+</div>
+</div>
+<h2 id="process-time-sharing">Process: <span class="gold">Time-Sharing</span><a class="headerlink" href="#process-time-sharing" title="Permanent link">&para;</a></h2>
+<p>The <strong class="caution">operating system</strong> <strong
+class="success">virtualizes</strong> the <strong
+class="info">processor</strong> via the <strong
+class="success">process</strong> abstraction:</p>
+<div class="centered">
+
+<img src="static/img/slides04-process-time-sharing.png" class="transparent">
+
+</div>
+
+<p>That is, each task is associated with a <strong
+class="success">process</strong> that represents the state of the <strong
+class="info">processor</strong>.  To allow multiple <strong
+class="success">processes</strong> to make progress <strong
+class="special">concurrently</strong>, the <strong class="caution">operating
+system</strong> provides each <strong class="success">process</strong> a
+certain <strong class="special">time slice</strong> or share of <strong
+class="info">processor</strong> time.</p>
+<h2 id="process-multitasking">Process: <span class="gold">Multitasking</span><a class="headerlink" href="#process-multitasking" title="Permanent link">&para;</a></h2>
+<div class="flex-row">
+<div class="flex-col">
+<h3 id="cooperative"><strong class="danger">Cooperative</strong><a class="headerlink" href="#cooperative" title="Permanent link">&para;</a></h3>
+<p>The <strong class="caution">operating system</strong> <strong>trusts</strong> the <strong
+class="success">processes</strong> to behave reasonably and voluntarily
+<strong>yield</strong> the <strong class="info">processor</strong> so others can execute.</p>
+<div class="centered">
+
+<img src="https://www.homecomputermuseum.nl/wp-content/uploads/2018/08/Apple-Front-1200x1054.jpg" width="300" class="bordered">
+
+</div>
+</div>
+<div class="flex-col">
+<h3 id="pre-emptive"><strong class="success">Pre-emptive</strong><a class="headerlink" href="#pre-emptive" title="Permanent link">&para;</a></h3>
+<p>The <strong class="caution">operating system</strong> sets a <strong
+class="info">hardware timer interrupt</strong> to periodically <strong>suspend</strong> the
+currently running <strong class="success">process</strong> and possibly
+<strong>switch</strong> to another <strong class="success">process</strong>.</p>
+<div class="centered">
+
+<img src="https://photos5.appleinsider.com/gallery/61542-127138-imac-xl.jpg" width="400" class="bordered">
+
+</div>
+</div>
+</div>
+<h2 id="process-skit">Process: <span class="gold">Skit</span><a class="headerlink" href="#process-skit" title="Permanent link">&para;</a></h2>
+<div class="flex-row">
+<div class="flex-col success">
+<p>Closed on Sunday, you're my Chick-fil-A</p>
+<p>Closed on Sunday, you my Chick-fil-A</p>
+<p>Hold the selfies, put the 'Gram away</p>
+<p>Get your family, y'all hold hands and pray</p>
+<p>When you got daughters, always keep 'em safe</p>
+<p>Watch out for vipers, don't let them indoctrinate</p>
+</div>
+<div class="flex-col danger">
+<p>Closed on Sunday, you my Chick-fil-A</p>
+<p>You're my number one, with the lemonade</p>
+<p>Raise our sons, train them in the faith</p>
+<p>Through temptations, make sure they're wide awake</p>
+<p>Follow Jesus, listen and obey</p>
+<p>No more livin' for the culture, we nobody's slave</p>
+</div>
+</div>
+<h2 id="process-context-switch">Process: <span class="gold">Context Switch</span><a class="headerlink" href="#process-context-switch" title="Permanent link">&para;</a></h2>
+<p>When a <strong class="info">hardware timer interrupt</strong> goes off, the
+<strong class="caution">operating system</strong> has the option of performing
+a <strong class="special">context switch</strong> (ie. <em>switch from one <strong
+class="success">process</strong> to another</em>).</p>
+<div class="centered">
+
+<img src="static/img/slides04-process-context-switch.png" class="transparent">
+
+</div>
+
+<div class="alert danger-bg">
+<p><strong>Context switches</strong> are <strong>expensive</strong>!!!</p>
+</div>
+<h2 id="process-states">Process: <span class="gold">States</span><a class="headerlink" href="#process-states" title="Permanent link">&para;</a></h2>
+<p>A <strong class="success">process</strong> can be in one of the following
+<strong class="special">states</strong> during its lifespan:</p>
+<div class="centered">
+
+<img src="static/img/slides04-process-states.png" class="transparent responsive">
+
+</div>
+
+<ul>
+<li>
+<p><strong class="success">Running</strong>: The <strong
+  class="success">process</strong> has been <strong>allocated</strong> time on the <strong
+  class="info">processor</strong> and is executing.</p>
+</li>
+<li>
+<p><strong class="caution">Ready</strong>: The <strong
+  class="success">process</strong> has no blocking <strong
+  class="warning">system calls</strong> and is available to be scheduled.</p>
+</li>
+<li>
+<p><strong class="danger">Waiting</strong>: The <strong
+  class="success">process</strong> has a blocking <strong
+  class="warning">system calls</strong> and is not able to make progress until
+  it is finished.</p>
+</li>
+</ul>
+<h2 id="process-life-cycle">Process: <span class="gold">Life Cycle</span><a class="headerlink" href="#process-life-cycle" title="Permanent link">&para;</a></h2>
+<ol>
+<li>
+<p><strong class="success">Parent process</strong> <a href="https://man7.org/linux/man-pages/man2/fork.2.html">forks</a> to create a new
+  <strong class="warning">child process</strong>.</p>
+</li>
+<li>
+<p><strong class="warning">Child process</strong> performs actions, possible
+  <a href="https://man7.org/linux/man-pages/man3/exec.3.html">execs</a> to run another program.</p>
+</li>
+<li>
+<p><strong class="success">Parent process</strong> <a href="https://man7.org/linux/man-pages/man2/wait.2.html">waits</a> for <strong
+  class="warning">child process</strong>.</p>
+</li>
+<li>
+<p><strong class="warning">Child process</strong> <a href="https://man7.org/linux/man-pages/man3/exit.3.html">exits</a>.</p>
+</li>
+<li>
+<p><strong class="success">Parent process</strong> receives <strong
+  class="special">status code</strong> of <strong class="warning">child
+  process</strong>.</p>
+</li>
+</ol>
+<div class="centered">
+
+<img src="static/img/slides04-process-life-cycle.png" class="transparent responsive">
+
+</div>
+
+<h2 id="process-hello-nc-version-1-fork-bomb">Process: <a href="https://github.com/nd-cse-30341-fa26/examples/blob/master/lecture04/hello-n.c">hello-n.c</a> (<i class="muted">Version 1: Fork Bomb</i>)<a class="headerlink" href="#process-hello-nc-version-1-fork-bomb" title="Permanent link">&para;</a></h2>
+<div class="codehilite"><pre><span></span><code><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">argv</span><span class="p">[])</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">atoi</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">n</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kt">pid_t</span><span class="w"> </span><span class="n">pid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fork</span><span class="p">();</span>
+
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">pid</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="c1">// Child</span>
+<span class="w">            </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;[%d] Hello from child %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">getpid</span><span class="p">(),</span><span class="w"> </span><span class="n">i</span><span class="p">);</span>
+<span class="w">            </span><span class="n">exit</span><span class="p">(</span><span class="n">EXIT_SUCCESS</span><span class="p">);</span><span class="w"> </span><span class="c1">// FIXES: Fork Bomb</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">EXIT_SUCCESS</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<div class="alert danger-bg">
+<ul>
+<li>
+<p>Runs more than <code>N</code> processes.</p>
+</li>
+<li>
+<p>Ordering is different between runs.</p>
+</li>
+</ul>
+</div>
+<h2 id="process-hello-nc-version-2-sequential">Process: <a href="https://github.com/nd-cse-30341-fa26/examples/blob/master/lecture04/hello-n.c">hello-n.c</a> (<i class="muted">Version 2: Sequential</i>)<a class="headerlink" href="#process-hello-nc-version-2-sequential" title="Permanent link">&para;</a></h2>
+<div class="codehilite"><pre><span></span><code><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">argv</span><span class="p">[])</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">atoi</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">n</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kt">pid_t</span><span class="w"> </span><span class="n">pid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fork</span><span class="p">();</span>
+
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">pid</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="c1">// Child</span>
+<span class="w">            </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;[%d] Hello from child %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">getpid</span><span class="p">(),</span><span class="w"> </span><span class="n">i</span><span class="p">);</span>
+<span class="w">            </span><span class="n">exit</span><span class="p">(</span><span class="n">EXIT_SUCCESS</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">wait</span><span class="p">(</span><span class="nb">NULL</span><span class="p">);</span><span class="w">   </span><span class="c1">// FIXES: Zombies / Orphans</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">EXIT_SUCCESS</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<div class="alert warning-bg">
+<ul>
+<li>Ordering is now sequential (<em>no concurrency</em>).</li>
+</ul>
+</div>
+<h2 id="process-hello-nc-version-3-parallel">Process: <a href="https://github.com/nd-cse-30341-fa26/examples/blob/master/lecture04/hello-n.c">hello-n.c</a> (<i class="muted">Version 3: Parallel</i>)<a class="headerlink" href="#process-hello-nc-version-3-parallel" title="Permanent link">&para;</a></h2>
+<div class="codehilite"><pre><span></span><code><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">argv</span><span class="p">[])</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">atoi</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">n</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kt">pid_t</span><span class="w"> </span><span class="n">pid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fork</span><span class="p">();</span>
+
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">pid</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="c1">// Child</span>
+<span class="w">            </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;[%d] Hello from child %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">getpid</span><span class="p">(),</span><span class="w"> </span><span class="n">i</span><span class="p">);</span>
+<span class="w">            </span><span class="n">exit</span><span class="p">(</span><span class="n">EXIT_SUCCESS</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">n</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">wait</span><span class="p">(</span><span class="nb">NULL</span><span class="p">);</span><span class="w"> </span><span class="c1">// FIXES: Zombies / Orphans while keeping concurrency</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">EXIT_SUCCESS</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<div class="alert caution-bg">
+<ul>
+<li>Now <strong>concurrent</strong> -- can be <strong>parallel</strong> if we have enough <strong>CPU</strong> cores.</li>
+</ul>
+</div>
+</main>
+<footer>
+Built using <a href="https://python.org">Python</a>
+and <a href="https://jinja.palletsprojects.com">Jinja</a>
+with colors from 
+<a href="https://onmessage.nd.edu/university-branding/colors/">Notre Dame</a>, 
+<a href="https://spreadsheet.dev/how-to-get-the-hexadecimal-codes-of-colors-in-google-sheets">Google Docs</a>, and 
+<a href="https://nordtheme.com">Nord Theme</a>,
+and icons from <a href="https://pictogrammers.com/library/mdi/">Material Design Icons</a>.</footer>
+</body>
+</html>

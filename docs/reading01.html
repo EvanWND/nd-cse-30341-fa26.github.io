@@ -1,0 +1,642 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Favicon -->
+<link rel="icon" type="image/png" sizes="32x32" href="static/ico/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="static/ico/favicon-16x16.png">
+<link rel="manifest" href="static/ico/site.webmanifest">
+<!-- Stylesheets -->
+<link rel="stylesheet" href="static/css/domer.css">
+<title>Reading 01: Hardware, Operating Systems</title>
+</head>
+<body>
+<header>
+<a class="logo" href="reading01.html">
+    <h1>Reading 01: Hardware, Operating Systems</h1>
+</a>
+<nav>
+    <ul>
+        <li><a href="index.html"><h4>Home</h4></a></li>
+        </ul>
+</nav></header>
+<main>
+<p><strong>Everyone</strong>:</p>
+<p>Welcome to <a href="index.html">CSE 30341 Operating System Principles</a>, which (as the syllabus
+states) is a course that "introduces all aspects of modern operating
+systems", including topics such as "process structure and synchronization,
+interprocess communication, memory management, file systems, security, I/O,
+and distributed systems".  What this means is that we will be exploring the
+key ideas behind operating systems such as Linux, Windows, and macOS and
+studying the underlying abstractions these systems provide to user
+applications.</p>
+<div class="alert info-bg">
+<h3 id="book-embed_icon-tldr"><i class="icon icon-medium"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>book</title><path d="M18,22A2,2 0 0,0 20,20V4C20,2.89 19.1,2 18,2H12V9L9.5,7.5L7,9V2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18Z" /></svg>
+</i> TL;DR<a class="headerlink" href="#book-embed_icon-tldr" title="Permanent link">&para;</a></h3>
+<p>For this week, you need to join the class <a href="https://nd-cse.slack.com">Slack</a> channel, setup your
+<a href="https://github.com">GitHub</a> repository, read about basic hardware and operating system
+concepts, and submit your responses to the <a href="static/json/reading01.json">Reading 01 Quiz</a>.</p>
+</div>
+<h2 id="course-overview">Course Overview<a class="headerlink" href="#course-overview" title="Permanent link">&para;</a></h2>
+<div class="flex-row">
+<div class="flex-col">
+<p>Last year, most of you took the <a href="https://pnutz.h4x0r.space/courses/cse.20289.sp26">CSE 20289 Systems Programming</a> course
+where you learned about how to use a Unix system and how to program
+applications in that environment.  Throughout the course, you experienced
+and practiced the <a href="https://en.wikipedia.org/wiki/Unix_philosophy">Unix Philosophy</a>:</p>
+<ol>
+<li>
+<p>Write programs that do one thing and do it well.</p>
+</li>
+<li>
+<p>Write programs to work together.</p>
+</li>
+<li>
+<p>Write programs to handle text streams, because that is a universal interface.</p>
+</li>
+</ol>
+<p>You did this by writing <a href="https://en.wikipedia.org/wiki/Shell_script">shell scripts</a>, <a href="https://www.python.org/">Python</a> applications, and
+utilities in <a href="https://en.wikipedia.org/wiki/C_(programming_language)">C</a>.  You even wrote programs that utilized <a href="https://en.wikipedia.org/wiki/System_call">system calls</a>
+such as <a href="https://man7.org/linux/man-pages/man2/open.2.html">open</a>, <a href="https://man7.org/linux/man-pages/man2/fork.2.html">fork</a>, and <a href="https://man7.org/linux/man-pages/man2/socket.2.html">socket</a>!  To organize and track your code, you
+used <a href="https://git-scm.com/">git</a> and to automate building and testing, you used <a href="https://www.gnu.org/software/make/">make</a>.</p>
+</div>
+<div class="flex-col-50 centered">
+  <img src="static/img/house-of-cards.png" class="responsive" style="padding: 10px">
+</div>
+</div>
+<p>In this class, we will take the next step and explore what data structures,
+algorithms, and mechanisms are necessary at the operating system level to
+support such applications.  That is, we will discuss how the <a href="https://en.wikipedia.org/wiki/Kernel_(operating_system)">operating
+system kernel</a> provides different <strong>abstractions</strong> that allow us to safely
+and efficiently execute multiple programs that communicate with each other
+while accessing different hardware resources.  In short, we will uncover
+the <strong>magic</strong> that powers the <a href="https://en.wikipedia.org/wiki/Unix_philosophy">Unix Philosophy</a>.</p>
+<p>For this course, we will focus on three main ideas:</p>
+<ol>
+<li>
+<p><strong>Virtualization</strong>: How does the operating system represent the
+underlying hardware resources?</p>
+</li>
+<li>
+<p><strong>Concurrency</strong>: How does the operating system coordinate multiple
+streams of execution?</p>
+</li>
+<li>
+<p><strong>Persistence</strong>: How does the operating system organize and manage data?</p>
+</li>
+</ol>
+<p>To explore these topics and apply the concepts learned in class, you will
+implement <strong>four programming projects</strong> throughout the semester: implement a
+<a href="https://en.wikipedia.org/wiki/Scheduling_(computing)#SCHEDULER">scheduling</a> process queue, implement a <a href="https://en.wikipedia.org/wiki/Message_queue">message bus</a>, implement <a href="http://man7.org/linux/man-pages/man3/malloc.3.html">malloc</a>,
+and implement a <a href="https://en.wikipedia.org/wiki/File_system">filesystem</a>.  These projects will require some design work, extensive
+testing, and utilization of the skills you learned in both <a href="https://pnutz.h4x0r.space/courses/cse.20289.sp26">CSE 20289
+Systems Programming</a> and <strong>CSE 20312 Data Structures</strong>.</p>
+<p>Additionally, you will have weekly <strong>reading assignments</strong> (<em>the first one
+is below</em>).  These will automatically be graded by the <a href="https://en.wikipedia.org/wiki/Continuous_integration">continuous
+integration</a> system provided by <a href="https://github.com">GitHub</a>.</p>
+<p>Of course, there will be <strong>four exams</strong> to assess your mastery of the
+course material.  Each exam will be on paper and will be "closed book",
+"closed notes", "closed computer", but "open mind".</p>
+<p>Finally, in the days before each <strong>exam</strong>, there will be an in-person
+<strong>interview</strong> with a teaching assistant or with the instructor where you
+will have the opportunity to demonstrate your knowledge of the <strong>project</strong>
+and to discuss what you learned from the experience.</p>
+<h2 id="task-0-python">Task 0: Python<a class="headerlink" href="#task-0-python" title="Permanent link">&para;</a></h2>
+<p>Throughout the semester, we will be using <a href="https://python.org/">Python 3</a> for a variety of
+purposes. Because the <strong>student machines</strong> provide an older version of <a href="https://python.org/">Python 3</a>
+by default, you will need to add the following line to your <code>~/.bashrc</code> file:</p>
+<div class="codehilite"><pre><span></span><code><span class="k">export</span><span class="w"> </span><span class="n">PATH</span><span class="o">=/</span><span class="n">escnfs</span><span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">pbui</span><span class="o">/</span><span class="n">pub</span><span class="o">/</span><span class="n">pkgsrc</span><span class="o">/</span><span class="n">bin</span><span class="p">:</span><span class="o">$</span><span class="n">PATH</span>
+</code></pre></div>
+
+<p>You can then source this file to load that environment variable:</p>
+<div class="codehilite"><pre><span></span><code>$<span class="w"> </span><span class="nb">source</span><span class="w"> </span>~/.bashrc
+</code></pre></div>
+
+<p>To check that <a href="https://python.org/">Python 3</a> works, you can run the following:</p>
+<div class="codehilite"><pre><span></span><code>$<span class="w"> </span>python3<span class="w"> </span>-V
+Python<span class="w"> </span><span class="m">3</span>.12.4
+</code></pre></div>
+
+<p>This will be necessary for the <code>.scripts/check.py</code> script in your
+<strong>assignments</strong> repository.</p>
+<div class="alert info-bg">
+<h3 id="server-embed_icon-student-machines"><i class="icon icon-medium"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>server</title><path d="M4,1H20A1,1 0 0,1 21,2V6A1,1 0 0,1 20,7H4A1,1 0 0,1 3,6V2A1,1 0 0,1 4,1M4,9H20A1,1 0 0,1 21,10V14A1,1 0 0,1 20,15H4A1,1 0 0,1 3,14V10A1,1 0 0,1 4,9M4,17H20A1,1 0 0,1 21,18V22A1,1 0 0,1 20,23H4A1,1 0 0,1 3,22V18A1,1 0 0,1 4,17M9,5H10V3H9V5M9,13H10V11H9V13M9,21H10V19H9V21M5,3V5H7V3H5M5,11V13H7V11H5M5,19V21H7V19H5Z" /></svg>
+</i> Student Machines<a class="headerlink" href="#server-embed_icon-student-machines" title="Permanent link">&para;</a></h3>
+<p>As a reminder, students in this class have access to the following
+<strong>student</strong> machines: <code>student05.cse.nd.edu</code>, <code>student10.cse.nd.edu</code>,
+<code>student11.cse.nd.edu</code>, <code>student12.cse.nd.edu</code>, <code>student13.cse.nd.edu</code>.</p>
+</div>
+<h2 id="task-1-slack">Task 1: Slack<a class="headerlink" href="#task-1-slack" title="Permanent link">&para;</a></h2>
+<p>For communication outside of our meeting time, we will be using <a href="https://nd-cse.slack.com">Slack</a>,
+specifically the <a href="https://nd-cse.slack.com/messages/cse-30341-fa26/">#cse-30341-fa26</a> channel:</p>
+<blockquote>
+<p><a href="https://nd-cse.slack.com/messages/cse-30341-fa26/">https://nd-cse.slack.com/messages/cse-30341-fa26/</a></p>
+</blockquote>
+<p>There is a <a href="mailto:fa26-cse-30341-01-group@nd.edu">class mailing list</a>, but most day-to-day communication
+(<em>including office hours and homework help</em>) should take place on <a href="https://nd-cse.slack.com">Slack</a>.</p>
+<div class="alert caution-bg">
+<p>Be aware of the following:</p>
+<ul>
+<li>
+<p>You will need to signup and create a <a href="https://nd-cse.slack.com">Slack</a> account if you don't already
+  have one.</p>
+</li>
+<li>
+<p>You can use the web interface or download the <a href="https://nd-cse.slack.com">Slack</a> desktop client
+  (<em>there are also mobile applications as well</em>).</p>
+</li>
+</ul>
+</div>
+<h2 id="task-2-github">Task 2: GitHub<a class="headerlink" href="#task-2-github" title="Permanent link">&para;</a></h2>
+<p>All of your work will be submitted to <a href="https://github.com">GitHub</a> using <a href="https://git-scm.com/">git</a>. Your third task
+is to setup your <a href="https://github.com">GitHub</a> repository by doing the following:</p>
+<ol>
+<li>
+<p><strong>Create</strong> a <a href="https://github.com">GitHub</a> account if you do not already have one.</p>
+</li>
+<li>
+<div class="flex-col">
+<p>To <strong>fork</strong> the class <strong>assignments</strong> repository, you must message
+<strong>bobbit</strong> on <a href="https://nd-cse.slack.com">Slack</a> a <code>!classroom</code> command in the following format:</p>
+<div class="codehilite"><pre><span></span><code>#<span class="w"> </span><span class="n">Send</span><span class="w"> </span><span class="n">Bobbit</span><span class="w"> </span><span class="n">this</span><span class="w"> </span><span class="n">command</span><span class="w"> </span><span class="n">in</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="n">private</span><span class="w"> </span><span class="n">message</span>
+<span class="sx">!classroom cse-30341-fa26 assignments NOTRE_DAME_NETID GITHUB_USERNAME</span>
+</code></pre></div>
+
+<p>The following is an example of what the message should look like on <a href="https://nd-cse.slack.com">Slack</a>:</p>
+<p><img src="static/img/reading01-bobbit-classroom.png" class="responsive"></p>
+<p>This will create a <strong>private</strong> <code>assignments-NOTRE_DAME_NETID</code> inside
+the <a href="https://github.com/nd-cse-30341-fa26">nd-cse-30341-fa26</a> organization and invite your <a href="https://github.com">GitHub</a> account
+as a collaborator (<em>you must accept the email invitation to collaborate
+on the repository</em>).</p>
+<div class="alert caution-bg" markdown="1">
+<h3 id="chat-embed_icon-private-message"><i class="icon icon-medium"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>chat</title><path d="M12,3C17.5,3 22,6.58 22,11C22,15.42 17.5,19 12,19C10.76,19 9.57,18.82 8.47,18.5C5.55,21 2,21 2,21C4.33,18.67 4.7,17.1 4.75,16.5C3.05,15.07 2,13.13 2,11C2,6.58 6.5,3 12,3Z" /></svg>
+</i> Private Message<a class="headerlink" href="#chat-embed_icon-private-message" title="Permanent link">&para;</a></h3>
+<p>It is recommended that you perform the <code>!classroom</code> command in a
+<strong>private message</strong> to <strong>bobbit</strong> rather than in the class channel.</p>
+</div>
+</div>
+</li>
+<li>
+<div class="flex-col">
+<p>Once this is done, you can <a href="https://git-scm.com/docs/git-clone">clone</a> your <a href="https://git-scm.com/">git</a> repository to one of the
+<strong>student</strong> machines:</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Clone GitHub assignments repository to local machine</span>
+$<span class="w"> </span>git<span class="w"> </span>clone<span class="w"> </span>git@github.com:nd-cse-30341-fa26/assignments-NOTRE_DAME_NETID.git
+</code></pre></div>
+
+<p>To remotely access your repository from the command-line, you have two options:</p>
+<ol>
+<li>
+<div class="flex-col">
+<p><a href="https://docs.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh/about-ssh">Setup SSH Keys</a>: With this method, you generate a local public
+  and private key pair on your computer and then upload the
+  <strong>public key</strong> to <a href="https://github.com">GitHub</a>.  When accessing <a href="https://github.com">GitHub</a> from the
+  command-line, you will use the <strong>private key</strong> to authenticate
+  to the server.</p>
+<p>This is the <strong>recommended</strong> way to setup your repository as it
+  will allow for <strong>passwordless</strong> access.
+  </div></p>
+</li>
+<li>
+<div class="flex-col">
+<p><a href="https://docs.github.com/en/github/authenticating-to-github/keeping-your-account-and-data-secure/creating-a-personal-access-token">Setup a Personal Access Token</a>: With this method, <a href="https://github.com">GitHub</a> will
+  generate an application specific passsword that you can use
+  with <strong>HTTPS</strong>.  As the <strong>PAT</strong> is a long string of characters,
+  it is recommended that you use it in conjunction with a
+  <strong>password manager</strong> or <strong>keyring</strong>.</p>
+</div>
+</li>
+</ol>
+<div class="alert success-bg" markdown="1">
+<h3 id="key-chain-embed_icon-setup-ssh-keys"><i class="icon icon-medium"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>key-chain</title><path d="M12.67 13.67C12.2 14.13 11.63 14.5 11 14.73V23H8V21H5V18H8V14.72C6.26 14.1 5 12.46 5 10.5C5 8 7 6 9.5 6C9.54 6 9.57 6 9.6 6C9.13 6.95 8.92 8 9.03 9.08C8.44 9.28 8 9.84 8 10.5C8 11.33 8.67 12 9.5 12C9.73 12 9.95 11.94 10.15 11.85C10.79 12.69 11.67 13.32 12.67 13.67M20.73 19.44L17.97 20.6L17.19 18.76L14.43 19.93L13.26 17.16L16.03 16L14.76 13C12.91 13.08 11.11 12.05 10.35 10.25C9.39 7.96 10.47 5.32 12.76 4.35C13 4.25 13.26 4.18 13.5 4.12C12.84 2.87 11.5 2 10 2C7.79 2 6 3.79 6 6C6 6.08 6 6.16 6 6.24C5.7 6.5 5.4 6.82 5.15 7.15C5.06 6.78 5 6.4 5 6C5 3.24 7.24 1 10 1S15 3.24 15 6C15 7.42 14.4 8.67 13.45 9.57C13.87 10 14.5 10.13 15.08 9.88C15.85 9.56 16.2 8.68 15.88 7.92C15.85 7.83 15.8 7.74 15.74 7.66C15.9 7.13 16 6.58 16 6C16 5.37 15.9 4.76 15.72 4.19C17 4.55 18.1 5.44 18.65 6.76C19.41 8.56 18.89 10.57 17.5 11.81L20.73 19.44M13 8.6C13.37 8.19 13.65 7.71 13.82 7.18C13.28 7.45 12.97 8 13 8.6Z" /></svg>
+</i> Setup SSH Keys<a class="headerlink" href="#key-chain-embed_icon-setup-ssh-keys" title="Permanent link">&para;</a></h3>
+<p>Here is a quick tutorial on how to <a href="https://docs.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh/about-ssh">Setup SSH Keys</a> on the <strong>student
+machines</strong> (<em>if you have not already</em>):</p>
+<ol>
+<li>
+<div class="flex-col">
+<p>Generate SSH keys if you don't have them yet:</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Accept the defaults, don&#39;t make a password if you want to go passwordless</span>
+$<span class="w"> </span>ssh-keygen
+</code></pre></div>
+
+</div>
+</li>
+<li>
+<div class="flex-col">
+<p>Copy the contents of <code>~/.ssh/id_rsa.pub</code> to the SSH Keys section of
+your <a href="https://github.com/settings/keys">GitHub settings page</a>:</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Copy and paste the contents of this file into GitHub</span>
+$<span class="w"> </span>cat<span class="w"> </span>~/.ssh/id_rsa.pub
+</code></pre></div>
+
+</div>
+</li>
+<li>
+<div class="flex-col">
+<p>Edit/create <code>~/.ssh/config</code> to use this key with <a href="https://github.com">GitHub</a>:</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Add the following to your config (replace NOTRE_DAME_NETID)</span>
+$<span class="w"> </span><span class="nv">$EDITOR</span><span class="w"> </span>~/.ssh/config
+Host<span class="w"> </span>github.com
+<span class="w">        </span>User<span class="w"> </span>git
+<span class="w">        </span>Hostname<span class="w"> </span>github.com
+<span class="w">        </span>PreferredAuthentications<span class="w"> </span>publickey
+<span class="w">        </span>IdentityFile<span class="w"> </span>/escnfs/home/NOTRE_DAME_NETID/.ssh/id_rsa
+</code></pre></div>
+
+</div>
+</li>
+</ol>
+<p>Once this is done, you should be able to do <a href="https://git-scm.com/">git</a> operations without a password.
+You will need to accept the host key the first time by typing in "yes".
+</div></p>
+</div>
+</li>
+</ol>
+<div class="alert danger-bg">
+<h3 id="github-embed_icon-github-repository"><i class="icon icon-medium"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>github</title><path d="M12,2A10,10 0 0,0 2,12C2,16.42 4.87,20.17 8.84,21.5C9.34,21.58 9.5,21.27 9.5,21C9.5,20.77 9.5,20.14 9.5,19.31C6.73,19.91 6.14,17.97 6.14,17.97C5.68,16.81 5.03,16.5 5.03,16.5C4.12,15.88 5.1,15.9 5.1,15.9C6.1,15.97 6.63,16.93 6.63,16.93C7.5,18.45 8.97,18 9.54,17.76C9.63,17.11 9.89,16.67 10.17,16.42C7.95,16.17 5.62,15.31 5.62,11.5C5.62,10.39 6,9.5 6.65,8.79C6.55,8.54 6.2,7.5 6.75,6.15C6.75,6.15 7.59,5.88 9.5,7.17C10.29,6.95 11.15,6.84 12,6.84C12.85,6.84 13.71,6.95 14.5,7.17C16.41,5.88 17.25,6.15 17.25,6.15C17.8,7.5 17.45,8.54 17.35,8.79C18,9.5 18.38,10.39 18.38,11.5C18.38,15.32 16.04,16.16 13.81,16.41C14.17,16.72 14.5,17.33 14.5,18.26C14.5,19.6 14.5,20.68 14.5,21C14.5,21.27 14.66,21.59 15.17,21.5C19.14,20.16 22,16.42 22,12A10,10 0 0,0 12,2Z" /></svg>
+</i> GitHub Repository<a class="headerlink" href="#github-embed_icon-github-repository" title="Permanent link">&para;</a></h3>
+<p>You are responsible for ensuring that your <a href="https://github.com">GitHub</a> assignments repository
+is in proper order, which means you have the correct settings and
+permissions set.  Failure to properly configure your repository will
+adversely impact your grade.</p>
+</div>
+<h2 id="task-3-reading">Task 3: Reading<a class="headerlink" href="#task-3-reading" title="Permanent link">&para;</a></h2>
+<div class="flex-row">
+<div class="flex-col">
+<p>The readings for <strong>Tuesday, August 25</strong> are:</p>
+<ol>
+<li>
+<div class="flex-col">
+<p><a href="http://pages.cs.wisc.edu/~remzi/OSTEP/">Operating Systems: Three Easy Pieces</a></p>
+<ol>
+<li><a href="http://pages.cs.wisc.edu/~remzi/OSTEP/dialogue-threeeasy.pdf">A Dialogue on the Book</a></li>
+<li><a href="http://pages.cs.wisc.edu/~remzi/OSTEP/intro.pdf">Introduction to Operating Systems</a></li>
+</ol>
+</li>
+<li>
+<div class="flex-col">
+<p><a href="https://opensource.com/article/17/2/linux-boot-and-startup">An introduction to the Linux boot and startup processes</a> and <a href="https://bytebytego.com/guides/linux-boot-process-explained/">Linux Boot Process Explained</a></p>
+</li>
+</ol>
+<h3 id="optional-ai-conversation">Optional AI Conversation<a class="headerlink" href="#optional-ai-conversation" title="Permanent link">&para;</a></h3>
+<p>Using <a href="https://learning.google.com/experiments/learn-about">Learn About from Google</a> (<em>or your preferred AI agent</em>), have a
+conversation using the following prompts:</p>
+<blockquote>
+<ol>
+<li>
+<p>Explain the following core themes of an operating system:
+  virtualization, concurrency, persistence.</p>
+</li>
+<li>
+<p>Describe the typical boot process of a <a href="https://kernel.org">Linux</a> system.</p>
+</li>
+<li>
+<p>Provide a brief summary of the different types of operating systems
+used in computing.</p>
+</li>
+<li>
+<p>Summarize the differences between a microkernel and a monolithic
+kernel and the historical importance of these approaches.</p>
+</li>
+</ol>
+</blockquote>
+<p>As you explore, feel free to dive into any suggested related questions.</p>
+</div>
+<div class="flex-col-25 centered">
+  <img src="static/img/ostep.jpg">
+</div>
+</div>
+<div class="alert caution-bg">
+<p><strong>Note</strong>: As this is the first week of class, don't worry if you don't get
+  the readings done by Tuesday.  Try to turn in the assignment by the <strong>end
+  of the week</strong>.</p>
+</div>
+<h2 id="task-4-quiz">Task 4: Quiz<a class="headerlink" href="#task-4-quiz" title="Permanent link">&para;</a></h2>
+<p>Once you have done the <strong>Readings</strong>, answer the following <a href="static/json/reading01.json">Reading 01 Quiz</a>
+questions:</p>
+<div id="quiz-questions"></div>
+
+<div id="quiz-responses"></div>
+
+<script src="static/js/dredd-quiz.js"></script>
+<script>
+loadQuiz('static/json/reading01.json');
+</script>
+
+<pre style="display: none;" id="dr-container" class="codehilite"><code id="dredd-response"></code></pre>
+
+<h3 id="program">Program<a class="headerlink" href="#program" title="Permanent link">&para;</a></h3>
+<p>In addition to a <a href="https://dredd.h4x0r.space">dredd</a> quiz, each reading will also have a short <a href="https://en.wikipedia.org/wiki/C_(programming_language)">C</a>
+program associated with each assignment.  For this week, you are to modify
+<code>program.c</code> in <code>reading01</code> to print out <code>True</code> or <code>False</code> for each of the
+following statements:</p>
+<ol>
+<li>
+<p>Students cannot drop any <strong>readings</strong>.</p>
+</li>
+<li>
+<p>There are six group projects in this course.</p>
+</li>
+<li>
+<p>There are two in-class <strong>exams</strong> in this course.</p>
+</li>
+<li>
+<p>Students are expected to <strong>attend</strong> class regularly and on-time.</p>
+</li>
+<li>
+<p>There are no <strong>deadlines</strong> in this class.</p>
+</li>
+<li>
+<p>Students are expected to be <strong>respectful</strong> of their fellow classmates
+and the instructional staff.</p>
+</li>
+<li>
+<p>There is no <strong>video capture</strong> for this class.</p>
+</li>
+<li>
+<p>The course <strong>textbook</strong> is free and available online.</p>
+</li>
+<li>
+<p>Students may consult online <strong>references</strong> or copy from <strong>resources</strong> if
+properly cited.</p>
+</li>
+<li>
+<p>Students may consult or copy from <strong>solutions</strong> found online or from
+other students.</p>
+</li>
+<li>
+<p>Students may consult <strong>ChatGPT</strong>, <strong>Co-Pilot</strong>, or other AI-based tools
+for explaining concepts, debugging problems, or as a reference.</p>
+</li>
+<li>
+<p>Students may generate solutions with <strong>ChatGPT</strong>, <strong>Co-Pilot</strong>, or
+other AI-based tools to do programming assignments.</p>
+</li>
+</ol>
+<div class="alert success-bg">
+<p><strong>Note</strong>: Simply print <code>True</code> or <code>False</code> for each question (<em>each answer on
+its own line with no trailing space</em>).</p>
+</div>
+<p>To test your <code>program.c</code>, you should be able to use <code>make</code>:</p>
+<div class="codehilite"><pre><span></span><code>$<span class="w"> </span>make<span class="w"> </span>test-program
+Testing<span class="w"> </span>reading01<span class="w"> </span>program<span class="w"> </span>...
+<span class="w">  </span>Score<span class="w"> </span><span class="m">12</span>.00<span class="w"> </span>/<span class="w"> </span><span class="m">12</span>.00
+<span class="w">  </span>Grade<span class="w">  </span><span class="m">1</span>.00<span class="w"> </span>/<span class="w">  </span><span class="m">1</span>.00
+<span class="w"> </span>Status<span class="w"> </span>Success
+</code></pre></div>
+
+<h3 id="submission">Submission<a class="headerlink" href="#submission" title="Permanent link">&para;</a></h3>
+<p>To check your quiz answers, you will need create a <code>answers.json</code> or
+<code>answers.yaml</code> file in the <code>reading01</code> folder of your <strong>assignments</strong>
+repository:</p>
+<ol>
+<li>
+<div class="flex-col">
+<p>For this class, you must use a <strong>separate <a href="https://git-scm.com/">git</a> branch for each
+assignment</strong>.  This means that the work for each reading and
+challenge must be done in a separate branch.  To create and
+checkout a new branch, you can do the following:</p>
+<div class="codehilite"><pre><span></span><code>$<span class="w"> </span>git<span class="w"> </span>switch<span class="w"> </span>master<span class="w">           </span><span class="c1"># Make sure we are in master branch</span>
+$<span class="w"> </span>git<span class="w"> </span>pull<span class="w"> </span>--rebase<span class="w">           </span><span class="c1"># Make sure we are up-to-date with GitHub repository</span>
+
+$<span class="w"> </span>git<span class="w"> </span>switch<span class="w"> </span>-c<span class="w"> </span>reading01<span class="w">     </span><span class="c1"># Create reading01 branch and switch to it</span>
+</code></pre></div>
+
+<p>Once you do the above, you should see the following output for the
+<a href="https://git-scm.com/docs/git-branch">git-branch</a> command:</p>
+<div class="codehilite"><pre><span></span><code>$<span class="w"> </span>git<span class="w"> </span>branch
+<span class="w">  </span>master
+*<span class="w"> </span>reading01
+</code></pre></div>
+
+<p>The <code>*</code> indicates that we are currently on the <code>reading01</code> branch.</p>
+<div class="alert warning-bg" markdown="1">
+<p><strong>Note</strong>: Please update the <code>README.md</code> file to include your <strong>name</strong>
+and <strong>NetID</strong> so it is straightforward to identify your account.</p>
+</div>
+</div>
+</li>
+<li>
+<div class="flex-col">
+<p>You can either hand-write the <code>answers</code> file using your favorite text
+editor or you can use the online form to generate the <a href="http://www.json.org/">JSON</a> data.</p>
+<p>A hand-written <code>answers.yaml</code> may look like the following:</p>
+<div class="codehilite"><pre><span></span><code><span class="nt">q1</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">telemetry</span><span class="p p-Indicator">]</span>
+<span class="nt">q2</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">scalability</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">processor</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mouse</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">keyboard</span>
+
+<span class="nt">q3</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">functions</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">call</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">awesome</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">lame</span>
+
+<span class="nt">q4</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">iOS</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">monitoring</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">iphones</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">NSA</span>
+
+<span class="nt">q5</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">init</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">bios</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">kernel</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">bootloader</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">mbr</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+
+<p>The equivalent <code>answers.json</code> generated using the online form may look
+like the following:</p>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;q1&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;telemetry&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;q2&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="s2">&quot;scalability&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;processor&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;mouse&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;keyboard&quot;</span>
+<span class="w">  </span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;q3&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="s2">&quot;functions&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;call&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;awesome&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;lame&quot;</span>
+<span class="w">  </span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;q4&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="s2">&quot;iOS&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;monitoring&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;iphones&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;NSA&quot;</span>
+<span class="w">  </span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;q5&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="s2">&quot;init&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;bios&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;kernel&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;bootloader&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;mbr&quot;</span>
+<span class="w">  </span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>You may use either format.  To determine which symbols correspond to
+which response, take a look at the <a href="static/json/reading01.json">Reading 01 Quiz</a> file.</p>
+<p>To check your answers, you can use the provided <code>.scripts/check.py</code>
+script:</p>
+<div class="codehilite"><pre><span></span><code>$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>reading01<span class="w">                        </span><span class="c1"># Go into reading01 folder</span>
+$<span class="w"> </span><span class="nv">$EDITOR</span><span class="w"> </span>answers.json<span class="w">                </span><span class="c1"># Edit your answers.json file</span>
+
+$<span class="w"> </span>../.scripts/check.py<span class="w">                </span><span class="c1"># Check reading01</span>
+Checking<span class="w"> </span>reading01<span class="w"> </span>quiz<span class="w"> </span>...
+<span class="w">      </span>Q1<span class="w">  </span><span class="m">0</span>.00<span class="w"> </span>/<span class="w">  </span><span class="m">3</span>.00
+<span class="w">      </span>Q2<span class="w">  </span><span class="m">1</span>.00<span class="w"> </span>/<span class="w">  </span><span class="m">4</span>.00
+<span class="w">      </span>Q3<span class="w">  </span><span class="m">0</span>.00<span class="w"> </span>/<span class="w">  </span><span class="m">4</span>.00
+<span class="w">      </span>Q4<span class="w">  </span><span class="m">0</span>.00<span class="w"> </span>/<span class="w">  </span><span class="m">4</span>.00
+<span class="w">      </span>Q5<span class="w">  </span><span class="m">1</span>.00<span class="w"> </span>/<span class="w">  </span><span class="m">5</span>.00
+<span class="w">   </span>Score<span class="w">  </span><span class="m">2</span>.00<span class="w"> </span>/<span class="w"> </span><span class="m">20</span>.00
+<span class="w">   </span>Grade<span class="w">  </span><span class="m">1</span>.00<span class="w"> </span>/<span class="w">  </span><span class="m">1</span>.00
+<span class="w">  </span>Status<span class="w"> </span>Failure
+</code></pre></div>
+
+<p>This script will check your <code>reading01/answers.json</code> file to <a href="https://dredd.h4x0r.space">dredd</a>,
+which is the automated grading system.  <a href="https://dredd.h4x0r.space">dredd</a> will take your answers
+and return to you a score as shown above.</p>
+<div class="alert success-bg" markdown="1">
+<p><strong>Note</strong>: <code>Score</code> is how many points you received out of the maximum
+number of attempted points, while <code>Grade</code> is the amount of normalized
+points that will be recorded on <strong>Canvas</strong>.</p>
+<p>Moreover, <code>Status</code> is <code>Success</code> if you have achieved full credit
+(otherwise, it will show <code>Failure</code>).</p>
+</div>
+<div class="alert warning-bg" markdown="1">
+<h3 id="repeat-embed_icon-try-try-try-again"><i class="icon icon-medium"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>repeat</title><path d="M17,17H7V14L3,18L7,22V19H19V13H17M7,7H17V10L21,6L17,2V5H5V11H7V7Z" /></svg>
+</i> Try, Try, Try again<a class="headerlink" href="#repeat-embed_icon-try-try-try-again" title="Permanent link">&para;</a></h3>
+<p>You may check your quiz answers as many times as you want; <a href="https://dredd.h4x0r.space">dredd</a> does
+not keep track of who submits what or how many times. It simply returns a
+score.
+</div></p>
+<p>To test both the quiz and the <code>program.c</code>, you can simply type in <code>make</code>:</p>
+<div class="codehilite"><pre><span></span><code>$<span class="w"> </span>make
+Checking<span class="w"> </span>reading01<span class="w"> </span>quiz<span class="w"> </span>...
+<span class="w">      </span>Q1<span class="w">  </span><span class="m">3</span>.00<span class="w"> </span>/<span class="w">  </span><span class="m">3</span>.00
+<span class="w">      </span>Q2<span class="w">  </span><span class="m">4</span>.00<span class="w"> </span>/<span class="w">  </span><span class="m">4</span>.00
+<span class="w">      </span>Q3<span class="w">  </span><span class="m">4</span>.00<span class="w"> </span>/<span class="w">  </span><span class="m">4</span>.00
+<span class="w">      </span>Q4<span class="w">  </span><span class="m">4</span>.00<span class="w"> </span>/<span class="w">  </span><span class="m">4</span>.00
+<span class="w">      </span>Q5<span class="w">  </span><span class="m">5</span>.00<span class="w"> </span>/<span class="w">  </span><span class="m">5</span>.00
+<span class="w">  </span>--------------------
+<span class="w">   </span>Score<span class="w"> </span><span class="m">20</span>.00<span class="w"> </span>/<span class="w"> </span><span class="m">20</span>.00
+<span class="w">   </span>Grade<span class="w">  </span><span class="m">1</span>.00<span class="w"> </span>/<span class="w">  </span><span class="m">1</span>.00
+<span class="w">  </span>Status<span class="w"> </span>Success
+
+Testing<span class="w"> </span>reading01<span class="w"> </span>program<span class="w"> </span>...
+<span class="w">   </span>Score<span class="w"> </span><span class="m">12</span>.00<span class="w"> </span>/<span class="w"> </span><span class="m">12</span>.00
+<span class="w">   </span>Grade<span class="w">  </span><span class="m">1</span>.00<span class="w"> </span>/<span class="w">  </span><span class="m">1</span>.00
+<span class="w">  </span>Status<span class="w"> </span>Success
+
+Grade<span class="w"> </span>Summary<span class="w"> </span>...
+<span class="w">    </span>Quiz<span class="w"> </span><span class="m">0</span>.50<span class="w"> </span>/<span class="w">  </span><span class="m">0</span>.50
+<span class="w"> </span>Program<span class="w"> </span><span class="m">0</span>.50<span class="w"> </span>/<span class="w">  </span><span class="m">0</span>.50
+<span class="w">   </span>Total<span class="w"> </span><span class="m">1</span>.00<span class="w"> </span>/<span class="w">  </span><span class="m">1</span>.00
+<span class="w">  </span>Status<span class="w"> </span>Success
+</code></pre></div>
+
+</div>
+</li>
+<li>
+<div class="flex-col">
+<p>Once you have your answers file and your <code>program.c</code>, you need to add
+and commit each file, and push your commits to <a href="https://github.com">GitHub</a>:</p>
+<div class="codehilite"><pre><span></span><code>$<span class="w"> </span>git<span class="w"> </span>add<span class="w"> </span>answers.json<span class="w">                </span><span class="c1"># Add answers.json to staging area</span>
+$<span class="w"> </span>git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;Reading 01: Quiz&quot;</span><span class="w">    </span><span class="c1"># Commit quiz</span>
+
+$<span class="w"> </span>git<span class="w"> </span>add<span class="w"> </span>program.c<span class="w">                   </span><span class="c1"># Add program.c to staging area</span>
+$<span class="w"> </span>git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;Reading 01: Code&quot;</span><span class="w">    </span><span class="c1"># Commit program</span>
+
+$<span class="w"> </span>git<span class="w"> </span>push<span class="w"> </span>-u<span class="w"> </span>origin<span class="w"> </span>reading01<span class="w">        </span><span class="c1"># Push branch to GitHub</span>
+</code></pre></div>
+
+<div class="alert success-bg" markdown="1">
+<p><strong>Note</strong>: You may edit and commit changes to your branch as many times
+as you wish.  Just make sure all of your work goes in the appropriate
+branch and then perform a <code>git push</code> when you are done.
+</div></p>
+</div>
+</li>
+<li>
+<div class="flex-col">
+<p>When you are ready for your final submission, you need to create a
+<strong>pull request</strong> via the <a href="https://github.com">GitHub</a> interface:</p>
+<ol>
+<li>
+<div class="flex-col">
+<p>First, go to your repository's <strong>Branches</strong> page and then press the
+<strong>New pull request</strong> button for the appropriate branch:</p>
+<p><div class="centered">
+<img src="static/img/reading01-github-branches.png" class="responsive"/>
+</div></p>
+</div>
+</li>
+<li>
+<div class="flex-col">
+<p>Next, edit the <strong>pull request</strong> title to "Reading 01", assign the
+<strong>pull request</strong> to the <strong>teaching assistant</strong> assigned to you for
+the given week, write a comment if necessary, and then press the
+"Create pull request" button.</p>
+<p><div class="centered">
+<img src="static/img/reading01-github-new-pull-request.png" class="responsive"/>
+</div></p>
+</div>
+</li>
+<li>
+<div class="flex-col">
+<p>Finally, make sure all the checks have <strong>passed</strong>.</p>
+<p><div class="centered">
+<img src="static/img/reading01-github-pull-request.png" class="responsive"/>
+</div></p>
+<div class="alert danger-bg" markdown="1">
+<p><strong>Note</strong>: Please <strong>do not merge</strong> your own <strong>pull request</strong>.  This
+  makes it more difficult for the graders to keep track of what
+  needs to be graded.</p>
+</div>
+<p>Every commit on <a href="https://github.com">GitHub</a> will automatically submit your quiz or
+code to <a href="https://dredd.h4x0r.space">dredd</a> and the results of each run is displayed in the
+<strong>Checks</strong> tab of each commit as shown below:</p>
+<p><div class="centered">
+<img src="static/img/reading01-github-checks.png" class="responsive"/>
+</div></p>
+</div>
+</li>
+</ol>
+</div>
+<p>Once you have made the <strong>Pull Request</strong>, the TA can verify your work
+and provide feedback via the discussion form inside the <strong>Pull
+Request</strong>. If necessary, you can update your submission by simply
+commit and pushing to the appropriate branch; the <strong>Pull Request</strong> will
+automatically be updated to match your latest work.</p>
+</li>
+</ol>
+<div class="alert warning-bg">
+<h3 id="lifebuoy-embed_icon-acknowledgments"><i class="icon icon-medium"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>lifebuoy</title><path d="M19.79,15.41C20.74,13.24 20.74,10.75 19.79,8.59L17.05,9.83C17.65,11.21 17.65,12.78 17.06,14.17L19.79,15.41M15.42,4.21C13.25,3.26 10.76,3.26 8.59,4.21L9.83,6.94C11.22,6.35 12.79,6.35 14.18,6.95L15.42,4.21M4.21,8.58C3.26,10.76 3.26,13.24 4.21,15.42L6.95,14.17C6.35,12.79 6.35,11.21 6.95,9.82L4.21,8.58M8.59,19.79C10.76,20.74 13.25,20.74 15.42,19.78L14.18,17.05C12.8,17.65 11.22,17.65 9.84,17.06L8.59,19.79M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,8A4,4 0 0,0 8,12A4,4 0 0,0 12,16A4,4 0 0,0 16,12A4,4 0 0,0 12,8Z" /></svg>
+</i> Acknowledgments<a class="headerlink" href="#lifebuoy-embed_icon-acknowledgments" title="Permanent link">&para;</a></h3>
+<p>If you collaborated with any other students, or received help from TAs or AI
+tools on this assignment, please record this support in the <code>README.md</code> in
+the <code>reading01</code> folder and include it with your <strong>Pull Request</strong>.</p>
+</div>
+<div class="alert success-bg">
+<h3 id="account-question-embed_icon-graders"><i class="icon icon-medium"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>account-question</title><path d="M13,8A4,4 0 0,1 9,12A4,4 0 0,1 5,8A4,4 0 0,1 9,4A4,4 0 0,1 13,8M17,18V20H1V18C1,15.79 4.58,14 9,14C13.42,14 17,15.79 17,18M20.5,14.5V16H19V14.5H20.5M18.5,9.5H17V9A3,3 0 0,1 20,6A3,3 0 0,1 23,9C23,9.97 22.5,10.88 21.71,11.41L21.41,11.6C20.84,12 20.5,12.61 20.5,13.3V13.5H19V13.3C19,12.11 19.6,11 20.59,10.35L20.88,10.16C21.27,9.9 21.5,9.47 21.5,9A1.5,1.5 0 0,0 20,7.5A1.5,1.5 0 0,0 18.5,9V9.5Z" /></svg>
+</i> Graders<a class="headerlink" href="#account-question-embed_icon-graders" title="Permanent link">&para;</a></h3>
+<p>Once you have committed your work and pushed it to <a href="https://github.com">GitHub</a>, remember to
+create a <strong>pull request</strong> and assign it to the appropriate <strong>teaching
+assistant</strong> from the <a href="reading01_tas.html">Reading 01 TA List</a>.</p>
+<p><strong>Note</strong>: this list changes each week, so be sure to consult the appropriate
+list for each assignment.</p>
+</div>
+</main>
+<footer>
+Built using <a href="https://python.org">Python</a>
+and <a href="https://jinja.palletsprojects.com">Jinja</a>
+with colors from 
+<a href="https://onmessage.nd.edu/university-branding/colors/">Notre Dame</a>, 
+<a href="https://spreadsheet.dev/how-to-get-the-hexadecimal-codes-of-colors-in-google-sheets">Google Docs</a>, and 
+<a href="https://nordtheme.com">Nord Theme</a>,
+and icons from <a href="https://pictogrammers.com/library/mdi/">Material Design Icons</a>.</footer>
+</body>
+</html>

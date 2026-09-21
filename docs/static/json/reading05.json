@@ -1,0 +1,45 @@
+{
+    "q1": {
+        "type": "blank",
+        "question": "\n<p>To make a data structure <b>(1)</b> ____, that is ensure it provides\ncorrect concurrent access to data, we can utilize a <b>(2)</b> ____, where\n<b>(3)</b> ____ are acquired and released automatically when you call and\nreturn from object methods.</p>\n"
+    },
+    "q2": {
+        "type": "multiple",
+        "question": "\n<p>Which of the following statements are true regarding implementing\nconcurrent lists, queues, and hash tables (<i>choose all that\napply</i>)?</p>\n",
+        "responses": {
+            "lock": "We should only lock portions of methods that actually access the shared data resources.",
+            "concurrency": "We should generally add more concurrency to make things faster.",
+            "flow": "We should be wary of code that has many returns or exits as that can make it difficult to manage our locks.",
+            "nested": "We should avoid building data structures consisting of nested concurrent data structures due to complexity and performance issues."
+        }
+    },
+    "q3": {
+        "type": "blank",
+        "question": "\n<p>To avoid busy waiting, we can use a <b>(1)</b> ____ to create an\nexplicit queue that threads can put themselves on when some state of\nexecution is not as desired.  When another thread changes said state, it\ncan wake a <b>(2)</b> ____ thread and allow them to continue by <b>(3)</b>\n____ on the object.</p>\n"
+    },
+    "q4": {
+        "type": "order",
+        "question": "\n<p>Order the following actions to describe what happens when a thread calls\n<code>pthread_cond_wait(&cond, &lock)</code>.</p>\n\n</strong>\n",
+        "responses": {
+            "suspends": "The calling thread suspends execution (is put to sleep).",
+            "releases": "The calling thread releases the <code>lock</code>.",
+            "acquires": "The calling thread acquires the <code>lock</code>.",
+            "resumes": "The calling thread resumes execution (is woken up)."
+        }
+    },
+    "q5": {
+        "type": "multiple",
+        "question": "\n<p>Regarding the producer / consumer implementation in <b>Figure 30.6</b>,\nwhy is it considered a broken solution (<i>choose all that apply</i>)?</p>\n",
+        "responses": {
+            "early": "To prevent from waking up too early, the condition variable should be locked.",
+            "critical": "It is possible for multiple threads to be in the critical section.",
+            "waiting": "The code waits while holding the mutex.",
+            "change": "It is possible for the state of the bounded before to change between when a thread is signaled and when it is woken up.",
+            "signal": "The code signals all threads rather than having producers notifying consumers and consumers notifying producers."
+        }
+    },
+    "q6": {
+        "type": "blank",
+        "question": "\n<p>To fix the broken solution in <b>Figure 30.6</b>, we first need to use\n<b>(1)</b> ____ to check the condition.  Doing so will allow us to handle\n<b>(2)</b> ____, which happens when a multiple threads are woken up even\nthough only one signal has taken place.  Second, we need to have two\nconditions such that the producer waits on the <b>(3)</b> ____ condition\nand signals <b>(4)</b> ____.  Conversely, the consumer waits on <b>(5)</b>\n____ and signals <b>(6)</b> ____.</p>\n"
+    }
+}

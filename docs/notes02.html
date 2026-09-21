@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Favicon -->
+<link rel="icon" type="image/png" sizes="32x32" href="static/ico/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="static/ico/favicon-16x16.png">
+<link rel="manifest" href="static/ico/site.webmanifest">
+<!-- Stylesheets -->
+<link rel="stylesheet" href="static/css/domer.css">
+<title>Notes 02: OS Taxonomy, History, Themes</title>
+</head>
+<body>
+<header>
+<a class="logo" href="notes02.html">
+    <h1>Notes 02: OS Taxonomy, History, Themes</h1>
+</a>
+<nav>
+    <ul>
+        <li><a href="index.html"><h4>Home</h4></a></li>
+        </ul>
+</nav></header>
+<main>
+<h2 id="logistics">Logistics<a class="headerlink" href="#logistics" title="Permanent link">&para;</a></h2>
+<ul>
+<li>
+<p><a href="https://www.zdnet.com/article/just-a-hobby-linus-torvalds-introduced-linux-35-years-ago-almost-called-it-freax/">Linux is 35 YRO</a></p>
+</li>
+<li>
+<div class="flex-col" markdown="1">
+<p><a href="project01.html">Project 01</a></p>
+<ul>
+<li>Due Dates, grace periods</li>
+<li>System Calls and Forking</li>
+<li>
+<p>Create a bunch of tasks and manage them (<em>scheduling</em>)</p>
+</li>
+<li>
+<p><strong>Deliverables</strong>: Video (<em>Reflect and think</em>), Individual Quiz
+(<em>Foreshadoing exam questions</em>), Interview (<em>System Design</em>)</p>
+</li>
+<li>
+<p><strong>Brainstorming</strong>: Not required, but should help guide</p>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="os-taxonomy-by-purpose">OS Taxonomy: <span class="gold">By Purpose</span><a class="headerlink" href="#os-taxonomy-by-purpose" title="Permanent link">&para;</a></h2>
+<div class="flex-row">
+<div class="flex-col">
+<h3 id="mainframe"><span class="danger">Mainframe</span><a class="headerlink" href="#mainframe" title="Permanent link">&para;</a></h3>
+<p>Process many jobs or tasks at once (<em>time-sharing, transaction processing, batch</em>)</p>
+<div class="centered">
+    <img src="https://images.computerhistory.org/revonline/images/500004505-03-01.jpg?w=400" class="responsive">
+</div>
+<div class="alert info-bg">
+<p><strong>COBOL</strong> still alive today.</p>
+</div>
+</div>
+<div class="flex-col">
+<h3 id="server"><span class="success">Server</span><a class="headerlink" href="#server" title="Permanent link">&para;</a></h3>
+<p>Provide services to multiple users (<em>print, filesharing, web, etc.</em>)</p>
+<div class="centered">
+    <img src="https://i.dell.com/is/image/DellContent//content/dam/images/products/servers/poweredge/r440/dellemc-per440-8x2-5-lcd-above-ff.psd?fmt=png-alpha&pscan=auto&scl=1&hei=402&wid=1344&qlt=100,1&resMode=sharp2&size=1344,402&chrss=full" class="transparent responsive">
+</div>
+<div class="alert success-bg">
+<p><strong>Optimize</strong> for <strong>high throughput</strong>.</p>
+</div>
+</div>
+</div>
+<div class="flex-row">
+<div class="flex-col">
+<h3 id="personal"><span class="special">Personal</span><a class="headerlink" href="#personal" title="Permanent link">&para;</a></h3>
+<p>Support a single user (like your <em>laptop</em> or <em>desktop</em>)</p>
+<div class="centered">
+    <img src="https://i.dell.com/is/image/DellContent//content/dam/ss2/product-images/dell-client-products/notebooks/latitude-notebooks/14-7420-2in1/media-gallery/la7420t_ctb_00030rf120_bk_5000x5000_gettyimages-1197597312_revised.psd?fmt=png-alpha&pscan=auto&scl=1&wid=4652&hei=2777&qlt=100,1&resMode=sharp2&size=4652,2777&chrss=full&imwidth=420" class="transparent responsive">
+</div>
+<div class="alert success-bg">
+<p><strong>Optimize</strong> for <strong>low latency</strong>.</p>
+</div>
+</div>
+<div class="flex-col">
+<h3 id="handheld"><span class="caution">Handheld</span><a class="headerlink" href="#handheld" title="Permanent link">&para;</a></h3>
+<p>Usually found in <em>PDAs</em> or <em>mobile phones</em></p>
+<div class="centered">
+    <img src="https://p4-ofp.static.pub//fes/cms/2024/08/28/82b5rafgf57ap23fcdgtk1i9hxek5u880251.png" class="transparent responsive">
+</div>
+<div class="alert success-bg">
+<p><strong>Optimize</strong> for <strong>low power/heat</strong>.</p>
+</div>
+</div>
+</div>
+<div class="flex-row">
+<div class="flex-col">
+<h3 id="embedded"><span class="primary">Embedded</span><a class="headerlink" href="#embedded" title="Permanent link">&para;</a></h3>
+<p>Run on resource constrained devices that are not usually used for general
+purpose computing (<em>TVs, cars, microwaves, etc.</em>)</p>
+<div class="centered">
+<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/QNX-Logo-QNX-CORAL-RGB.svg/960px-QNX-Logo-QNX-CORAL-RGB.svg.png?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=thumbnail" class="transparent responsive">
+</div>
+</div>
+<div class="flex-col">
+<h3 id="real-time"><span class="warning">Real-time</span><a class="headerlink" href="#real-time" title="Permanent link">&para;</a></h3>
+<p>Provide absolute guarantees that a certain action will occur by a certain time.</p>
+<div class="centered">
+<img src="https://www.windriver.com/sites/default/files/styles/hero_1024x480/public/posts/VxWorks-logo.png?itok=v8iPm_Lb" class="transparent responsive">
+</div>
+<div class="alert info-bg">
+<p><strong>Optimize</strong> for <strong>reliability / consistency</strong>.</p>
+</div>
+</div>
+</div>
+<h2 id="os-taxonomy-by-structure">OS Taxonomy: <span class="gold">By Structure</span><a class="headerlink" href="#os-taxonomy-by-structure" title="Permanent link">&para;</a></h2>
+<div class="flex-row">
+<div class="flex-col">
+<h3 id="monolithic"><span class="danger">Monolithic</span><a class="headerlink" href="#monolithic" title="Permanent link">&para;</a></h3>
+<p>A <strong>single</strong> program running in <strong>kernel</strong> mode.</p>
+</div>
+<div class="flex-col">
+<h3 id="microkernel"><span class="success">Microkernel</span><a class="headerlink" href="#microkernel" title="Permanent link">&para;</a></h3>
+<p><strong>Multiple</strong> programs working together with the help of a <em>privileged</em>
+<strong>intermediary</strong>.</p>
+</div>
+</div>
+<div class="centered">
+
+<a title="Wooptoo, Public domain, via Wikimedia Commons" href="https://commons.wikimedia.org/wiki/File:OS-structure.svg"><img alt="Différences entre systèmes d&#039;exploitation à noyau monolithique et à micro-noyau" src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/OS-structure.svg/960px-OS-structure.svg.png?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=thumbnail" class="transparent responsive"></a>
+
+</div>
+
+<h2 id="os-taxonomy-tanenbaum-vs-torvalds">OS Taxonomy: <span class="gold">Tanenbaum vs Torvalds</span><a class="headerlink" href="#os-taxonomy-tanenbaum-vs-torvalds" title="Permanent link">&para;</a></h2>
+<ul>
+<li>
+<div class="flex-col">
+<p>Who won? <strong>Both?</strong></p>
+<ul>
+<li>
+<p><em>Minix</em> is used in <a href="https://en.wikipedia.org/wiki/Intel_Management_Engine">Intel Management Engine</a></p>
+</li>
+<li>
+<p><em>macOS</em>, <em>Windows</em> are <em>hybrid</em>.</p>
+</li>
+<li>
+<p>Talk is cheap.  Show me the code -- <strong>Linus</strong></p>
+</li>
+<li>
+<p>Performance matters.</p>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="os-history-numerical-analysis">OS History: <span class="gold">Numerical Analysis</span><a class="headerlink" href="#os-history-numerical-analysis" title="Permanent link">&para;</a></h2>
+<div class="centered">
+
+<img src="https://media.datacenterdynamics.com/media/images/eniac4.width-880.png" class="transparent responsive">
+
+The <strong class="caution">operating system</strong> did not exist yet...
+
+</div>
+
+<div class="alert info-bg">
+<p><strong>Vacuum Tubes</strong>.</p>
+</div>
+<h2 id="os-history-batch-computing">OS History: <span class="gold">Batch Computing</span><a class="headerlink" href="#os-history-batch-computing" title="Permanent link">&para;</a></h2>
+<div class="centered">
+
+<iframe width="450" height="240" src="https://www.youtube.com/embed/1C5lc2GIisQ" title="Hidden Figures Scene: Dorothy fixes the IBM" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+<br>
+
+<strong class="caution">Operating systems</strong> (*usually some sort of library*) were
+charged with <strong class="success">processing batches of tasks</strong> (*compile, load,
+run, output*).
+
+</div>
+
+<div class="alert info-bg">
+<p><strong>Transistor</strong>.</p>
+</div>
+<div class="alert caution-bg">
+<p>Idea of a minimal <strong>kernel</strong> lives on in <strong>exokernel</strong> or <strong>rumpkernel</strong>
+projects.</p>
+</div>
+<h2 id="os-history-multiprogramming">OS History: <span class="gold">Multiprogramming</span><a class="headerlink" href="#os-history-multiprogramming" title="Permanent link">&para;</a></h2>
+<div class="flex-row">
+<div class="flex-col">
+<ul>
+<li>
+<p><strong class="success">Multiprogramming</strong>: Enable multiple tasks to
+run <strong>concurrently</strong></p>
+</li>
+<li>
+<p><strong class="danger">Memory Protection</strong>: Disallow one task from
+<strong>manipulating data</strong> of another task</p>
+</li>
+<li>
+<p><strong class="caution">Time-Sharing</strong>: Split processing time among
+<strong>multiple users</strong></p>
+</li>
+</ul>
+<div class="alert info-bg">
+<p><strong>Integrated circuit</strong>.</p>
+</div>
+</div>
+<div class="flex-col">
+<p><img src="https://gunkies.org/w/images/1/14/CISLMultics.jpg" class="transparent responsive" alt="Multics"></p>
+<p><img src="https://cdn-blog.adafruit.com/uploads/2022/03/Untitled-55.png" class="transparent responsive"></p>
+</div>
+</div>
+<h2 id="os-history-personal-computers">OS History: <span class="gold">Personal Computers</span><a class="headerlink" href="#os-history-personal-computers" title="Permanent link">&para;</a></h2>
+<div class="centered">
+
+<img src="static/img/slides02-os-family-tree.png" class="transparent responsive">
+
+</div>
+
+<h2 id="os-themes-an-operating-system-is">OS Themes: <span class="gold">An Operating System is...</span><a class="headerlink" href="#os-themes-an-operating-system-is" title="Permanent link">&para;</a></h2>
+<p>A <strong class="caution">body of software</strong> that enables other programs
+to interact with each other and the <strong class="info">physical hardware
+resources</strong> in an efficient manner.  To do this, it utilizes:</p>
+<ul>
+<li>
+<p><strong class="success">Virtualization</strong></p>
+</li>
+<li>
+<p><strong class="danger">Concurrency</strong></p>
+</li>
+<li>
+<p><strong class="info">Persistence</strong></p>
+</li>
+</ul>
+<h2 id="os-themes-virtualization">OS Themes: <span class="gold">Virtualization</span><a class="headerlink" href="#os-themes-virtualization" title="Permanent link">&para;</a></h2>
+<p>This is when the <strong class="caution">OS</strong> takes a <strong
+class="info">physical resource</strong> and transforms it into a more
+general, powerful, and easy-to-use <strong
+class="success">abstraction</strong>.</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Create spin script</span>
+$<span class="w"> </span>cat<span class="w"> </span>&gt;<span class="w"> </span>spin.sh<span class="w"> </span><span class="s">&lt;&lt;EOF</span>
+<span class="s">#!/bin/sh</span>
+<span class="s">while true; do</span>
+<span class="s">    echo $1</span>
+<span class="s">    sleep 1</span>
+<span class="s">done</span>
+<span class="s">EOF</span>
+
+<span class="c1"># Make script executable</span>
+$<span class="w"> </span>chmod<span class="w"> </span>+x<span class="w"> </span>spin.sh
+
+<span class="c1"># Run multiple processes</span>
+$<span class="w"> </span>./spin.sh<span class="w"> </span>A<span class="w"> </span><span class="p">&amp;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>./spin.sh<span class="w"> </span>B<span class="w"> </span><span class="p">&amp;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>./spin.sh<span class="w"> </span>C<span class="w"> </span><span class="p">&amp;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>./spin.sh<span class="w"> </span>D
+</code></pre></div>
+
+<div class="alert info-bg centered">
+<p>What is being <strong>virtualized</strong>?</p>
+<p><strong>CPU (<em>HW</em>)</strong> -&gt; <strong>Process (<em>Abstraction</em>)</strong></p>
+</div>
+<div class="alert warning-bg centered">
+<p>Do you observe anything <strong>weird</strong> with the <strong>output</strong>?</p>
+<p><strong>CPU (<em>HW</em>)</strong> -&gt; <strong>Process (<em>Abstraction</em>)</strong></p>
+</div>
+<div class="alert danger-bg centered">
+<p>How do we <strong>stop</strong> the <strong>processes</strong>?</p>
+<p>pkill -9 spin.sh</p>
+</div>
+<h2 id="os-themes-concurrency">OS Themes: <span class="gold">Concurrency</span><a class="headerlink" href="#os-themes-concurrency" title="Permanent link">&para;</a></h2>
+<p>This is when you have multiple tasks <strong
+class="success">executing</strong> and <strong class="caution">utilizing
+resources</strong> in <strong>overlapping time periods</strong>.</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Create inc script</span>
+$<span class="w"> </span>cat<span class="w"> </span>&gt;<span class="w"> </span>inc.sh<span class="w"> </span><span class="s">&lt;&lt;EOF</span>
+<span class="s">#!/bin/sh</span>
+<span class="s">[ ! -r count ] &amp;&amp; echo 0 &gt; count  # Test command, short circuit evaluation</span>
+
+<span class="s">while true; do</span>
+<span class="s">    c=$(cat count)                # Command substitution</span>
+<span class="s">    echo $(($c + 1)) | tee count  # Arithmetic, pipelining</span>
+<span class="s">    sleep 1</span>
+<span class="s">done</span>
+<span class="s">EOF</span>
+
+<span class="c1"># Run multiple processes</span>
+$<span class="w"> </span>./inc.sh<span class="w"> </span>A<span class="w"> </span><span class="p">&amp;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>./inc.sh<span class="w"> </span>B<span class="w"> </span><span class="p">&amp;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>./inc.sh<span class="w"> </span>C<span class="w"> </span><span class="p">&amp;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>./inc.sh<span class="w"> </span>D
+</code></pre></div>
+
+<div class="alert warning-bg centered">
+<p>Do you notice any <strong>issues</strong> when running <strong>concurrently</strong>?</p>
+<p><strong>Repeats</strong> due to <strong>race condition</strong></p>
+</div>
+<h2 id="os-themes-persistence">OS Themes: <span class="gold">Persistence</span><a class="headerlink" href="#os-themes-persistence" title="Permanent link">&para;</a></h2>
+<p>This is the ability to <strong class="caution">access</strong> and <strong
+class="warning">store</strong> data in a <strong
+class="success">reliable</strong> and <strong
+class="success">efficient</strong> manner.</p>
+<div class="codehilite"><pre><span></span><code><span class="c1">// For each command line argument, open the file and</span>
+<span class="c1">// perform cat on the file descriptor</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">argv</span><span class="p">[])</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">argc</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="n">cat_fd</span><span class="p">(</span><span class="n">STDIN_FILENO</span><span class="p">);</span>
+
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">argc</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kt">int</span><span class="w"> </span><span class="n">fd</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="n">open</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="w"> </span><span class="n">O_RDONLY</span><span class="p">);</span>
+<span class="w">        </span><span class="n">result</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="p">(</span><span class="n">fd</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="n">cat_fd</span><span class="p">(</span><span class="n">fd</span><span class="p">)</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">EXIT_FAILURE</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">result</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1">// Read a chunk from the file descriptor and</span>
+<span class="c1">// write it to stdout</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">cat_fd</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">fd</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kt">char</span><span class="w"> </span><span class="n">buffer</span><span class="p">[</span><span class="n">BUFSIZ</span><span class="p">];</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">nread</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">while</span><span class="w"> </span><span class="p">((</span><span class="n">nread</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">read</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span><span class="w"> </span><span class="n">buffer</span><span class="p">,</span><span class="w"> </span><span class="n">BUFSIZ</span><span class="p">))</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// TODO: Check if write fails</span>
+<span class="w">        </span><span class="n">write</span><span class="p">(</span><span class="n">STDOUT_FILENO</span><span class="p">,</span><span class="w"> </span><span class="n">buffer</span><span class="p">,</span><span class="w"> </span><span class="n">nread</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">close</span><span class="p">(</span><span class="n">fd</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<div class="alert info-bg centered">
+<p>How to check which <strong>system calls</strong> are used?</p>
+<p><strong>strace</strong></p>
+</div>
+<h2 id="os-themes-hardware-os-symbiosis">OS Themes: <span class="gold">Hardware / OS Symbiosis</span><a class="headerlink" href="#os-themes-hardware-os-symbiosis" title="Permanent link">&para;</a></h2>
+<p>Computer <strong class="info">hardware</strong> provides both <strong
+class="danger">limitations</strong> and <strong
+class="success">opportunities</strong> for the <strong
+class="caution">operating system</strong>, which is in charge of managing these
+resources efficiently on behalf of the <strong
+class="special">applications</strong>.</p>
+<div class="centered">
+<img src="static/img/house-of-cards.png" class="responsive transparent">
+</div>
+
+<p>As <strong class="info">hardware</strong> evolves, so must the <strong
+class="caution">operating system</strong> in order for it to take advantage of
+new developments and expose them to <strong
+class="special">applications</strong>.</p>
+</main>
+<footer>
+Built using <a href="https://python.org">Python</a>
+and <a href="https://jinja.palletsprojects.com">Jinja</a>
+with colors from 
+<a href="https://onmessage.nd.edu/university-branding/colors/">Notre Dame</a>, 
+<a href="https://spreadsheet.dev/how-to-get-the-hexadecimal-codes-of-colors-in-google-sheets">Google Docs</a>, and 
+<a href="https://nordtheme.com">Nord Theme</a>,
+and icons from <a href="https://pictogrammers.com/library/mdi/">Material Design Icons</a>.</footer>
+</body>
+</html>

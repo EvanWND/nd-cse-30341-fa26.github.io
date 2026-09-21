@@ -1,0 +1,63 @@
+{
+    "q1": {
+        "type": "blank",
+        "question": "\n<p>Modern operating systems use a basic technique known as <b>(1)</b> ____,\nwhich allows users to run as many concurrent processes as they would like\non a single <b>(2)</b> ____.  To do this, the OS will need to employ\nlow-level <b>(3)</b> ____ or methods such as a <b>(4)</b> ____, which gives\nthe OS the ability to stop one program and start another on a given CPU.\nAdditionally, on top of these methods, the OS will need to provide\nintelligence in the form of <b>(5)</b> ____ or algorithms that make\ndecisions within the OS.</p>\n"
+    },
+    "q2": {
+        "type": "multiple",
+        "question": "\n<p>After a <code>fork()</code>, both the parent and the child processes are\nalmost exactly the same except they have different (<i>choose all that\napply</i>):<p>\n",
+        "responses": {
+            "address": "Address spaces",
+            "registers": "Registers",
+            "code": "Program code",
+            "pid": "Process identifiers (PID)",
+            "uid": "User identifier (UID)"
+        }
+    },
+    "q3": {
+        "type": "multiple",
+        "question": "\n<p>When a program is executed, the operating system must do which of the\nfollowing tasks (<i>choose all that apply</i>)?</p>\n",
+        "responses": {
+            "kill": "<b>Kill</b> an existing process.",
+            "fs": "<b>Allocate</b> space on the hard drive.",
+            "code": "<b>Load</b> code and static data in memory.",
+            "stack": "<b>Create</b> and <b>initialize</b> the stack and heap.",
+            "io": "<b>Setup</b> I/O or file descriptors.",
+            "main": "<b>Jump</b> to the <code>main()</code> routine.",
+            "compile": "<b>Compile</b> the code.",
+            "init": "<b>Signal</b> the init process."
+        }
+    },
+    "q4": {
+        "type": "blank",
+        "question": "\n<p>A <b>process</b> be in <b>three different states</b>:</p>\n\n<ol>\n\n  <li>The <b>(1)</b> ____ state is where a process can be ran, but for some\n  reason the OS has chosen not to run it at the current moment.</li>\n\n  <li>The <b>(2)</b> ____ state is where a process has performed some kind\n  of operation that makes it unavailable to be ran until another even takes\n  place.</li>\n\n  <li>The <b>(3)</b> ____ state is where a process is actively executing on\n  a processor.</li>\n\n</ol>\n"
+    },
+    "q5": {
+        "type": "order",
+        "question": "\n<p>Suppose our user application wishes to open a file for reading.\n<b>Order</b> the following events:</p>\n",
+        "responses": {
+            "trap": "Hardware receives trap.",
+            "return": "OS returns-from-trap.",
+            "syscall": "User application calls <code>open()</code> system call.",
+            "jump": "Hardware jumps to trap handler.",
+            "registers": "Hardware saves registers to kernel stack.",
+            "handler": "OS handles trap by doing work of syscall.",
+            "kernelmode": "Hardware moves to kernel mode."
+        }
+    },
+    "q6": {
+        "type": "blank",
+        "question": "\n<p>On early versions of the Macintosh operating system, the OS used a\n<b>(1)</b> ____ approach where the OS trusts the processes of the system to\nbehave reasonably.  Of course, this was a terrible idea, so modern\noperating systems now utilize a <b>(2)</b> ____ to raise a CPU exception,\nhalt the current process, and load a pre-configured <b>(3)</b> ____ in the\nOS.  When this happens, the <b>(4)</b> ____ needs to make a decision on\nwhich process to run next.  If it chooses to execute another process, then\nthe OS must perform a <b>(5)</b> ____.</p>\n"
+    },
+    "q7": {
+        "type": "multiple",
+        "question": "\n<p>During a <b>context switch</b>, what information must be <b>saved</b>\nand <b>restored</b> (<i>choose all that apply</i>)?</p>\n",
+        "responses": {
+            "registers": "General purpose registers",
+            "pc": "Program counter",
+            "ksp": "Kernel stack pointer",
+            "files": "Open files",
+            "memory": "Address space"
+        }
+    }
+}

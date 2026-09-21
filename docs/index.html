@@ -1,0 +1,815 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Favicon -->
+<link rel="icon" type="image/png" sizes="32x32" href="static/ico/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="static/ico/favicon-16x16.png">
+<link rel="manifest" href="static/ico/site.webmanifest">
+<!-- Stylesheets -->
+<link rel="stylesheet" href="static/css/domer.css">
+<title>CSE 30341 Operating System Principles (Fall 2026)</title>
+</head>
+<body>
+<header>
+<a class="logo" href="index.html">
+    <h1>Operating System Principles</h1>
+</a>
+<nav>
+    <ul>
+        <li><a href="#logistics"><h4>Logistics</h4></a></li>
+        <li><a href="#schedule"><h4>Schedule</h4></a></li>
+        <li><a href="#policies"><h4>Policies</h4></a></li>
+        <li><a href="#resources"><h4>Resources</h4></a></li>
+        </ul>
+</nav></header>
+<main>
+<p><strong>CSE 30341</strong> is a required course in the <a href="http://cse.nd.edu">Computer Science and
+Engineering</a> program at the <a href="http://www.nd.edu">University of Notre Dame</a>.  This class
+introduces many different aspects of modern operating systems such as
+process structure and synchronization, interprocess communication,
+concurrency and parallelism with threads, virtual memory, resource
+allocation, file systems, security, and distributed systems.</p>
+<div class="centered">
+    <img src="static/img/house-of-cards.svg" class="transparent responsive" style="max-width: 720px; padding: 10px;">
+</div>
+
+<p>Upon successful completion of this course, students will be able to:</p>
+<ul>
+<li>
+<p><strong>Describe</strong> the basic components of a modern operating system.</p>
+</li>
+<li>
+<p><strong>Understand</strong> the symbiotic relationship between computer architecture
+  and operating system design.</p>
+</li>
+<li>
+<p><strong>Discuss</strong> how operating systems provide abstractions for
+  virtualization, concurrency, and persistence.</p>
+</li>
+<li>
+<p><strong>Construct</strong> applications that utilize processes, threads, interprocess
+  communication, and synchronization primitives to solve problems requiring
+  concurrent or parallel computation.</p>
+</li>
+<li>
+<p><strong>Explain</strong> how resources such as CPU time and memory are allocated and
+  managed by the operating system.</p>
+</li>
+<li>
+<p><strong>Evaluate</strong> the trade-offs embedded in different operating system
+  techniques, algorithms, and data structures.</p>
+</li>
+<li>
+<p><strong>Analyze</strong> the performance of applications in a variety of system contexts.</p>
+</li>
+</ul>
+<h2 id="logistics">Logistics<a class="headerlink" href="#logistics" title="Permanent link">&para;</a></h2>
+<div class="flex-row">
+<div class="flex-col">
+<h3 id="class-information">Class Information<a class="headerlink" href="#class-information" title="Permanent link">&para;</a></h3>
+<dl>
+<dt><i class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>calendar-clock</title><path d="M15,13H16.5V15.82L18.94,17.23L18.19,18.53L15,16.69V13M19,8H5V19H9.67C9.24,18.09 9,17.07 9,16A7,7 0 0,1 16,9C17.07,9 18.09,9.24 19,9.67V8M5,21C3.89,21 3,20.1 3,19V5C3,3.89 3.89,3 5,3H6V1H8V3H16V1H18V3H19A2,2 0 0,1 21,5V11.1C22.24,12.36 23,14.09 23,16A7,7 0 0,1 16,23C14.09,23 12.36,22.24 11.1,21H5M16,11.15A4.85,4.85 0 0,0 11.15,16C11.15,18.68 13.32,20.85 16,20.85A4.85,4.85 0 0,0 20.85,16C20.85,13.32 18.68,11.15 16,11.15Z" /></svg>
+</i> Date/Time</dt>
+<dd><strong>T/TH</strong> 9:30 AM - 10:45 AM</dd>
+<dt><i class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>map-marker</title><path d="M12,11.5A2.5,2.5 0 0,1 9.5,9A2.5,2.5 0 0,1 12,6.5A2.5,2.5 0 0,1 14.5,9A2.5,2.5 0 0,1 12,11.5M12,2A7,7 0 0,0 5,9C5,14.25 12,22 12,22C12,22 19,14.25 19,9A7,7 0 0,0 12,2Z" /></svg>
+</i> Location</dt>
+<dd><strong>136</strong> DeBartolo Hall</dd>
+<dt><i class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>video</title><path d="M17,10.5V7A1,1 0 0,0 16,6H4A1,1 0 0,0 3,7V17A1,1 0 0,0 4,18H16A1,1 0 0,0 17,17V13.5L21,17.5V6.5L17,10.5Z" /></svg>
+</i> Zoom Meeting</dt>
+<dd><a href="https://notredame.zoom.us/j/92794038154">927 9403 8154</a></dd>
+<dt><i class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>email</title><path d="M20,8L12,13L4,8V6L12,11L20,6M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4Z" /></svg>
+</i> Mailing List</dt>
+<dd><a href="mailto:fa26-cse-30341-01-group@nd.edu">fa26-cse-30341-01-group@nd.edu</a></dd>
+<dt><i class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>slack</title><path d="M6,15A2,2 0 0,1 4,17A2,2 0 0,1 2,15A2,2 0 0,1 4,13H6V15M7,15A2,2 0 0,1 9,13A2,2 0 0,1 11,15V20A2,2 0 0,1 9,22A2,2 0 0,1 7,20V15M9,7A2,2 0 0,1 7,5A2,2 0 0,1 9,3A2,2 0 0,1 11,5V7H9M9,8A2,2 0 0,1 11,10A2,2 0 0,1 9,12H4A2,2 0 0,1 2,10A2,2 0 0,1 4,8H9M17,10A2,2 0 0,1 19,8A2,2 0 0,1 21,10A2,2 0 0,1 19,12H17V10M16,10A2,2 0 0,1 14,12A2,2 0 0,1 12,10V5A2,2 0 0,1 14,3A2,2 0 0,1 16,5V10M14,18A2,2 0 0,1 16,20A2,2 0 0,1 14,22A2,2 0 0,1 12,20V18H14M14,17A2,2 0 0,1 12,15A2,2 0 0,1 14,13H19A2,2 0 0,1 21,15A2,2 0 0,1 19,17H14Z" /></svg>
+</i> Slack</dt>
+<dd><a href="https://nd-cse.slack.com/messages/cse-30341-fa26">#cse-30341-fa26</a></dd>
+<dt><i class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>github</title><path d="M12,2A10,10 0 0,0 2,12C2,16.42 4.87,20.17 8.84,21.5C9.34,21.58 9.5,21.27 9.5,21C9.5,20.77 9.5,20.14 9.5,19.31C6.73,19.91 6.14,17.97 6.14,17.97C5.68,16.81 5.03,16.5 5.03,16.5C4.12,15.88 5.1,15.9 5.1,15.9C6.1,15.97 6.63,16.93 6.63,16.93C7.5,18.45 8.97,18 9.54,17.76C9.63,17.11 9.89,16.67 10.17,16.42C7.95,16.17 5.62,15.31 5.62,11.5C5.62,10.39 6,9.5 6.65,8.79C6.55,8.54 6.2,7.5 6.75,6.15C6.75,6.15 7.59,5.88 9.5,7.17C10.29,6.95 11.15,6.84 12,6.84C12.85,6.84 13.71,6.95 14.5,7.17C16.41,5.88 17.25,6.15 17.25,6.15C17.8,7.5 17.45,8.54 17.35,8.79C18,9.5 18.38,10.39 18.38,11.5C18.38,15.32 16.04,16.16 13.81,16.41C14.17,16.72 14.5,17.33 14.5,18.26C14.5,19.6 14.5,20.68 14.5,21C14.5,21.27 14.66,21.59 15.17,21.5C19.14,20.16 22,16.42 22,12A10,10 0 0,0 12,2Z" /></svg>
+</i> GitHub</dt>
+<dd><a href="https://github.com/nd-cse-30341-fa26">nd-cse-30341-fa26</a></dd>
+</dl>
+</div>
+<div class="flex-col">
+<h3 id="course-staff">Course Staff<a class="headerlink" href="#course-staff" title="Permanent link">&para;</a></h3>
+<dl>
+<dt><i class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>human-male-board</title><path d="M20,17A2,2 0 0,0 22,15V4A2,2 0 0,0 20,2H9.46C9.81,2.61 10,3.3 10,4H20V15H11V17M15,7V9H9V22H7V16H5V22H3V14H1.5V9A2,2 0 0,1 3.5,7H15M8,4A2,2 0 0,1 6,6A2,2 0 0,1 4,4A2,2 0 0,1 6,2A2,2 0 0,1 8,4Z" /></svg>
+</i> Instructor</dt>
+<dd>Peter Bui (<a href="mailto:pbui@nd.edu">pbui@nd.edu</a>)</dd>
+<dt><i class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>account-question</title><path d="M13,8A4,4 0 0,1 9,12A4,4 0 0,1 5,8A4,4 0 0,1 9,4A4,4 0 0,1 13,8M17,18V20H1V18C1,15.79 4.58,14 9,14C13.42,14 17,15.79 17,18M20.5,14.5V16H19V14.5H20.5M18.5,9.5H17V9A3,3 0 0,1 20,6A3,3 0 0,1 23,9C23,9.97 22.5,10.88 21.71,11.41L21.41,11.6C20.84,12 20.5,12.61 20.5,13.3V13.5H19V13.3C19,12.11 19.6,11 20.59,10.35L20.88,10.16C21.27,9.9 21.5,9.47 21.5,9A1.5,1.5 0 0,0 20,7.5A1.5,1.5 0 0,0 18.5,9V9.5Z" /></svg>
+</i> Teaching Assistant</dt>
+<dd>Kaitlyn Dooley (<a href="mailto:kdooley3@nd.edu">kdooley3@nd.edu</a>)</dd>
+<dt><i class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>account-question</title><path d="M13,8A4,4 0 0,1 9,12A4,4 0 0,1 5,8A4,4 0 0,1 9,4A4,4 0 0,1 13,8M17,18V20H1V18C1,15.79 4.58,14 9,14C13.42,14 17,15.79 17,18M20.5,14.5V16H19V14.5H20.5M18.5,9.5H17V9A3,3 0 0,1 20,6A3,3 0 0,1 23,9C23,9.97 22.5,10.88 21.71,11.41L21.41,11.6C20.84,12 20.5,12.61 20.5,13.3V13.5H19V13.3C19,12.11 19.6,11 20.59,10.35L20.88,10.16C21.27,9.9 21.5,9.47 21.5,9A1.5,1.5 0 0,0 20,7.5A1.5,1.5 0 0,0 18.5,9V9.5Z" /></svg>
+</i> Teaching Assistant</dt>
+<dd>Emmalyn Holmquist (<a href="mailto:eholmqui@nd.edu">eholmqui@nd.edu</a>)</dd>
+<dt><i class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>account-question</title><path d="M13,8A4,4 0 0,1 9,12A4,4 0 0,1 5,8A4,4 0 0,1 9,4A4,4 0 0,1 13,8M17,18V20H1V18C1,15.79 4.58,14 9,14C13.42,14 17,15.79 17,18M20.5,14.5V16H19V14.5H20.5M18.5,9.5H17V9A3,3 0 0,1 20,6A3,3 0 0,1 23,9C23,9.97 22.5,10.88 21.71,11.41L21.41,11.6C20.84,12 20.5,12.61 20.5,13.3V13.5H19V13.3C19,12.11 19.6,11 20.59,10.35L20.88,10.16C21.27,9.9 21.5,9.47 21.5,9A1.5,1.5 0 0,0 20,7.5A1.5,1.5 0 0,0 18.5,9V9.5Z" /></svg>
+</i> Teaching Assistant</dt>
+<dd>Henry Jochaniewicz (<a href="mailto:hjochani@nd.edu">hjochani@nd.edu</a>)</dd>
+<dt><i class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>account-question</title><path d="M13,8A4,4 0 0,1 9,12A4,4 0 0,1 5,8A4,4 0 0,1 9,4A4,4 0 0,1 13,8M17,18V20H1V18C1,15.79 4.58,14 9,14C13.42,14 17,15.79 17,18M20.5,14.5V16H19V14.5H20.5M18.5,9.5H17V9A3,3 0 0,1 20,6A3,3 0 0,1 23,9C23,9.97 22.5,10.88 21.71,11.41L21.41,11.6C20.84,12 20.5,12.61 20.5,13.3V13.5H19V13.3C19,12.11 19.6,11 20.59,10.35L20.88,10.16C21.27,9.9 21.5,9.47 21.5,9A1.5,1.5 0 0,0 20,7.5A1.5,1.5 0 0,0 18.5,9V9.5Z" /></svg>
+</i> Teaching Assistant</dt>
+<dd>Leonardo Molina (<a href="mailto:lmolina3@nd.edu">lmolina3@nd.edu</a>)</dd>
+<dt><i class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>account-question</title><path d="M13,8A4,4 0 0,1 9,12A4,4 0 0,1 5,8A4,4 0 0,1 9,4A4,4 0 0,1 13,8M17,18V20H1V18C1,15.79 4.58,14 9,14C13.42,14 17,15.79 17,18M20.5,14.5V16H19V14.5H20.5M18.5,9.5H17V9A3,3 0 0,1 20,6A3,3 0 0,1 23,9C23,9.97 22.5,10.88 21.71,11.41L21.41,11.6C20.84,12 20.5,12.61 20.5,13.3V13.5H19V13.3C19,12.11 19.6,11 20.59,10.35L20.88,10.16C21.27,9.9 21.5,9.47 21.5,9A1.5,1.5 0 0,0 20,7.5A1.5,1.5 0 0,0 18.5,9V9.5Z" /></svg>
+</i> Teaching Assistant</dt>
+<dd>Aynaz Namik (<a href="mailto:anamik@nd.edu">anamik@nd.edu</a>)</dd>
+<dt><i class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>account-question</title><path d="M13,8A4,4 0 0,1 9,12A4,4 0 0,1 5,8A4,4 0 0,1 9,4A4,4 0 0,1 13,8M17,18V20H1V18C1,15.79 4.58,14 9,14C13.42,14 17,15.79 17,18M20.5,14.5V16H19V14.5H20.5M18.5,9.5H17V9A3,3 0 0,1 20,6A3,3 0 0,1 23,9C23,9.97 22.5,10.88 21.71,11.41L21.41,11.6C20.84,12 20.5,12.61 20.5,13.3V13.5H19V13.3C19,12.11 19.6,11 20.59,10.35L20.88,10.16C21.27,9.9 21.5,9.47 21.5,9A1.5,1.5 0 0,0 20,7.5A1.5,1.5 0 0,0 18.5,9V9.5Z" /></svg>
+</i> Teaching Assistant</dt>
+<dd>Samuel Neisewander (<a href="mailto:sneisewa@nd.edu">sneisewa@nd.edu</a>)</dd>
+<dt><i class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>account-question</title><path d="M13,8A4,4 0 0,1 9,12A4,4 0 0,1 5,8A4,4 0 0,1 9,4A4,4 0 0,1 13,8M17,18V20H1V18C1,15.79 4.58,14 9,14C13.42,14 17,15.79 17,18M20.5,14.5V16H19V14.5H20.5M18.5,9.5H17V9A3,3 0 0,1 20,6A3,3 0 0,1 23,9C23,9.97 22.5,10.88 21.71,11.41L21.41,11.6C20.84,12 20.5,12.61 20.5,13.3V13.5H19V13.3C19,12.11 19.6,11 20.59,10.35L20.88,10.16C21.27,9.9 21.5,9.47 21.5,9A1.5,1.5 0 0,0 20,7.5A1.5,1.5 0 0,0 18.5,9V9.5Z" /></svg>
+</i> Teaching Assistant</dt>
+<dd>Norah Swatland (<a href="mailto:nswatlan@nd.edu">nswatlan@nd.edu</a>)</dd>
+</dl>
+</div>
+</div>
+<h3 id="office-hours">Office Hours<a class="headerlink" href="#office-hours" title="Permanent link">&para;</a></h3>
+<div class="centered">
+  <img src="static/img/office-hours.svg" class="responsive">
+</div>
+
+<h2 id="schedule">Schedule<a class="headerlink" href="#schedule" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+  <tr>
+    <th>Date</th>
+    <th>Topics</th>
+    <th>Assignments</th>
+  </tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="3" class="unit">Unit 01: Virtualization with Processes</td>
+</tr>
+<tr>
+  <td class="date">Tue 08/25</td>
+  <td class="topics">
+  Syllabus, Computer Hardware, Boot Sequence
+              <a class="badge success-btn" href="slides00.html">Slides 00</a>
+              <a class="badge success-btn" href="slides01.html">Slides 01</a>
+            <a class="badge info-btn" href="https://notredame.hosted.panopto.com/Panopto/Pages/Viewer.aspx?id=77dc45ab-438f-41d3-acef-b4b100fd01e3">Panopto</a>
+    </td>
+  <td class="assignments">
+            <a class="badge primary-btn" href="reading01.html">
+  Reading 01
+  </a>
+    </td>
+</tr>
+<tr>
+  <td class="date">Thu 08/27</td>
+  <td class="topics">
+  OS Taxonomy, History, Themes
+              <a class="badge success-btn" href="slides02.html">Slides 02</a>
+            <a class="badge info-btn" href="https://notredame.hosted.panopto.com/Panopto/Pages/Viewer.aspx?id=c8911312-ff16-4ec5-88ab-b4b300fca264">Panopto</a>
+    </td>
+  <td class="assignments">
+    </td>
+</tr>
+<tr>
+<td colspan="3" class="week">&nbsp;</td>
+</tr>
+<tr>
+  <td class="date">Tue 09/01</td>
+  <td class="topics">
+  System Calls
+              <a class="badge success-btn" href="slides03.html">Slides 03</a>
+            <a class="badge info-btn" href="https://notredame.hosted.panopto.com/Panopto/Pages/Viewer.aspx?id=c9b7c4f7-1df7-4be9-a97e-b4b800fb109d">Panopto</a>
+    </td>
+  <td class="assignments">
+            <a class="badge primary-btn" href="reading02.html">
+  Reading 02
+  </a>
+    </td>
+</tr>
+<tr>
+  <td class="date">Thu 09/03</td>
+  <td class="topics">
+  Processes
+              <a class="badge success-btn" href="slides04.html">Slides 04</a>
+            <a class="badge info-btn" href="https://notredame.hosted.panopto.com/Panopto/Pages/Viewer.aspx?id=997962e1-85cd-43dd-8aa1-b4ba00fcef9c">Panopto</a>
+    </td>
+  <td class="assignments">
+    </td>
+</tr>
+<tr>
+<td colspan="3" class="week">&nbsp;</td>
+</tr>
+<tr>
+  <td class="date">Tue 09/08</td>
+  <td class="topics">
+  FIFO, Round Robin
+              <a class="badge success-btn" href="slides05.html">Slides 05</a>
+            <a class="badge info-btn" href="https://notredame.hosted.panopto.com/Panopto/Pages/Viewer.aspx?id=8629562a-8db1-46a7-b231-b4bf0100ca8c">Panopto</a>
+    </td>
+  <td class="assignments">
+            <a class="badge primary-btn" href="reading03.html">
+  Reading 03
+  </a>
+    </td>
+</tr>
+<tr>
+  <td class="date">Thu 09/10</td>
+  <td class="topics">
+  MLFQ, Lottery
+              <a class="badge success-btn" href="slides06.html">Slides 06</a>
+            <a class="badge info-btn" href="https://notredame.hosted.panopto.com/Panopto/Pages/Viewer.aspx?id=94d4d157-7994-4149-ae17-b4c100fb6273">Panopto</a>
+    </td>
+  <td class="assignments">
+    </td>
+</tr>
+<tr>
+<td colspan="3" class="week">&nbsp;</td>
+</tr>
+<tr>
+  <td class="date">Tue 09/15</td>
+  <td class="topics">
+  Concurrency
+              <a class="badge success-btn" href="slides07.html">Slides 07</a>
+            <a class="badge info-btn" href="https://notredame.hosted.panopto.com/Panopto/Pages/Viewer.aspx?id=58f71b90-b7f8-4907-9403-b4c600fb6914">Panopto</a>
+    </td>
+  <td class="assignments">
+            <a class="badge caution-btn" href="project01.html">
+  Project 01
+  </a>
+    </td>
+</tr>
+<tr>
+  <td class="date">Thu 09/17</td>
+  <td class="topics">
+  
+            <a class="badge danger-btn" href="studyguide01.html">Exam 01</a>
+    </td>
+  <td class="assignments">
+            <a class="badge warning-btn" href="interview01.html">
+  Interview 01
+  </a>
+    </td>
+</tr>
+<tr>
+<td colspan="3" class="week">&nbsp;</td>
+</tr>
+<tr>
+<td colspan="3" class="unit">Unit 02: Concurrency with Threads</td>
+</tr>
+<tr>
+  <td class="date">Tue 09/22</td>
+  <td class="topics">
+  Events, Threads
+              <a class="badge success-btn" href="slides08.html">Slides 08</a>
+    </td>
+  <td class="assignments">
+            <a class="badge primary-btn" href="reading04.html">
+  Reading 04
+  </a>
+    </td>
+</tr>
+<tr>
+  <td class="date">Thu 09/24</td>
+  <td class="topics">
+  Locks
+              <a class="badge success-btn" href="slides09.html">Slides 09</a>
+    </td>
+  <td class="assignments">
+    </td>
+</tr>
+<tr>
+<td colspan="3" class="week">&nbsp;</td>
+</tr>
+<tr>
+  <td class="date">Tue 09/29</td>
+  <td class="topics">
+  Condition Variables
+              <a class="badge success-btn" href="slides10.html">Slides 10</a>
+    </td>
+  <td class="assignments">
+            <a class="badge primary-btn" href="reading05.html">
+  Reading 05
+  </a>
+    </td>
+</tr>
+<tr>
+  <td class="date">Thu 10/01</td>
+  <td class="topics">
+  Structures
+    </td>
+  <td class="assignments">
+    </td>
+</tr>
+<tr>
+<td colspan="3" class="week">&nbsp;</td>
+</tr>
+<tr>
+  <td class="date">Tue 10/06</td>
+  <td class="topics">
+  Semaphores
+              <a class="badge success-btn" href="slides11.html">Slides 11</a>
+    </td>
+  <td class="assignments">
+            <a class="badge primary-btn" href="reading06.html">
+  Reading 06
+  </a>
+    </td>
+</tr>
+<tr>
+  <td class="date">Thu 10/08</td>
+  <td class="topics">
+  Patterns
+    </td>
+  <td class="assignments">
+    </td>
+</tr>
+<tr>
+<td colspan="3" class="week">&nbsp;</td>
+</tr>
+<tr>
+  <td class="date">Tue 10/13</td>
+  <td class="topics">
+  Concurrency Bugs
+              <a class="badge success-btn" href="slides12.html">Slides 12</a>
+    </td>
+  <td class="assignments">
+            <a class="badge caution-btn" href="project02.html">
+  Project 02
+  </a>
+    </td>
+</tr>
+<tr>
+  <td class="date">Thu 10/15</td>
+  <td class="topics">
+  
+            <a class="badge danger-btn" href="">Exam 02</a>
+    </td>
+  <td class="assignments">
+            <a class="badge warning-btn" href="interview02.html">
+  Interview 02
+  </a>
+    </td>
+</tr>
+<tr>
+<td colspan="3" class="week">&nbsp;</td>
+</tr>
+<tr>
+<td colspan="3" class="unit"><i class="muted">Fall Break</i></td>
+</tr>
+<tr>
+<td colspan="3" class="unit">Unit 03: Virtualization with Memory</td>
+</tr>
+<tr>
+  <td class="date">Tue 10/27</td>
+  <td class="topics">
+  Address Space, Translation
+              <a class="badge success-btn" href="slides13.html">Slides 13</a>
+    </td>
+  <td class="assignments">
+            <a class="badge primary-btn" href="reading07.html">
+  Reading 07
+  </a>
+    </td>
+</tr>
+<tr>
+  <td class="date">Thu 10/29</td>
+  <td class="topics">
+  Free-Space Management
+              <a class="badge success-btn" href="slides14.html">Slides 14</a>
+    </td>
+  <td class="assignments">
+    </td>
+</tr>
+<tr>
+<td colspan="3" class="week">&nbsp;</td>
+</tr>
+<tr>
+  <td class="date">Tue 11/03</td>
+  <td class="topics">
+  Heap Allocation
+    </td>
+  <td class="assignments">
+            <a class="badge primary-btn" href="reading08.html">
+  Reading 08
+  </a>
+    </td>
+</tr>
+<tr>
+  <td class="date">Thu 11/05</td>
+  <td class="topics">
+  Segmentation
+              <a class="badge success-btn" href="slides15.html">Slides 15</a>
+    </td>
+  <td class="assignments">
+    </td>
+</tr>
+<tr>
+<td colspan="3" class="week">&nbsp;</td>
+</tr>
+<tr>
+  <td class="date">Tue 11/10</td>
+  <td class="topics">
+  Paging
+              <a class="badge success-btn" href="slides16.html">Slides 16</a>
+    </td>
+  <td class="assignments">
+            <a class="badge primary-btn" href="reading09.html">
+  Reading 09
+  </a>
+    </td>
+</tr>
+<tr>
+  <td class="date">Thu 11/12</td>
+  <td class="topics">
+  TLB / Multi-Level
+              <a class="badge success-btn" href="slides17.html">Slides 17</a>
+    </td>
+  <td class="assignments">
+    </td>
+</tr>
+<tr>
+<td colspan="3" class="week">&nbsp;</td>
+</tr>
+<tr>
+  <td class="date">Tue 11/17</td>
+  <td class="topics">
+  Swapping
+              <a class="badge success-btn" href="slides18.html">Slides 18</a>
+    </td>
+  <td class="assignments">
+            <a class="badge caution-btn" href="project03.html">
+  Project 03
+  </a>
+    </td>
+</tr>
+<tr>
+  <td class="date">Thu 11/19</td>
+  <td class="topics">
+  
+            <a class="badge danger-btn" href="">Exam 03</a>
+    </td>
+  <td class="assignments">
+            <a class="badge warning-btn" href="interview03.html">
+  Interview 03
+  </a>
+    </td>
+</tr>
+<tr>
+<td colspan="3" class="week">&nbsp;</td>
+</tr>
+<tr>
+<td colspan="3" class="unit">Unit 04: Persistence with File Systems</td>
+</tr>
+<tr>
+  <td class="date">Tue 11/24</td>
+  <td class="topics">
+  I/O Devices, RAID
+              <a class="badge success-btn" href="slides19.html">Slides 19</a>
+              <a class="badge success-btn" href="slides20.html">Slides 20</a>
+    </td>
+  <td class="assignments">
+            <a class="badge primary-btn" href="reading10.html">
+  Reading 10
+  </a>
+    </td>
+</tr>
+<tr>
+  <td class="date">Thu 11/26</td>
+  <td class="topics">
+  Thanksgiving
+    </td>
+  <td class="assignments">
+    </td>
+</tr>
+<tr>
+<td colspan="3" class="week">&nbsp;</td>
+</tr>
+<tr>
+  <td class="date">Tue 12/01</td>
+  <td class="topics">
+  File Systems
+              <a class="badge success-btn" href="slides21.html">Slides 21</a>
+    </td>
+  <td class="assignments">
+            <a class="badge primary-btn" href="reading11.html">
+  Reading 11
+  </a>
+    </td>
+</tr>
+<tr>
+  <td class="date">Thu 12/03</td>
+  <td class="topics">
+  FFS, LFS
+              <a class="badge success-btn" href="slides22.html">Slides 22</a>
+    </td>
+  <td class="assignments">
+    </td>
+</tr>
+<tr>
+<td colspan="3" class="week">&nbsp;</td>
+</tr>
+<tr>
+  <td class="date">Tue 12/08</td>
+  <td class="topics">
+  Consistency, Integrity
+              <a class="badge success-btn" href="slides23.html">Slides 23</a>
+    </td>
+  <td class="assignments">
+            <a class="badge caution-btn" href="project04.html">
+  Project 04
+  </a>
+    </td>
+</tr>
+<tr>
+  <td class="date">Thu 12/10</td>
+  <td class="topics">
+  <i>Reading Day</i>
+    </td>
+  <td class="assignments">
+            <a class="badge warning-btn" href="interview04.html">
+  Interview 04
+  </a>
+    </td>
+</tr>
+<tr>
+<td colspan="3" class="week">&nbsp;</td>
+</tr>
+<tr>
+  <td class="date">Mon 12/14</td>
+  <td class="topics">
+  
+            <a class="badge danger-btn" href="">Exam 04</a>
+    </td>
+  <td class="assignments">
+    </td>
+</tr>
+<tr>
+<td colspan="3" class="week">&nbsp;</td>
+</tr>
+</tbody>
+</table>
+
+<div class="alert info-bg">
+<h3 id="calendar-check-embed_icon-due-dates"><i class="icon icon-medium"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>calendar-check</title><path d="M19,19H5V8H19M19,3H18V1H16V3H8V1H6V3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M16.53,11.06L15.47,10L10.59,14.88L8.47,12.76L7.41,13.82L10.59,17L16.53,11.06Z" /></svg>
+</i> Due Dates<a class="headerlink" href="#calendar-check-embed_icon-due-dates" title="Permanent link">&para;</a></h3>
+<p>All <strong>Readings</strong> are to be submitted to your own <strong>private</strong> <a href="https://github.com">GitHub</a> repository.
+Unless specified otherwise:</p>
+<ul>
+<li>
+<p><strong>Reading</strong> assignments are due by <strong>noon</strong> on the <strong>Tuesday</strong> of the assigned week.</p>
+</li>
+<li>
+<p><strong>Projects</strong> are due by <strong>noon</strong> on the <strong>Tuesday</strong> of the assigned week.</p>
+</li>
+<li>
+<p>Coding <strong>Interviews</strong> are due during the week of the written <strong>Exam</strong> and
+must be scheduled with a <strong>teaching assistant</strong> or the <strong>instructor</strong> ahead
+of time.</p>
+</li>
+</ul>
+<p><strong>Note</strong>: As described below, there is a <strong>grace period</strong> that allows for
+<strong>late</strong> submissions with <strong>no penalty</strong> up to <strong>12</strong> hours after each
+<strong>deadline</strong>.</p>
+</div>
+<h2 id="policies">Policies<a class="headerlink" href="#policies" title="Permanent link">&para;</a></h2>
+<div class="flex-row">
+<div class="flex-col">
+<h3 id="coursework">Coursework<a class="headerlink" href="#coursework" title="Permanent link">&para;</a></h3>
+<table class="bordered">
+<thead>
+    <th>Component</th>
+    <th>Description</th>
+    <th>Points</th>
+  </thead>
+<tbody>
+    <tr class="info-bg">
+      <td class="centered"><span class="badge primary-btn">Readings</span></td>
+      <td>Weekly individual assignments.</td>
+      <td class="centered">10 &times; 1</td>
+    </tr>
+    <tr class="caution-bg">
+      <td class="centered"><span class="badge caution-btn">Projects</span></td>
+      <td>Quarterly group projects.</td>
+      <td class="centered">4 &times; 4</td>
+    </tr>
+    <tr class="warning-bg">
+      <td class="centered"><span class="badge warning-btn">Interviews</span></td>
+      <td>Quarterly individual interviews.</td>
+      <td class="centered">4 &times; 2</td>
+    </tr>
+    <tr class="danger-bg">
+      <td class="centered"><span class="badge danger-btn">Exams</span></td>
+      <td>Quarterly in-person exams.</td>
+      <td class="centered">3 &times; 15, 21</td>
+    </tr>
+    <tr class="success-bg">
+      <td class="centered" style="font-weight: bold;">Total</td>
+      <td></td>
+      <td class="centered" style="font-weight: bold;">100</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<div class="flex-col">
+<h3 id="grading">Grading<a class="headerlink" href="#grading" title="Permanent link">&para;</a></h3>
+<table class="bordered">
+<thead>
+    <th>Grade</th>
+    <th>Points</th>
+    <th>Grade</th>
+    <th>Points</th>
+    <th>Grade</th>
+    <th>Points</th>
+  </thead>
+<tbody>
+    <tr class="centered success-bg">
+      <td></td>
+      <td></td>
+      <td style="font-weight: bold;">A</td>
+      <td>300 - 280</td>
+      <td style="font-weight: bold;">A-</td>
+      <td>280 - 270</td>
+    </tr>
+    <tr class="centered info-bg">
+      <td style="font-weight: bold;">B+</td>
+      <td>270 - 260</td>
+      <td style="font-weight: bold;">B</td>
+      <td>260 - 250</td>
+      <td style="font-weight: bold;">B-</td>
+      <td>250 - 240</td>
+    </tr>
+    <tr class="centered caution-bg">
+      <td style="font-weight: bold;">C+</td>
+      <td>240 - 230</td>
+      <td style="font-weight: bold;">C</td>
+      <td>230 - 220</td>
+      <td style="font-weight: bold;">C-</td>
+      <td>220 - 210</td>
+    </tr>
+    <tr class="centered danger-bg">
+      <td style="font-weight: bold;">D&nbsp;</td>
+      <td>210 - 200</td>
+      <td style="font-weight: bold;">F</td>
+      <td>200 - 0&nbsp;&nbsp;</td>
+      <td></td>
+      <td></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+<div class="flex-row">
+<div class="flex-col">
+<h3 id="participation">Participation<a class="headerlink" href="#participation" title="Permanent link">&para;</a></h3>
+<p>Students are expected to <strong>attend</strong> lecture and <strong>participate</strong> regularly
+during class by answering questions, contributing to discussions, and
+helping other students.</p>
+<p>Foreseeable absences should be discussed with the instructor ahead of time.</p>
+</div>
+<div class="flex-col">
+<h3 id="community">Community<a class="headerlink" href="#community" title="Permanent link">&para;</a></h3>
+<p>Recalling one of the tenets of the <a href="https://en.wikipedia.org/wiki/Hacker_ethic">Hacker Ethic</a>:</p>
+<blockquote>
+<p>Hackers should be judged by their hacking, not criteria such as degrees,
+age, race, sex, or position.</p>
+</blockquote>
+<p>Students are expected to be <strong>respectful</strong> to their fellow classmates and
+the course staff.</p>
+</div>
+</div>
+<div class="flex-row">
+<div class="flex-col">
+<h3 id="students-with-disabilities">Students with Disabilities<a class="headerlink" href="#students-with-disabilities" title="Permanent link">&para;</a></h3>
+<p>Any student who has a documented disability and is registered with <a href="https://supportandcare.nd.edu/for-students/current-students/accessibility-support/">Sara
+Bea Accessibility Services</a> should speak with the professor as soon as
+possible regarding accommodations. Students who are not registered should
+contact the <a href="https://supportandcare.nd.edu/">Center for Student Support and Care</a>.</p>
+</div>
+<div class="flex-col">
+<h3 id="late-work">Late Work<a class="headerlink" href="#late-work" title="Permanent link">&para;</a></h3>
+<p>In the case of a serious illness or other excused absence, as defined by
+university policies, coursework will be accepted late by the same number of
+days as the excused absence.</p>
+<p>Otherwise, there is an automatic <strong>25% late penalty</strong> for submissions
+turned in <strong>12 hours</strong> past the <strong>posted deadline</strong>.</p>
+<p>No assignments will be accepted after the <strong>last day of class</strong> without the
+permission of the instructor.</p>
+</div>
+</div>
+<div class="flex-row">
+<div class="flex-col">
+<h3 id="classroom-recording">Classroom Recording<a class="headerlink" href="#classroom-recording" title="Permanent link">&para;</a></h3>
+<p>Lectures in this course will be recorded using <strong>Zoom</strong>, uploaded to
+<strong>Panopto</strong>, and shared on <strong>Canvas</strong> and the course website.</p>
+<p>Except for faculty and staff who require access, no content will be shared
+with individuals outside of the course without prior authorization.</p>
+<p>These recordings are jointly copyrighted by the <a href="http://www.nd.edu">University of Notre Dame</a>
+and the instructor. Posting them to other websites (including YouTube,
+Facebook, SnapChat, etc.) or elsewhere without express, written permission
+may result in disciplinary action and possible civil prosecution.</p>
+</div>
+<div class="flex-col">
+<h3 id="academic-dishonesty">Academic Dishonesty<a class="headerlink" href="#academic-dishonesty" title="Permanent link">&para;</a></h3>
+<p>Any academic misconduct in this course is considered a <strong>serious offense</strong>,
+and the strongest possible <strong>academic penalties</strong> will be pursued for such
+behavior. Students may discuss high-level ideas with other students (or
+<strong>AI tools</strong>), but at the time of implementation (i.e. programming), each
+person must do his/her own work. Use of the Internet as a reference is
+allowed but directly copying code or other information is cheating. It is
+cheating to copy, to allow another person to copy, all or part of an exam
+or assignment, or to fake program output. It is also a violation of the
+<a href="https://honorcode.nd.edu/">Undergraduate Academic Code of Honor</a> to observe and then fail to report
+academic dishonesty. Each student is <strong>responsible</strong> for the security and
+<strong>integrity</strong> of their own work.</p>
+</div>
+</div>
+<div class="alert danger-bg">
+<h3 id="alert-embed_icon-cse-guide-to-the-honor-code"><i class="icon icon-medium"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>alert</title><path d="M13 14H11V9H13M13 18H11V16H13M1 21H23L12 2L1 21Z" /></svg>
+</i> CSE Guide to the Honor Code<a class="headerlink" href="#alert-embed_icon-cse-guide-to-the-honor-code" title="Permanent link">&para;</a></h3>
+<p>For the assignments in this class, students are allowed to consult printed
+and online resources and to discuss the class material with other students.
+Students may also consult <strong>AI Tools</strong> such as <strong>CoPilot</strong> or <strong>ChatGPT</strong>
+for help explaining concepts, debugging problems, or as a reference.
+Viewing or consulting solutions, such as those from other students,
+previous semesters, or generated by <strong>AI Tools</strong> is <strong>never allowed</strong>.</p>
+<p>Likewise, students may copy <strong>small and trivial</strong> snippets from books,
+online sources, and <strong>AI Tools</strong> as long as you <strong>cite them properly</strong>.
+However, students <strong>may not copy</strong> solutions or <strong>significant</strong> portions of
+code from other students or online sources, nor may students generate
+solutions via <strong>AI Tools</strong>.</p>
+<p>Finally, when preparing for exams in this class, <strong>students may not access
+exams from previous semesters</strong>, nor may students look at or copy solutions
+from other current or former students.</p>
+<table class="bordered" style="border-color: var(--danger);">
+<thead>
+    <th></th>
+    <th>Resources</th>
+    <th>Solutions</th>
+  </thead>
+<tbody>
+    <tr style="font-weight: bold;">
+      <td class="centered">Consulting</td>
+      <td class="centered success-bg">Allowed</td>
+      <td class="centered danger-bg">Not Allowed</td>
+    </tr>
+    <tr style="font-weight: bold;">
+      <td class="centered">Copying</td>
+      <td class="centered caution-bg">Cite</td>
+      <td class="centered danger-bg">Not Allowed</td>
+    </tr>
+  </tbody>
+</table>
+<p>See the <a href="https://cse.nd.edu/undergraduate/cse-guide-to-the-honor-code/">CSE Guide to the Honor Code</a> for definitions of the above terms and
+specific examples of what is allowed and not allowed when consulting
+resources.</p>
+<p>If students are unclear about whether certain forms of consultation or
+common work are acceptable or what the standards for citation are, then
+students are responsible for consulting with the instructor to resolve any
+confusion.</p>
+<p>If the instructor sees behavior that is, in their judgement, academically
+dishonest, they are required to file either an <a href="https://honorcode.nd.edu/honor-code-violation-report/">Honor Code Violation Report</a> or
+a formal report to the <a href="https://engineering.nd.edu/">College of Engineering</a> Honesty Committee.</p>
+</div>
+<h2 id="resources">Resources<a class="headerlink" href="#resources" title="Permanent link">&para;</a></h2>
+<div class="flex-row">
+<div class="flex-col">
+<h3 id="textbooks">Textbooks<a class="headerlink" href="#textbooks" title="Permanent link">&para;</a></h3>
+<div class="flex-row">
+<div class="flex-col">
+<div class="centered">
+<a href="http://pages.cs.wisc.edu/~remzi/OSTEP/"><img src="static/img/ostep.jpg"></a>
+</div>
+</div>
+<div class="flex-col">
+<dl>
+<dt>Title</dt>
+<dd><a href="http://pages.cs.wisc.edu/~remzi/OSTEP/">Operating Systems: Three Easy Pieces</a></dd>
+<dt>Authors</dt>
+<dd>Remzi Arpaci-Dusseau, Andrea Arpaci-Dusseau</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="flex-col">
+<h3 id="guides">Guides<a class="headerlink" href="#guides" title="Permanent link">&para;</a></h3>
+<ul>
+<li><a href="https://beej.us/guide/bggit/">Beej's Guide to Git</a></li>
+<li><a href="https://beej.us/guide/bgc/">Beej's Guide to C Programming</a></li>
+<li><a href="https://beej.us/guide/bgipc/">Beej's Guide to Interprocess Communication</a></li>
+<li><a href="https://beej.us/guide/bgnet/">Beej's Guide to Network Programming</a></li>
+</ul>
+<h3 id="manual-pages">Manual Pages<a class="headerlink" href="#manual-pages" title="Permanent link">&para;</a></h3>
+<ul>
+<li><a href="https://man7.org/linux/man-pages/index.html">Linux man pages online</a></li>
+<li><a href="https://pubs.opengroup.org/onlinepubs/9799919799/">POSIX Standard</a></li>
+</ul>
+<h3 id="tutorials">Tutorials<a class="headerlink" href="#tutorials" title="Permanent link">&para;</a></h3>
+<ul>
+<li><a href="https://linuxcommand.org/lc3_learning_the_shell.php">Learning the Shell</a></li>
+<li><a href="https://hpc-tutorials.llnl.gov/posix/">POSIX Threads Programming</a></li>
+</ul>
+</div>
+</div>
+</main>
+<footer>
+Built using <a href="https://python.org">Python</a>
+and <a href="https://jinja.palletsprojects.com">Jinja</a>
+with colors from 
+<a href="https://onmessage.nd.edu/university-branding/colors/">Notre Dame</a>, 
+<a href="https://spreadsheet.dev/how-to-get-the-hexadecimal-codes-of-colors-in-google-sheets">Google Docs</a>, and 
+<a href="https://nordtheme.com">Nord Theme</a>,
+and icons from <a href="https://pictogrammers.com/library/mdi/">Material Design Icons</a>.</footer>
+</body>
+</html>
