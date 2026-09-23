@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Favicon -->
+<link rel="icon" type="image/png" sizes="32x32" href="static/ico/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="static/ico/favicon-16x16.png">
+<link rel="manifest" href="static/ico/site.webmanifest">
+<!-- Stylesheets -->
+<link rel="stylesheet" href="static/css/domer.css">
+<title>Notes 09: Locks</title>
+</head>
+<body>
+<header>
+<a class="logo" href="notes09.html">
+    <h1>Notes 09: Locks</h1>
+</a>
+<nav>
+    <ul>
+        <li><a href="index.html"><h4>Home</h4></a></li>
+        </ul>
+</nav></header>
+<main>
+<h2 id="review">Review<a class="headerlink" href="#review" title="Permanent link">&para;</a></h2>
+<ul>
+<li>
+<p>Why do I want <strong>threads</strong> (<i>instead of <strong>processes</strong></i>)? <strong>light-weight</strong></p>
+<ul>
+<li>
+<p>What do we <strong>not share</strong>? <strong>Execution context</strong>, <strong>stack</strong></p>
+</li>
+<li>
+<p>What do we <strong>share</strong>? <strong>Address space (code, data, heap)</strong>, <strong>Kernel state</strong></p>
+</li>
+<li>
+<p>Gives us <strong>internal concurrency</strong> (<i><strong>concurrency</strong> with less
+overhead of processes</i>)</p>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="threads-counterc-skit">Threads: <a href="https://github.com/nd-cse-30341-fa26/examples/blob/master/lecture08/counter.c">counter.c</a> (<i class="muted">skit</i>)<a class="headerlink" href="#threads-counterc-skit" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p><strong>Question</strong>: Is the version without locks <strong>safe/correct</strong>?</p>
+</blockquote>
+<h3 id="skit">Skit<a class="headerlink" href="#skit" title="Permanent link">&para;</a></h3>
+<p><strong>Two people</strong> come up:</p>
+<ul>
+<li><strong>Person A (I/O)</strong>: Listens for user's command</li>
+<li><strong>Person B (CPU)</strong>: Updates counter</li>
+<li><strong>Scenario</strong>: What if there is only one <strong>CPU</strong>... and <strong>Person B</strong> gets
+interrupted before updating... <strong>race condition</strong>!</li>
+</ul>
+<div class="alert warning-bg centered">
+<p>We need <strong>atomicity</strong>! Region of code with <strong>shared resource</strong> is <strong>critical
+section</strong>... before accessing <strong>shared resource</strong>, we need to grab
+<strong>mutex/lock</strong>!</p>
+</div>
+<ul>
+<li>
+<p>Redo skit with people <strong>grabbing lock</strong> before accessing <strong>shared
+resource</strong>.</p>
+</li>
+<li>
+<p>If someone has the <strong>lock</strong>, other <strong>threads</strong> will voluntarily <strong>wait</strong>
+until the <strong>lock</strong> is free.</p>
+</li>
+<li>
+<p><strong>Threads</strong> can choose to <strong>ignore lock</strong>!</p>
+</li>
+</ul>
+<div class="alert success-bg centered">
+<p>We should <strong>abstract</strong> the <strong>lock</strong> away (<em>Tuesday</em>).</p>
+</div>
+<h2 id="threads-disassembly">Threads: <span class="gold">Disassembly</span><a class="headerlink" href="#threads-disassembly" title="Permanent link">&para;</a></h2>
+<div class="flex-row">
+<div class="flex-col">
+<h3 id="background-thread"><span class="danger">Background Thread</span><a class="headerlink" href="#background-thread" title="Permanent link">&para;</a></h3>
+<p>Counter++</p>
+<div class="codehilite"><pre><span></span><code>LOAD  $Counter, R1
+ADD   R1, 1
+STORE $Counter, R1
+</code></pre></div>
+
+</div>
+<div class="flex-col">
+<h3 id="foreground-thread"><span class="success">Foreground Thread</span><a class="headerlink" href="#foreground-thread" title="Permanent link">&para;</a></h3>
+<p>Counter = 0</p>
+<div class="codehilite"><pre><span></span><code>STORE $Counter, 0
+</code></pre></div>
+
+</div>
+</div>
+<h2 id="locks-posix-threads">Locks: <span class="gold">POSIX Threads</span><a class="headerlink" href="#locks-posix-threads" title="Permanent link">&para;</a></h2>
+<p>Use a <strong class="warning">lock</strong> or <strong class="warning">mutual
+exclusion</strong> to guard a <strong class="danger">critical section</strong>,
+which is a <strong class="caution">region of code</strong> that <strong
+class="danger">acces a shared resource</strong>:</p>
+<div class="codehilite"><pre><span></span><code><span class="n">pthread_mutex_t</span><span class="w"> </span><span class="n">Lock</span><span class="p">;</span><span class="w">               </span><span class="c1">// Declare lock</span>
+<span class="n">pthread_mutex_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">Lock</span><span class="p">,</span><span class="w"> </span><span class="nb">NULL</span><span class="p">);</span><span class="w">    </span><span class="c1">// Initialize lock</span>
+
+<span class="n">pthread_mutex_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">Lock</span><span class="p">);</span><span class="w">          </span><span class="c1">// Acquire lock</span>
+<span class="n">access_shared_resource</span><span class="p">();</span><span class="w">           </span><span class="c1">// Perform critical section</span>
+<span class="n">pthread_mutex_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">Lock</span><span class="p">);</span><span class="w">        </span><span class="c1">// Release lock</span>
+</code></pre></div>
+
+<h2 id="threads-counterc">Threads: <a href="https://github.com/nd-cse-30341-fa26/examples/blob/master/lecture08/counter.c">counter.c</a><a class="headerlink" href="#threads-counterc" title="Permanent link">&para;</a></h2>
+<div class="codehilite"><pre><span></span><code><span class="cm">/* Globals */</span>
+<span class="kt">int</span><span class="w">         </span><span class="n">Counter</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="n">pthread_mutex_t</span><span class="w"> </span><span class="n">Lock</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PTHREAD_MUTEX_INITIALIZER</span><span class="p">;</span>
+
+<span class="cm">/* Functions */</span>
+
+<span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="nf">update_counter</span><span class="p">(</span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">arg</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">   </span><span class="c1">// Background thread</span>
+<span class="w">    </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="nb">true</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">                  </span><span class="c1">// Version 0: Just count (no loop)</span>
+<span class="w">        </span><span class="n">usleep</span><span class="p">(</span><span class="n">TIMEOUT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1000</span><span class="p">);</span>
+<span class="w">        </span><span class="n">pthread_mutex_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">Lock</span><span class="p">);</span><span class="w">  </span><span class="c1">// Version 1: No lock</span>
+<span class="w">        </span><span class="n">Counter</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<span class="w">        </span><span class="n">pthread_mutex_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">Lock</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">NULL</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="cm">/* Main execution */</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">argv</span><span class="p">[])</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Background Thread - Update Loop</span>
+<span class="w">    </span><span class="n">pthread_t</span><span class="w"> </span><span class="kr">thread</span><span class="p">;</span>
+<span class="w">    </span><span class="n">pthread_create</span><span class="p">(</span><span class="o">&amp;</span><span class="kr">thread</span><span class="p">,</span><span class="w"> </span><span class="nb">NULL</span><span class="p">,</span><span class="w"> </span><span class="n">update_counter</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">// Foreground Thread - I/O Loop</span>
+<span class="w">    </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="nb">true</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kt">char</span><span class="w"> </span><span class="n">buffer</span><span class="p">[</span><span class="n">BUFSIZ</span><span class="p">];</span>
+
+<span class="w">        </span><span class="c1">// Display prompt</span>
+<span class="w">        </span><span class="n">fputs</span><span class="p">(</span><span class="n">PROMPT</span><span class="p">,</span><span class="w"> </span><span class="n">stdout</span><span class="p">);</span><span class="w"> </span><span class="n">fflush</span><span class="p">(</span><span class="n">stdout</span><span class="p">);</span>
+
+<span class="w">        </span><span class="c1">// Read input</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">fgets</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span><span class="w"> </span><span class="n">BUFSIZ</span><span class="p">,</span><span class="w"> </span><span class="n">stdin</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">break</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="n">buffer</span><span class="p">[</span><span class="n">strlen</span><span class="p">(</span><span class="n">buffer</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+
+<span class="w">        </span><span class="c1">// Process input</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;count&quot;</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">pthread_mutex_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">Lock</span><span class="p">);</span><span class="w">    </span><span class="c1">// Version 1: No locks</span>
+<span class="w">            </span><span class="n">fprintf</span><span class="p">(</span><span class="n">stdout</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Counter is %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Counter</span><span class="p">);</span>
+<span class="w">            </span><span class="n">pthread_mutex_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">Lock</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;reset&quot;</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">pthread_mutex_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">Lock</span><span class="p">);</span><span class="w">    </span><span class="c1">// Version 1: No locks</span>
+<span class="w">            </span><span class="n">Counter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="w">            </span><span class="n">pthread_mutex_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">Lock</span><span class="p">);</span>
+<span class="w">            </span><span class="n">fputs</span><span class="p">(</span><span class="s">&quot;Counter is reset!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">stdout</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;exit&quot;</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">fputs</span><span class="p">(</span><span class="s">&quot;Bye!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">stdout</span><span class="p">);</span>
+<span class="w">            </span><span class="k">break</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Unknown command: %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">buffer</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<div class="alert warning-bg">
+<p><strong>Notes</strong>:</p>
+<ul>
+<li><code>#include &lt;pthread.h&gt;</code></li>
+<li><code>man pthread_create</code></li>
+<li>Add <code>-pthread</code> to <code>Makefile</code></li>
+<li>Try with <strong>big</strong> input (ie. <code>yes count &gt; input</code>)</li>
+</ul>
+<p><strong>Questions</strong>:</p>
+<ul>
+<li>Why didn't I need to create a foreground thread? <em>main</em></li>
+<li>What happens if main thread dies? <em>everything dies</em></li>
+<li>Is it correct? What is dangerous? <em>race condition</em></li>
+</ul>
+</div>
+<h2 id="locks-prime">Locks: <a href="https://github.com/nd-cse-30341-fa26/examples/tree/master/lecture09">prime</a><a class="headerlink" href="#locks-prime" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>Implement a program that computes the number of <strong>prime numbers</strong> between <code>1</code>
+and <code>400,000</code>.</p>
+</blockquote>
+<ol>
+<li>
+<p><strong class="info">Single-thread</strong></p>
+</li>
+<li>
+<p><strong class="caution">Locks</strong></p>
+</li>
+<li>
+<p><strong class="success">Lock-less</strong></p>
+</li>
+</ol>
+<h3 id="locks-prime-single-threaded">Locks: <a href="https://github.com/nd-cse-30341-fa26/examples/tree/master/lecture09">prime</a> (<i class="muted">single-threaded</i>)<a class="headerlink" href="#locks-prime-single-threaded" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code><span class="kt">size_t</span><span class="w"> </span><span class="nf">is_prime</span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">n</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">n</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">argv</span><span class="p">[])</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kt">size_t</span><span class="w"> </span><span class="n">count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">PRIME_MAX</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">count</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">is_prime</span><span class="p">(</span><span class="n">i</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;There are %lu primes less than %lu</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">count</span><span class="p">,</span><span class="w"> </span><span class="n">PRIME_MAX</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<div class="alert caution-bg">
+<p><strong>Questions</strong>:</p>
+<ul>
+<li>
+<p>Is this problem <strong>data</strong> or <strong>task parallel</strong>? <i><strong>Data parallel</strong>.</i></p>
+</li>
+<li>
+<p>How could I make this <strong>faster</strong>? <i>Use <strong>threads</strong> to process ranges.</i></p>
+</li>
+</ul>
+</div>
+<h3 id="locks-prime-multi-threaded-v1">Locks: <a href="https://github.com/nd-cse-30341-fa26/examples/tree/master/lecture09">prime</a> (<i class="muted">multi-threaded - v1</i>)<a class="headerlink" href="#locks-prime-multi-threaded-v1" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code><span class="cm">/* Structure */</span>
+<span class="k">typedef</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kt">size_t</span><span class="w"> </span><span class="n">start</span><span class="p">;</span>
+<span class="w">    </span><span class="kt">size_t</span><span class="w"> </span><span class="n">stop</span><span class="p">;</span>
+<span class="p">}</span><span class="w"> </span><span class="n">PrimeArgs</span><span class="p">;</span>
+
+<span class="c1">// Version 0: No locks</span>
+<span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nf">count_primes</span><span class="p">(</span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">arg</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">PrimeArgs</span><span class="w"> </span><span class="o">*</span><span class="n">pa</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">PrimeArgs</span><span class="w"> </span><span class="o">*</span><span class="p">)</span><span class="n">arg</span><span class="p">;</span>
+<span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;start=%lu, stop=%lu</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">pa</span><span class="o">-&gt;</span><span class="n">start</span><span class="p">,</span><span class="w"> </span><span class="n">pa</span><span class="o">-&gt;</span><span class="n">stop</span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pa</span><span class="o">-&gt;</span><span class="n">start</span><span class="p">;</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">pa</span><span class="o">-&gt;</span><span class="n">stop</span><span class="p">;</span><span class="w"> </span><span class="n">n</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">is_prime</span><span class="p">(</span><span class="n">n</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">Count</span><span class="o">++</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">NULL</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">argv</span><span class="p">[])</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">pthread_t</span><span class="w"> </span><span class="kr">thread</span><span class="p">;</span>
+<span class="w">    </span><span class="n">PrimeArgs</span><span class="w"> </span><span class="n">args</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// Division of work</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">NUM_THREADS</span><span class="p">;</span><span class="w"> </span><span class="n">t</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">args</span><span class="p">.</span><span class="n">start</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">max</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="n">t</span><span class="o">*</span><span class="n">PRIME_MAX</span><span class="o">/</span><span class="n">NUM_THREADS</span><span class="p">);</span>
+<span class="w">        </span><span class="n">args</span><span class="p">.</span><span class="n">stop</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">t</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">PRIME_MAX</span><span class="o">/</span><span class="n">NUM_THREADS</span><span class="p">;</span>
+<span class="w">        </span><span class="n">pthread_create</span><span class="p">(</span><span class="o">&amp;</span><span class="n">threads</span><span class="p">,</span><span class="w"> </span><span class="nb">NULL</span><span class="p">,</span><span class="w"> </span><span class="n">count_primes</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">args</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;There are %lu primes less than %ld</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Count</span><span class="p">,</span><span class="w"> </span><span class="n">PRIME_MAX</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<div class="alert danger-bg">
+<p><strong>Observation</strong>:</p>
+<ul>
+<li>
+<p><strong>Problem 1</strong>: If <strong>main thread</strong> exits... everything exits.</p>
+</li>
+<li>
+<p><strong>Solution</strong>: <strong>Wait</strong> for <strong>worker threads</strong>.</p>
+</li>
+</ul>
+</div>
+<h3 id="locks-prime-multi-threaded-v2">Locks: <a href="https://github.com/nd-cse-30341-fa26/examples/tree/master/lecture09">prime</a> (<i class="muted">multi-threaded - v2</i>)<a class="headerlink" href="#locks-prime-multi-threaded-v2" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">argv</span><span class="p">[])</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">pthread_t</span><span class="w"> </span><span class="n">threads</span><span class="p">[</span><span class="n">NUM_THREADS</span><span class="p">]</span><span class="w">  </span><span class="c1">// Need array of threads</span>
+<span class="w">    </span><span class="n">PrimeArgs</span><span class="w"> </span><span class="n">args</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// Division of work</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">NUM_THREADS</span><span class="p">;</span><span class="w"> </span><span class="n">t</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">args</span><span class="p">.</span><span class="n">start</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">max</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="n">t</span><span class="o">*</span><span class="n">PRIME_MAX</span><span class="o">/</span><span class="n">NUM_THREADS</span><span class="p">);</span>
+<span class="w">        </span><span class="n">args</span><span class="p">.</span><span class="n">stop</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">t</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">PRIME_MAX</span><span class="o">/</span><span class="n">NUM_THREADS</span><span class="p">;</span>
+<span class="w">        </span><span class="n">pthread_create</span><span class="p">(</span><span class="o">&amp;</span><span class="n">threads</span><span class="p">[</span><span class="n">t</span><span class="p">],</span><span class="w"> </span><span class="nb">NULL</span><span class="p">,</span><span class="w"> </span><span class="n">count_primes</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">args</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// Wait for threads</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">NUM_THREADS</span><span class="p">;</span><span class="w"> </span><span class="n">t</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">pthread_join</span><span class="p">(</span><span class="n">threads</span><span class="p">[</span><span class="n">t</span><span class="p">],</span><span class="w"> </span><span class="nb">NULL</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;There are %lu primes less than %ld</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Count</span><span class="p">,</span><span class="w"> </span><span class="n">PRIME_MAX</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<div class="alert danger-bg">
+<p><strong>Observation</strong>:</p>
+<ul>
+<li>
+<p><strong>Problem 2</strong>: <strong>Slow</strong> and produces <strong>wrong output</strong>.</p>
+</li>
+<li>
+<p><strong>Solution</strong>: Debug to figure out problem... <strong>Need separate args per thread</strong>.</p>
+</li>
+</ul>
+</div>
+<h3 id="locks-prime-multi-threaded-v3">Locks: <a href="https://github.com/nd-cse-30341-fa26/examples/tree/master/lecture09">prime</a> (<i class="muted">multi-threaded - v3</i>)<a class="headerlink" href="#locks-prime-multi-threaded-v3" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">argv</span><span class="p">[])</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">pthread_t</span><span class="w"> </span><span class="n">threads</span><span class="p">[</span><span class="n">NUM_THREADS</span><span class="p">]</span><span class="w">  </span><span class="c1">// Need array of threads</span>
+<span class="w">    </span><span class="n">PrimeArgs</span><span class="w"> </span><span class="n">args</span><span class="p">[</span><span class="n">NUM_THREADS</span><span class="p">];</span><span class="w">    </span><span class="c1">// Need array of arguments</span>
+
+<span class="w">    </span><span class="c1">// Division of work</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">NUM_THREADS</span><span class="p">;</span><span class="w"> </span><span class="n">t</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">args</span><span class="p">[</span><span class="n">t</span><span class="p">].</span><span class="n">start</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">max</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="n">t</span><span class="o">*</span><span class="n">PRIME_MAX</span><span class="o">/</span><span class="n">NUM_THREADS</span><span class="p">);</span>
+<span class="w">        </span><span class="n">args</span><span class="p">[</span><span class="n">t</span><span class="p">].</span><span class="n">stop</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">t</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">PRIME_MAX</span><span class="o">/</span><span class="n">NUM_THREADS</span><span class="p">;</span>
+<span class="w">        </span><span class="n">pthread_create</span><span class="p">(</span><span class="o">&amp;</span><span class="n">threads</span><span class="p">[</span><span class="n">t</span><span class="p">],</span><span class="w"> </span><span class="nb">NULL</span><span class="p">,</span><span class="w"> </span><span class="n">count_primes</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">args</span><span class="p">[</span><span class="n">t</span><span class="p">]);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// Wait for threads</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">NUM_THREADS</span><span class="p">;</span><span class="w"> </span><span class="n">t</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">pthread_join</span><span class="p">(</span><span class="n">threads</span><span class="p">[</span><span class="n">t</span><span class="p">],</span><span class="w"> </span><span class="nb">NULL</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;There are %lu primes less than %ld</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Count</span><span class="p">,</span><span class="w"> </span><span class="n">PRIME_MAX</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<div class="alert danger-bg">
+<p><strong>Observation</strong>:</p>
+<ul>
+<li>
+<p><strong>Problem 3</strong>: <strong>Fast</strong> and produces <strong>wrong output</strong>.</p>
+</li>
+<li>
+<p><strong>Solution</strong>: <strong>Need to protect shared resource</strong>.</p>
+</li>
+</ul>
+</div>
+<h3 id="locks-prime-multi-threaded-v4">Locks: <a href="https://github.com/nd-cse-30341-fa26/examples/tree/master/lecture09">prime</a> (<i class="muted">multi-threaded - v4</i>)<a class="headerlink" href="#locks-prime-multi-threaded-v4" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code><span class="c1">// Global Variables</span>
+<span class="n">pthread_mutex_t</span><span class="w"> </span><span class="n">Lock</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="n">PTHREAD_MUTEX_INITIALIZER</span><span class="p">;</span>
+
+<span class="c1">// Version 1: Lock all checks</span>
+<span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nf">count_primes</span><span class="p">(</span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">arg</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">PrimeArgs</span><span class="w"> </span><span class="o">*</span><span class="n">pa</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">PrimeArgs</span><span class="w"> </span><span class="o">*</span><span class="p">)</span><span class="n">arg</span><span class="p">;</span>
+
+<span class="w">    </span><span class="n">pthread_mutex_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">Lock</span><span class="p">);</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pa</span><span class="o">-&gt;</span><span class="n">start</span><span class="p">;</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">pa</span><span class="o">-&gt;</span><span class="n">stop</span><span class="p">;</span><span class="w"> </span><span class="n">n</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">is_prime</span><span class="p">(</span><span class="n">n</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">Count</span><span class="o">++</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="n">pthread_mutex_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">Lock</span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">NULL</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<div class="alert danger-bg">
+<p><strong>Observation</strong>:</p>
+<ul>
+<li>
+<p><strong>Problem 4</strong>: <strong>Slow</strong> and looks like only one <strong>CPU</strong> is being used.</p>
+</li>
+<li>
+<p><strong>Solution</strong>: Only <strong>lock</strong> what you need to.</p>
+</li>
+</ul>
+</div>
+<h3 id="locks-prime-multi-threaded-v5">Locks: <a href="https://github.com/nd-cse-30341-fa26/examples/tree/master/lecture09">prime</a> (<i class="muted">multi-threaded - v5</i>)<a class="headerlink" href="#locks-prime-multi-threaded-v5" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code><span class="c1">// Version 2: Lock just update</span>
+<span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nf">count_primes</span><span class="p">(</span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">arg</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">PrimeArgs</span><span class="w"> </span><span class="o">*</span><span class="n">pa</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">PrimeArgs</span><span class="w"> </span><span class="o">*</span><span class="p">)</span><span class="n">arg</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pa</span><span class="o">-&gt;</span><span class="n">start</span><span class="p">;</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">pa</span><span class="o">-&gt;</span><span class="n">stop</span><span class="p">;</span><span class="w"> </span><span class="n">n</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">is_prime</span><span class="p">(</span><span class="n">n</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">pthread_mutex_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">Lock</span><span class="p">);</span>
+<span class="w">            </span><span class="n">Count</span><span class="o">++</span><span class="p">;</span>
+<span class="w">            </span><span class="n">pthread_mutex_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">Lock</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">NULL</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<div class="alert caution-bg">
+<p><strong>Observation</strong>:</p>
+<ul>
+<li>Could just track <strong>local count</strong>!</li>
+</ul>
+</div>
+<h3 id="locks-prime-multi-threaded-v6">Locks: <a href="https://github.com/nd-cse-30341-fa26/examples/tree/master/lecture09">prime</a> (<i class="muted">multi-threaded - v6</i>)<a class="headerlink" href="#locks-prime-multi-threaded-v6" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nf">count_primes</span><span class="p">(</span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">arg</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">PrimeArgs</span><span class="w"> </span><span class="o">*</span><span class="n">pa</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">PrimeArgs</span><span class="w"> </span><span class="o">*</span><span class="p">)</span><span class="n">arg</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// Version 3: Use local counter</span>
+<span class="w">    </span><span class="kt">size_t</span><span class="w"> </span><span class="n">local_count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pa</span><span class="o">-&gt;</span><span class="n">start</span><span class="p">;</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">pa</span><span class="o">-&gt;</span><span class="n">stop</span><span class="p">;</span><span class="w"> </span><span class="n">n</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">is_prime</span><span class="p">(</span><span class="n">n</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">local_count</span><span class="o">++</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="n">pthread_mutex_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">Lock</span><span class="p">);</span>
+<span class="w">    </span><span class="n">Count</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">local_count</span><span class="p">;</span>
+<span class="w">    </span><span class="n">pthread_mutex_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">Lock</span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">NULL</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<div class="alert caution-bg">
+<p><strong>Observation</strong>:</p>
+<ul>
+<li>Actually, don't need to lock at all!!!</li>
+</ul>
+</div>
+<h3 id="locks-prime-multi-threaded-v7">Locks: <a href="https://github.com/nd-cse-30341-fa26/examples/tree/master/lecture09">prime</a> (<i class="muted">multi-threaded - v7</i>)<a class="headerlink" href="#locks-prime-multi-threaded-v7" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nf">count_primes</span><span class="p">(</span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">arg</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">PrimeArgs</span><span class="w"> </span><span class="o">*</span><span class="n">pa</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">PrimeArgs</span><span class="w"> </span><span class="o">*</span><span class="p">)</span><span class="n">arg</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// Version 3: Use local counter</span>
+<span class="w">    </span><span class="kt">size_t</span><span class="w"> </span><span class="n">local_count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pa</span><span class="o">-&gt;</span><span class="n">start</span><span class="p">;</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">pa</span><span class="o">-&gt;</span><span class="n">stop</span><span class="p">;</span><span class="w"> </span><span class="n">n</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">is_prime</span><span class="p">(</span><span class="n">n</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">local_count</span><span class="o">++</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">(</span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="p">)</span><span class="n">local_count</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="p">...</span>
+<span class="w">    </span><span class="c1">// Main - Wait for threads</span>
+
+<span class="w">    </span><span class="kt">size_t</span><span class="w"> </span><span class="n">thread_count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">NUM_THREADS</span><span class="p">;</span><span class="w"> </span><span class="n">t</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">pthread_join</span><span class="p">(</span><span class="n">threads</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="w"> </span><span class="p">(</span><span class="kt">void</span><span class="w"> </span><span class="o">**</span><span class="p">)</span><span class="o">&amp;</span><span class="n">thread_count</span><span class="p">);</span>
+<span class="w">        </span><span class="n">Count</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">thread_count</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+</code></pre></div>
+
+<div class="alert warning-bg">
+<p><strong>Observation</strong>:</p>
+<p><strong>Amdahl's Law</strong>: Sequential portion is <strong>bottleneck</strong> and limits scaling
+(<strong>demo</strong>: <code>32</code> cores).</p>
+</div>
+</main>
+<footer>
+Built using <a href="https://python.org">Python</a>
+and <a href="https://jinja.palletsprojects.com">Jinja</a>
+with colors from 
+<a href="https://onmessage.nd.edu/university-branding/colors/">Notre Dame</a>, 
+<a href="https://spreadsheet.dev/how-to-get-the-hexadecimal-codes-of-colors-in-google-sheets">Google Docs</a>, and 
+<a href="https://nordtheme.com">Nord Theme</a>,
+and icons from <a href="https://pictogrammers.com/library/mdi/">Material Design Icons</a>.</footer>
+</body>
+</html>
