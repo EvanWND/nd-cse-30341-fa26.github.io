@@ -22,27 +22,60 @@
         </ul>
 </nav></header>
 <main>
-<h2 id="review">Review<a class="headerlink" href="#review" title="Permanent link">&para;</a></h2>
-<ul>
-<li>
-<p>Why do I want <strong>threads</strong> (<i>instead of <strong>processes</strong></i>)? <strong>light-weight</strong></p>
-<ul>
-<li>
-<p>What do we <strong>not share</strong>? <strong>Execution context</strong>, <strong>stack</strong></p>
-</li>
-<li>
-<p>What do we <strong>share</strong>? <strong>Address space (code, data, heap)</strong>, <strong>Kernel state</strong></p>
-</li>
-<li>
-<p>Gives us <strong>internal concurrency</strong> (<i><strong>concurrency</strong> with less
-overhead of processes</i>)</p>
-</li>
-</ul>
-</li>
-</ul>
+<h2 id="review-processes-vs-events-vs-threads">Review: <span class="gold">Processes vs Events vs Threads</span><a class="headerlink" href="#review-processes-vs-events-vs-threads" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>What is <strong>concurrency</strong>?  What are different ways to implement it?</p>
+</blockquote>
+<table class="bordered">
+<thead>
+    <th class="success-bg">Processes</th>
+    <th class="caution-bg">Events</th>
+    <th class="info-bg">Threads</th>
+</thead>
+<tbody>
+<tr>
+<td class="success-bg" width="400px">
+
+(+) <strong>Abstraction</strong>: <strong>CPU</strong>
+<br>(+) <strong>Parallelism</strong>
+<br>
+<br>(~) No <strong>sharing</strong> (<em>memory</em>)
+<br>(~) Need to use <strong>IPC</strong>
+
+<br>
+<br><strong>Context Switch</strong>:
+<br>[x] <strong>Address Space</strong>
+<br>[x] <strong>Kernel State</strong>
+<br>[v] <strong>Execution Context</strong>
+
+</td>
+<td class="caution-bg" width="400px">
+
+(~) Signals
+<br>(+) <strong>Select / Poll</strong>
+<br>
+<br>(-) No <strong>parallelism</strong>
+<br>
+
+</td>
+<td class="info-bg" width="400px">
+
+(+) <strong>Abstraction</strong>: <strong>Execution Context</strong> (<em>LWP</em>)
+<br>(+) <strong>Parallelism</strong>
+<br>
+<br>(~) <strong>Sharing</strong> (<em>memory</em>)
+<br>(~) Need to <strong>synchronize</strong>
+
+</td>
+</tr>
+</tbody>
+</table>
+<div class="alert warning-bg">
+<p><strong>Note</strong>: <code>libcurl</code> uses <strong>events</strong> underneath!!!</p>
+</div>
 <h2 id="threads-counterc-skit">Threads: <a href="https://github.com/nd-cse-30341-fa26/examples/blob/master/lecture08/counter.c">counter.c</a> (<i class="muted">skit</i>)<a class="headerlink" href="#threads-counterc-skit" title="Permanent link">&para;</a></h2>
 <blockquote>
-<p><strong>Question</strong>: Is the version without locks <strong>safe/correct</strong>?</p>
+<p><strong>Comment</strong> the code and explain why this is <strong>unsafe</strong> via a <strong>skit</strong>.</p>
 </blockquote>
 <h3 id="skit">Skit<a class="headerlink" href="#skit" title="Permanent link">&para;</a></h3>
 <p><strong>Two people</strong> come up:</p>
@@ -70,27 +103,27 @@ until the <strong>lock</strong> is free.</p>
 <p><strong>Threads</strong> can choose to <strong>ignore lock</strong>!</p>
 </li>
 </ul>
-<div class="alert success-bg centered">
-<p>We should <strong>abstract</strong> the <strong>lock</strong> away (<em>Tuesday</em>).</p>
-</div>
 <h2 id="threads-disassembly">Threads: <span class="gold">Disassembly</span><a class="headerlink" href="#threads-disassembly" title="Permanent link">&para;</a></h2>
 <div class="flex-row">
 <div class="flex-col">
 <h3 id="background-thread"><span class="danger">Background Thread</span><a class="headerlink" href="#background-thread" title="Permanent link">&para;</a></h3>
 <p>Counter++</p>
-<div class="codehilite"><pre><span></span><code>LOAD  $Counter, R1
-ADD   R1, 1
-STORE $Counter, R1
+<div class="codehilite"><pre><span></span><code>LOAD    $Counter, R1    // 1
+ADD     R1, 1           // 2
+STORE   $Counter, R1    // 4
 </code></pre></div>
 
 </div>
 <div class="flex-col">
 <h3 id="foreground-thread"><span class="success">Foreground Thread</span><a class="headerlink" href="#foreground-thread" title="Permanent link">&para;</a></h3>
 <p>Counter = 0</p>
-<div class="codehilite"><pre><span></span><code>STORE $Counter, 0
+<div class="codehilite"><pre><span></span><code>STOREI  $Counter, 0     // 3
 </code></pre></div>
 
 </div>
+</div>
+<div class="alert info-bg">
+<p><a href="https://github.com/nd-cse-30341-fa26/examples/blob/master/lecture08/counter.c">counter.c</a> is an example of <strong>task parallelism</strong>.</p>
 </div>
 <h2 id="locks-posix-threads">Locks: <span class="gold">POSIX Threads</span><a class="headerlink" href="#locks-posix-threads" title="Permanent link">&para;</a></h2>
 <p>Use a <strong class="warning">lock</strong> or <strong class="warning">mutual
@@ -107,14 +140,15 @@ class="danger">acces a shared resource</strong>:</p>
 
 <h2 id="threads-counterc">Threads: <a href="https://github.com/nd-cse-30341-fa26/examples/blob/master/lecture08/counter.c">counter.c</a><a class="headerlink" href="#threads-counterc" title="Permanent link">&para;</a></h2>
 <div class="codehilite"><pre><span></span><code><span class="cm">/* Globals */</span>
-<span class="kt">int</span><span class="w">         </span><span class="n">Counter</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="kt">int</span><span class="w"> </span><span class="n">Counter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
 <span class="n">pthread_mutex_t</span><span class="w"> </span><span class="n">Lock</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PTHREAD_MUTEX_INITIALIZER</span><span class="p">;</span>
 
 <span class="cm">/* Functions */</span>
 
 <span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="nf">update_counter</span><span class="p">(</span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">arg</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">   </span><span class="c1">// Background thread</span>
 <span class="w">    </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="nb">true</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">                  </span><span class="c1">// Version 0: Just count (no loop)</span>
-<span class="w">        </span><span class="n">usleep</span><span class="p">(</span><span class="n">TIMEOUT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1000</span><span class="p">);</span>
+<span class="w">        </span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+
 <span class="w">        </span><span class="n">pthread_mutex_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">Lock</span><span class="p">);</span><span class="w">  </span><span class="c1">// Version 1: No lock</span>
 <span class="w">        </span><span class="n">Counter</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
 <span class="w">        </span><span class="n">pthread_mutex_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">Lock</span><span class="p">);</span>
@@ -166,19 +200,14 @@ class="danger">acces a shared resource</strong>:</p>
 </code></pre></div>
 
 <div class="alert warning-bg">
-<p><strong>Notes</strong>:</p>
-<ul>
-<li><code>#include &lt;pthread.h&gt;</code></li>
-<li><code>man pthread_create</code></li>
-<li>Add <code>-pthread</code> to <code>Makefile</code></li>
-<li>Try with <strong>big</strong> input (ie. <code>yes count &gt; input</code>)</li>
-</ul>
 <p><strong>Questions</strong>:</p>
 <ul>
 <li>Why didn't I need to create a foreground thread? <em>main</em></li>
-<li>What happens if main thread dies? <em>everything dies</em></li>
-<li>Is it correct? What is dangerous? <em>race condition</em></li>
+<li>Who enforces the <strong>lock</strong>? <em>noone</em>, hence <em>mutual exclusion</em></li>
 </ul>
+</div>
+<div class="alert success-bg centered">
+<p>We should use <strong>data structure</strong> to <strong>abstract</strong> the <strong>lock</strong> away (<em>Tuesday</em>).</p>
 </div>
 <h2 id="locks-prime">Locks: <a href="https://github.com/nd-cse-30341-fa26/examples/tree/master/lecture09">prime</a><a class="headerlink" href="#locks-prime" title="Permanent link">&para;</a></h2>
 <blockquote>
@@ -198,6 +227,7 @@ and <code>400,000</code>.</p>
 </ol>
 <h3 id="locks-prime-single-threaded">Locks: <a href="https://github.com/nd-cse-30341-fa26/examples/tree/master/lecture09">prime</a> (<i class="muted">single-threaded</i>)<a class="headerlink" href="#locks-prime-single-threaded" title="Permanent link">&para;</a></h3>
 <div class="codehilite"><pre><span></span><code><span class="kt">size_t</span><span class="w"> </span><span class="nf">is_prime</span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Review: size_t</span>
 <span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">n</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">n</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span>
 <span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
@@ -235,18 +265,23 @@ and <code>400,000</code>.</p>
 
 <span class="c1">// Version 0: No locks</span>
 <span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nf">count_primes</span><span class="p">(</span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">arg</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Review: void *, casting</span>
 <span class="w">    </span><span class="n">PrimeArgs</span><span class="w"> </span><span class="o">*</span><span class="n">pa</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">PrimeArgs</span><span class="w"> </span><span class="o">*</span><span class="p">)</span><span class="n">arg</span><span class="p">;</span>
-<span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;start=%lu, stop=%lu</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">pa</span><span class="o">-&gt;</span><span class="n">start</span><span class="p">,</span><span class="w"> </span><span class="n">pa</span><span class="o">-&gt;</span><span class="n">stop</span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">// Review: print debugging</span>
+<span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;[%ld] start=%lu, stop=%lu</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">pthread_self</span><span class="p">(),</span><span class="w"> </span><span class="n">pa</span><span class="o">-&gt;</span><span class="n">start</span><span class="p">,</span><span class="w"> </span><span class="n">pa</span><span class="o">-&gt;</span><span class="n">stop</span><span class="p">);</span>
 
 <span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pa</span><span class="o">-&gt;</span><span class="n">start</span><span class="p">;</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">pa</span><span class="o">-&gt;</span><span class="n">stop</span><span class="p">;</span><span class="w"> </span><span class="n">n</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">is_prime</span><span class="p">(</span><span class="n">n</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
 <span class="w">            </span><span class="n">Count</span><span class="o">++</span><span class="p">;</span>
 <span class="w">        </span><span class="p">}</span>
 <span class="w">    </span><span class="p">}</span>
+
 <span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">NULL</span><span class="p">;</span>
 <span class="p">}</span>
 
 <span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">argv</span><span class="p">[])</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Demonstrate: lscpu</span>
 <span class="w">    </span><span class="n">pthread_t</span><span class="w"> </span><span class="kr">thread</span><span class="p">;</span>
 <span class="w">    </span><span class="n">PrimeArgs</span><span class="w"> </span><span class="n">args</span><span class="p">;</span>
 
@@ -446,8 +481,44 @@ and <code>400,000</code>.</p>
 
 <div class="alert warning-bg">
 <p><strong>Observation</strong>:</p>
-<p><strong>Amdahl's Law</strong>: Sequential portion is <strong>bottleneck</strong> and limits scaling
-(<strong>demo</strong>: <code>32</code> cores).</p>
+<ul>
+<li>
+<p><strong>Problem</strong>: Division of work is unbalanced so we have <strong>stragglers</strong> (<em>long tail</em>).</p>
+</li>
+<li>
+<p><strong>Solution</strong>: <strong>Striding</strong>!</p>
+</li>
+</ul>
+</div>
+<h3 id="locks-prime-multi-threaded-v8">Locks: <a href="https://github.com/nd-cse-30341-fa26/examples/tree/master/lecture09">prime</a> (<i class="muted">multi-threaded - v8</i>)<a class="headerlink" href="#locks-prime-multi-threaded-v8" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nf">count_primes</span><span class="p">(</span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">arg</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">PrimeArgs</span><span class="w"> </span><span class="o">*</span><span class="n">pa</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">PrimeArgs</span><span class="w"> </span><span class="o">*</span><span class="p">)</span><span class="n">arg</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// Version 4: Stride</span>
+<span class="w">    </span><span class="kt">size_t</span><span class="w"> </span><span class="n">local_count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pa</span><span class="o">-&gt;</span><span class="n">start</span><span class="p">;</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">PRIME_MAX</span><span class="p">;</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">NUM_THREADS</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">is_prime</span><span class="p">(</span><span class="n">n</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">local_count</span><span class="o">++</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">(</span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="p">)</span><span class="n">local_count</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="p">...</span>
+<span class="w">    </span><span class="c1">// Division of work</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">NUM_THREADS</span><span class="p">;</span><span class="w"> </span><span class="n">t</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">args</span><span class="p">[</span><span class="n">t</span><span class="p">].</span><span class="n">start</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span>
+<span class="w">        </span><span class="n">pthread_create</span><span class="p">(</span><span class="o">&amp;</span><span class="n">threads</span><span class="p">[</span><span class="n">t</span><span class="p">],</span><span class="w"> </span><span class="nb">NULL</span><span class="p">,</span><span class="w"> </span><span class="n">count_primes</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">args</span><span class="p">[</span><span class="n">t</span><span class="p">]);</span>
+<span class="w">    </span><span class="p">}</span>
+</code></pre></div>
+
+<div class="alert warning-bg">
+<p><strong>Observation</strong>:</p>
+<ul>
+<li><strong>Amdahl's Law</strong>: Sequential portion is <strong>bottleneck</strong> and limits scaling
+  (<strong>demo</strong>: <code>32</code> cores).</li>
+</ul>
 </div>
 </main>
 <footer>
