@@ -1,0 +1,656 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Favicon -->
+<link rel="icon" type="image/png" sizes="32x32" href="static/ico/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="static/ico/favicon-16x16.png">
+<link rel="manifest" href="static/ico/site.webmanifest">
+<!-- Stylesheets -->
+<link rel="stylesheet" href="static/css/domer.css">
+<title>Notes 09: Condition Variables</title>
+</head>
+<body>
+<header>
+<a class="logo" href="notes10.html">
+    <h1>Notes 09: Condition Variables</h1>
+</a>
+<nav>
+    <ul>
+        <li><a href="index.html"><h4>Home</h4></a></li>
+        </ul>
+</nav></header>
+<main>
+<h2 id="review-locks">Review: <span class="gold">Locks</span><a class="headerlink" href="#review-locks" title="Permanent link">&para;</a></h2>
+<ul>
+<li>
+<p><a href="project01.html">Project 01</a>: We be <strong>graded</strong> soon...</p>
+</li>
+<li>
+<div class="flex-col" markdown="1">
+<p>What is a <strong>lock</strong>?</p>
+<ul>
+<li>
+<p>Mechanism to prevent thread from accessing <strong>critical section</strong> (<em>shared
+  resource</em>).</p>
+</li>
+<li>
+<p>Helps avoid <strong>race conditions</strong>!</p>
+</li>
+</ul>
+</li>
+<li>
+<div class="flex-col" markdown="1">
+<p>How do we use a <strong>lock</strong>?</p>
+<ul>
+<li>
+<p>Parties agree to <em>acquire</em> lock before accessing <em>shared resource</em>.</p>
+</li>
+<li>
+<p>If can't <em>acquire</em>, then <em>wait</em> until it is available (<em>mutual exclusion</em>).</p>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="project-02-pub-sub">Project 02: <span class="gold">Pub / Sub</span><a class="headerlink" href="#project-02-pub-sub" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p><strong>Analogy</strong>: Mobile phone subscribes to a <strong>Pub/Sub</strong> system to get
+<strong>notifications</strong>.</p>
+</blockquote>
+<div class="centered">
+
+<img src="static/img/notebook10-project02-pubsub.svg" class="transparent responsive">
+
+</div>
+
+<div class="alert warning-bg centered">
+<p>Need to use <strong>library</strong> to implement <strong>chat application</strong>.</p>
+</div>
+<h2 id="concurrent-ds-producer-consumer">Concurrent DS: <span class="gold">Producer / Consumer</span><a class="headerlink" href="#concurrent-ds-producer-consumer" title="Permanent link">&para;</a></h2>
+<p>In this classic <strong class="success">concurrency</strong> problem, we have
+one more <strong class="success">producers</strong> generating data that one or
+more <strong class="danger">consumers</strong> must process:</p>
+<h3 id="concurrent-ds-producer-consumer-skit">Concurrent DS: <span class="gold">Producer / Consumer</span> (<i class="muted">Skit</i>)<a class="headerlink" href="#concurrent-ds-producer-consumer-skit" title="Permanent link">&para;</a></h3>
+<ul>
+<li>
+<div class="flex-col" markdown="1">
+<p><strong>Producer</strong> puts <strong>balls</strong> into <strong>cups</strong>.</p>
+<ul>
+<li>
+<p>Performs <strong>push</strong> (<em>advance writer index/pointer</em>).</p>
+</li>
+<li>
+<p>Eventually runs out of space... or move back to from (<em>circular array</em>).</p>
+</li>
+<li>
+<p>Can't <strong>push</strong> if <strong>full</strong>.</p>
+</li>
+</ul>
+</li>
+<li>
+<div class="flex-col" markdown="1">
+<p><strong>Consumer</strong> retrieves <strong>balls</strong> from <strong>cups</strong>.</p>
+<ul>
+<li>
+<p>Performs <strong>pop</strong> (<em>advance reader index/pointer</em>)</p>
+</li>
+<li>
+<p>Need to careful to not advance <em>reader</em> past <em>writer</em>.</p>
+</li>
+<li>
+<p>Can't <strong>pop</strong> if <strong>empty</strong>.</p>
+</li>
+</ul>
+</li>
+</ul>
+<div class="alert warning-bg centered">
+<p>If we have someone <strong>consuming</strong> and someone <strong>producing</strong>,<br>
+then need to <strong>synchronize</strong> access to the resource!</p>
+</div>
+<h3 id="concurrent-ds-producer-consumer-pseudo-code">Concurrent DS: <span class="gold">Producer / Consumer</span> (<i class="muted">Pseudo-Code</i>)<a class="headerlink" href="#concurrent-ds-producer-consumer-pseudo-code" title="Permanent link">&para;</a></h3>
+<div class="flex-row">
+<div class="flex-col">
+<p><img src="static/img/slides10-producer-consumer.svg" class="transparent responsive"></p>
+<p><br></p>
+<div class="alert danger-bg centered">
+<p>This version is full of<br><strong>race conditions</strong>!</p>
+</div>
+</div>
+<div class="flex-col">
+<div class="codehilite"><pre><span></span><code><span class="c1"># Version 0 - No checks</span>
+
+<span class="k">def</span> <span class="nf">Producer</span><span class="p">(</span><span class="n">queue</span><span class="p">):</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">produce</span><span class="p">()</span>
+        <span class="n">queue</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">Consumer</span><span class="p">(</span><span class="n">queue</span><span class="p">):</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+        <span class="n">consume</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+<span class="c1"># Version 1 - If</span>
+
+<span class="k">def</span> <span class="nf">Producer</span><span class="p">(</span><span class="n">queue</span><span class="p">):</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">produce</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">queue</span><span class="o">.</span><span class="n">full</span><span class="p">():</span>    <span class="c1"># Add check</span>
+            <span class="n">queue</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">Consumer</span><span class="p">(</span><span class="n">queue</span><span class="p">):</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">queue</span><span class="o">.</span><span class="n">empty</span><span class="p">():</span>       <span class="c1"># Add check</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+        <span class="n">consume</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+<span class="c1"># Version 2 - While</span>
+
+<span class="k">def</span> <span class="nf">Producer</span><span class="p">(</span><span class="n">queue</span><span class="p">):</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">produce</span><span class="p">()</span>
+        <span class="k">while</span> <span class="ow">not</span> <span class="n">queue</span><span class="o">.</span><span class="n">full</span><span class="p">():</span> <span class="c1"># Add busy waiting</span>
+            <span class="k">pass</span>
+        <span class="n">queue</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">Consumer</span><span class="p">(</span><span class="n">queue</span><span class="p">):</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="k">while</span> <span class="n">queue</span><span class="o">.</span><span class="n">empty</span><span class="p">():</span>    <span class="c1"># Add busy waiting</span>
+            <span class="k">pass</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+        <span class="n">consume</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+<span class="c1"># Version 3 - Locks (Race Condition)</span>
+
+<span class="k">def</span> <span class="nf">Producer</span><span class="p">(</span><span class="n">queue</span><span class="p">):</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">produce</span><span class="p">()</span>
+
+        <span class="k">while</span> <span class="ow">not</span> <span class="n">queue</span><span class="o">.</span><span class="n">full</span><span class="p">():</span>
+            <span class="k">pass</span>
+
+        <span class="n">Lock</span><span class="p">()</span>                  <span class="c1"># Lock access to queue</span>
+        <span class="n">queue</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">Unlock</span><span class="p">()</span>
+
+<span class="k">def</span> <span class="nf">Consumer</span><span class="p">(</span><span class="n">queue</span><span class="p">):</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="k">while</span> <span class="n">queue</span><span class="o">.</span><span class="n">empty</span><span class="p">():</span>
+            <span class="k">pass</span>
+
+        <span class="n">Lock</span><span class="p">()</span>                  <span class="c1"># Lock access to queue</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+        <span class="n">Unlock</span><span class="p">()</span>
+        <span class="n">consume</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+<span class="c1"># Version 4 - Locks (Deadlock)</span>
+
+<span class="k">def</span> <span class="nf">Producer</span><span class="p">(</span><span class="n">queue</span><span class="p">):</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">produce</span><span class="p">()</span>
+
+        <span class="n">Lock</span><span class="p">()</span>                  <span class="c1"># Move lock</span>
+        <span class="k">while</span> <span class="ow">not</span> <span class="n">queue</span><span class="o">.</span><span class="n">full</span><span class="p">():</span>
+            <span class="k">pass</span>
+
+        <span class="n">queue</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">Unlock</span><span class="p">()</span>
+
+<span class="k">def</span> <span class="nf">Consumer</span><span class="p">(</span><span class="n">queue</span><span class="p">):</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">Lock</span><span class="p">()</span>                  <span class="c1"># Move lock</span>
+        <span class="k">while</span> <span class="n">queue</span><span class="o">.</span><span class="n">empty</span><span class="p">():</span>
+            <span class="k">pass</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+        <span class="n">Unlock</span><span class="p">()</span>
+        <span class="n">consume</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</code></pre></div>
+
+</div>
+</div>
+<h2 id="concurrent-ds-monitor">Concurrent DS: <span class="gold">Monitor</span><a class="headerlink" href="#concurrent-ds-monitor" title="Permanent link">&para;</a></h2>
+<p>Solve this problem with a <strong class="primary">monitor</strong> that uses
+<strong class="warning">locks</strong> and <strong class="caution">condition
+variables</strong> internally to provide safe access to <strong
+class="danger">shared resources</strong>.</p>
+<div class="flex-row">
+<div class="flex-col">
+<p><img src="static/img/slides10-monitor.svg" class="transparent responsive"></p>
+<p><br></p>
+<div class="alert success-bg centered">
+<p>Abstract the details of <strong>synchronization</strong> behind the interface of a <strong
+class="primary">concurrent data structure</strong>.</p>
+</div>
+</div>
+<div class="flex-col">
+<div class="codehilite"><pre><span></span><code>  <span class="k">def</span> <span class="nf">push</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+      <span class="n">mutex</span><span class="o">.</span><span class="n">lock</span><span class="p">()</span>
+
+      <span class="k">while</span> <span class="n">queue</span><span class="o">.</span><span class="n">full</span><span class="p">():</span>   <span class="c1"># Busy Waiting</span>
+          <span class="k">pass</span>
+
+      <span class="n">queue</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+      <span class="n">produced</span><span class="o">.</span><span class="n">signal</span><span class="p">()</span>
+      <span class="n">mutex</span><span class="o">.</span><span class="n">unlock</span><span class="p">()</span>
+
+  <span class="k">def</span> <span class="nf">pop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+      <span class="n">mutex</span><span class="o">.</span><span class="n">lock</span><span class="p">()</span>
+
+      <span class="k">while</span> <span class="n">queue</span><span class="o">.</span><span class="n">empty</span><span class="p">():</span>  <span class="c1"># Busy Waiting</span>
+          <span class="k">pass</span>
+
+      <span class="n">data</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+      <span class="n">mutex</span><span class="o">.</span><span class="n">unlock</span><span class="p">()</span>
+
+      <span class="k">return</span> <span class="n">data</span>
+</code></pre></div>
+
+<div class="alert warning-bg">
+<p><strong>Observations</strong>:</p>
+<ul>
+<li>
+<p><strong>Producer</strong> just uses <code>Push()</code>, <strong>Consumer</strong> just uses <code>Pop()</code>.</p>
+</li>
+<li>
+<p><strong>Problem 1</strong>: Grab <strong>lock</strong> and stuck in while loop forever (<em>deadlock</em>).</p>
+</li>
+<li>
+<p><strong>Problem 2</strong>: <strong>Busy waiting</strong>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<h2 id="concurrent-ds-queue-comments">Concurrent DS: <span class="gold">Queue</span> (<i class="muted">comments</i>)<a class="headerlink" href="#concurrent-ds-queue-comments" title="Permanent link">&para;</a></h2>
+<ul>
+<li>
+<div class="flex-col" markdown="1">
+<p>Annotate <code>pc.c</code> (<em>comments</em>).</p>
+<ul>
+<li>Review thread primitives (<code>thread.h</code>).</li>
+<li>Discuss <strong>sentinel value</strong> for terminating.</li>
+</ul>
+</li>
+<li>
+<div class="flex-col" markdown="1">
+<p>Discuss <code>queue.h</code> and <code>queue.c</code>.</p>
+<ul>
+<li>Review <strong>circular array</strong>.</li>
+<li>Discuss <strong>sentinel</strong> handling in <code>queue_pop()</code>.</li>
+</ul>
+</li>
+</ul>
+<h2 id="concurrent-ds-queue-1">Concurrent DS: <span class="gold">Queue</span> (<i class="muted">1</i>)<a class="headerlink" href="#concurrent-ds-queue-1" title="Permanent link">&para;</a></h2>
+<div class="codehilite"><pre><span></span><code><span class="c1">// queue.h</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Queue</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="p">...</span>
+<span class="w">    </span><span class="n">Mutex</span><span class="w">  </span><span class="n">lock</span><span class="p">;</span><span class="w">                        </span><span class="c1">// Declare lock</span>
+<span class="p">};</span>
+
+<span class="c1">// queue.c</span>
+<span class="n">Queue</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nf">queue_create</span><span class="p">(...)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">Queue</span><span class="w"> </span><span class="o">*</span><span class="n">q</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">calloc</span><span class="p">(...);</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">q</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="p">...</span>
+<span class="w">        </span><span class="n">mutex_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">,</span><span class="w"> </span><span class="nb">NULL</span><span class="p">);</span><span class="w">     </span><span class="c1">// Initialize lock</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">q</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">void</span><span class="w">    </span><span class="nf">queue_push</span><span class="p">(...)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">mutex_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">);</span><span class="w">               </span><span class="c1">// Acquire lock</span>
+<span class="w">    </span><span class="p">...</span>
+<span class="w">    </span><span class="n">mutex_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">);</span><span class="w">             </span><span class="c1">// Release lock</span>
+<span class="p">}</span>
+
+<span class="kt">int</span><span class="w">     </span><span class="nf">queue_pop</span><span class="p">(</span><span class="n">Queue</span><span class="w"> </span><span class="o">*</span><span class="n">q</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">mutex_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">);</span><span class="w">               </span><span class="c1">// Acquire lock</span>
+<span class="w">    </span><span class="p">...</span>
+<span class="w">    </span><span class="n">mutex_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">);</span><span class="w">             </span><span class="c1">// Release lock</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">value</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<div class="alert warning-bg">
+<p><strong>Observations</strong>:</p>
+<ul>
+<li><strong>Problem</strong>: <strong>Deadlock</strong> due to <strong>busy waiting</strong>.</li>
+</ul>
+</div>
+<h2 id="concurrent-ds-queue-2">Concurrent DS: <span class="gold">Queue</span> (<i class="muted">2</i>)<a class="headerlink" href="#concurrent-ds-queue-2" title="Permanent link">&para;</a></h2>
+<div class="codehilite"><pre><span></span><code><span class="c1">// queue.h</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Queue</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="p">...</span>
+<span class="w">    </span><span class="n">Mutex</span><span class="w">  </span><span class="n">lock</span><span class="p">;</span>
+<span class="w">    </span><span class="n">Cond</span><span class="w">   </span><span class="n">cond</span><span class="p">;</span><span class="w">                        </span><span class="c1">// Declare condition variable</span>
+<span class="p">};</span>
+
+<span class="c1">// queue.c</span>
+<span class="n">Queue</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nf">queue_create</span><span class="p">(...)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">Queue</span><span class="w"> </span><span class="o">*</span><span class="n">q</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">calloc</span><span class="p">(...);</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">q</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="p">...</span>
+<span class="w">        </span><span class="n">mutex_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">,</span><span class="w"> </span><span class="nb">NULL</span><span class="p">);</span>
+<span class="w">        </span><span class="n">cond_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">cond</span><span class="p">,</span><span class="w"> </span><span class="nb">NULL</span><span class="p">);</span><span class="w">      </span><span class="c1">// Initialize condition variable</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">q</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">void</span><span class="w">    </span><span class="nf">queue_push</span><span class="p">(...)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">mutex_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">);</span>
+<span class="w">    </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">size</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="n">q</span><span class="o">-&gt;</span><span class="n">capacity</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// 1. Give up lock</span>
+<span class="w">        </span><span class="c1">// 2. Go to sleep</span>
+<span class="w">        </span><span class="n">cond_wait</span><span class="p">(</span><span class="o">&amp;</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">cond</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">);</span><span class="w">  </span><span class="c1">// Wait until condition changes</span>
+<span class="w">        </span><span class="c1">// 3. Wake up</span>
+<span class="w">        </span><span class="c1">// 4. Take the lock back</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="p">...</span>
+
+<span class="w">    </span><span class="n">cond_signal</span><span class="p">(</span><span class="o">&amp;</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">cond</span><span class="p">);</span><span class="w">              </span><span class="c1">// Signal that condition has changed</span>
+<span class="w">    </span><span class="n">mutex_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">int</span><span class="w">     </span><span class="nf">queue_pop</span><span class="p">(</span><span class="n">Queue</span><span class="w"> </span><span class="o">*</span><span class="n">q</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">mutex_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">);</span>
+<span class="w">    </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">size</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">cond_wait</span><span class="p">(</span><span class="o">&amp;</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">cond</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">);</span><span class="w">  </span><span class="c1">// Wait until condition changes</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="p">...</span>
+
+<span class="w">    </span><span class="n">cond_signal</span><span class="p">(</span><span class="o">&amp;</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">cond</span><span class="p">);</span><span class="w">              </span><span class="c1">// Signal that condition has changed</span>
+<span class="w">    </span><span class="n">mutex_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">value</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<div class="alert warning-bg">
+<p><strong>Observations</strong>:</p>
+<ul>
+<li>
+<p><strong>Discuss</strong>: Use <code>while</code> instead of <code>if</code> due to <em>spurious interrupts</em>
+(<em>condition</em> may not have changed yet).</p>
+</li>
+<li>
+<p><strong>Problem</strong>: <strong>Hangs</strong> if we don't call <code>cond_signal</code>.</p>
+</li>
+<li>
+<p><strong>Skit</strong>: once <strong>producer</strong> becomes full, calls <code>cond_wait</code>... <strong>consumer</strong>
+takes one item, wakes up, another <strong>consumer</strong>, who eats, wakes up another
+<strong>consumer</strong>... OS may schedule <strong>consumer</strong> instead of <strong>producer</strong>!</p>
+</li>
+</ul>
+</div>
+<h2 id="concurrent-ds-queue-3">Concurrent DS: <span class="gold">Queue</span> (<i class="muted">3</i>)<a class="headerlink" href="#concurrent-ds-queue-3" title="Permanent link">&para;</a></h2>
+<div class="codehilite"><pre><span></span><code><span class="c1">// queue.h</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Queue</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="p">...</span>
+<span class="w">    </span><span class="n">Mutex</span><span class="w">  </span><span class="n">lock</span><span class="p">;</span>
+<span class="w">    </span><span class="n">Cond</span><span class="w">   </span><span class="n">consumed</span><span class="p">;</span><span class="w">                        </span><span class="c1">// Declare condition variable</span>
+<span class="w">    </span><span class="n">Cond</span><span class="w">   </span><span class="n">produced</span><span class="p">;</span><span class="w">                        </span><span class="c1">// Declare condition variable</span>
+<span class="p">};</span>
+
+<span class="c1">// queue.c</span>
+<span class="n">Queue</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nf">queue_create</span><span class="p">(...)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">Queue</span><span class="w"> </span><span class="o">*</span><span class="n">q</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">calloc</span><span class="p">(...);</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">q</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="p">...</span>
+<span class="w">        </span><span class="n">mutex_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">,</span><span class="w"> </span><span class="nb">NULL</span><span class="p">);</span>
+<span class="w">        </span><span class="n">cond_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">consumed</span><span class="p">,</span><span class="w"> </span><span class="nb">NULL</span><span class="p">);</span><span class="w">      </span><span class="c1">// Initialize condition variable</span>
+<span class="w">        </span><span class="n">cond_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">produced</span><span class="p">,</span><span class="w"> </span><span class="nb">NULL</span><span class="p">);</span><span class="w">      </span><span class="c1">// Initialize condition variable</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">q</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">void</span><span class="w">    </span><span class="nf">queue_push</span><span class="p">(...)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">mutex_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">);</span>
+<span class="w">    </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">size</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="n">q</span><span class="o">-&gt;</span><span class="n">capacity</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">cond_wait</span><span class="p">(</span><span class="o">&amp;</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">consumed</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">);</span><span class="w">  </span><span class="c1">// Wait for consumed</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="p">...</span>
+
+<span class="w">    </span><span class="n">cond_signal</span><span class="p">(</span><span class="o">&amp;</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">produced</span><span class="p">);</span><span class="w">              </span><span class="c1">// Signal produced</span>
+<span class="w">    </span><span class="n">mutex_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">);</span>
+<span class="p">}</span>
+
+
+<span class="kt">int</span><span class="w">     </span><span class="nf">queue_pop</span><span class="p">(</span><span class="n">Queue</span><span class="w"> </span><span class="o">*</span><span class="n">q</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">mutex_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">);</span>
+<span class="w">    </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">size</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">cond_wait</span><span class="p">(</span><span class="o">&amp;</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">produced</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">);</span><span class="w">  </span><span class="c1">// Wait for produced</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="p">...</span>
+
+<span class="w">    </span><span class="n">cond_signal</span><span class="p">(</span><span class="o">&amp;</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">consumed</span><span class="p">);</span><span class="w">              </span><span class="c1">// Signal consumed</span>
+<span class="w">    </span><span class="n">mutex_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">value</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h2 id="condition-variable-waiting">Condition Variable: <span class="gold">Waiting</span><a class="headerlink" href="#condition-variable-waiting" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p><strong class="primary">cond_wait</strong>(&amp;cond, &amp;lock);</p>
+</blockquote>
+<ol>
+<li>
+<p><strong>Give up lock</strong></p>
+</li>
+<li>
+<p><strong>Go to sleep</strong></p>
+</li>
+<li>
+<p><strong>Wake up</strong></p>
+</li>
+<li>
+<p><strong>Take back lock</strong></p>
+</li>
+</ol>
+<h2 id="locks-evaluation">Locks: <span class="gold">Evaluation</span><a class="headerlink" href="#locks-evaluation" title="Permanent link">&para;</a></h2>
+<p>To evaluate a <strong class="warning">lock</strong> implementation, we need to
+consider the following three <strong class="special">metrics</strong>:</p>
+<ol>
+<li>
+<p><strong class="caution">Correctness</strong></p>
+<p>Does it actually provide <strong class="warning">mutual exclusion</strong>?</p>
+</li>
+<li>
+<p><strong class="info">Fairness</strong></p>
+<p>Does it give each <strong class="primary">thread</strong> a fair shot at
+acquiring the <strong class="warning">lock</strong>?</p>
+</li>
+<li>
+<p><strong class="success">Performance</strong></p>
+<p>How much overhead is added by using the <strong
+class="warning">lock</strong>?</p>
+</li>
+</ol>
+<h2 id="locks-disabling-interrupts">Locks: <span class="gold">Disabling Interrupts</span><a class="headerlink" href="#locks-disabling-interrupts" title="Permanent link">&para;</a></h2>
+<p>One way to implement <strong class="warning">locks</strong> is to simply
+<strong class="danger">disable interrupts</strong>:</p>
+<div class="flex-row">
+<div class="flex-col">
+<div class="codehilite"><pre><span></span><code><span class="k">class</span> <span class="nc">Mutex</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">Lock</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">DisableInterrupts</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">Unlock</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">EnableInterrupts</span><span class="p">()</span>
+</code></pre></div>
+
+</div>
+<div class="flex-col-25">
+<p><strong class="danger">Problems</strong></p>
+<ol>
+<li>
+<p><strong class="caution">Correctness</strong></p>
+<p><em>Possibly lose interrupts.</em></p>
+</li>
+<li>
+<p><strong class="info">Fairness</strong></p>
+<p><em>Need to trust users.</em></p>
+</li>
+<li>
+<p><strong class="success">Performance</strong></p>
+<p><em>Doesn't scale to multiple processors.</em></p>
+</li>
+</ol>
+</div>
+</div>
+<h2 id="locks-implementation-spin-lock">Locks: <span class="gold">Implementation</span> (<i class="muted">Spin Lock</i>)<a class="headerlink" href="#locks-implementation-spin-lock" title="Permanent link">&para;</a></h2>
+<p>A better way is to implement a <strong class="warning">spin lock</strong>:</p>
+<div class="flex-row">
+<div class="flex-col">
+<div class="codehilite"><pre><span></span><code><span class="k">class</span> <span class="nc">Mutex</span><span class="p">:</span>
+    <span class="n">flag</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>             <span class="c1"># 0: available, 1: unavailable</span>
+
+    <span class="k">def</span> <span class="nf">Lock</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">flag</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span> <span class="c1"># Test lock</span>
+            <span class="k">pass</span>              <span class="c1"># Spin until lock is available</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">flag</span> <span class="o">=</span> <span class="mi">1</span>         <span class="c1"># Set lock</span>
+
+    <span class="k">def</span> <span class="nf">Unlock</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">flag</span> <span class="o">=</span> <span class="mi">0</span>         <span class="c1"># Clear lock</span>
+</code></pre></div>
+
+</div>
+<div class="flex-col-25">
+<p><strong class="danger">Problems</strong></p>
+<ol>
+<li>
+<p><strong class="caution">Correctness</strong></p>
+<p><em>Race condition</em></p>
+</li>
+<li>
+<p><strong class="success">Performance</strong></p>
+<p><em>Busy waiting</em></p>
+</li>
+</ol>
+</div>
+</div>
+<h2 id="locks-test-and-set">Locks: <span class="gold">Test and Set</span><a class="headerlink" href="#locks-test-and-set" title="Permanent link">&para;</a></h2>
+<p>To effectively implement a <strong class="warning">lock</strong>, we need
+special <strong class="info">hardware instructions</strong> that provide
+<strong class="special">atomic exchanges</strong>:</p>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">TestAndSet</span><span class="p">(</span><span class="n">old_ptr</span><span class="p">:</span> <span class="nb">int</span><span class="o">*</span><span class="p">,</span> <span class="n">new_value</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="n">old_value</span> <span class="o">=</span> <span class="o">*</span><span class="n">old_ptr</span>      <span class="c1"># Fetch old value at old pointer</span>
+    <span class="o">*</span><span class="n">old_ptr</span>  <span class="o">=</span> <span class="n">new_value</span>     <span class="c1"># Store new value into old pointer</span>
+    <span class="k">return</span> <span class="n">old_value</span>          <span class="c1"># Return old value</span>
+</code></pre></div>
+
+<div class="alert info-bg centered">
+<p>The above three lines all happen in one instruction (<i
+class="special">atomically</i>)</p>
+</div>
+<h2 id="locks-test-and-set-spin-lock">Locks: <span class="gold">Test and Set</span> (<i class="muted">Spin Lock</i>)<a class="headerlink" href="#locks-test-and-set-spin-lock" title="Permanent link">&para;</a></h2>
+<p>With the <strong class="info">TestAndSet</strong> instruction, we can implement
+a better <strong class="warning">spin lock</strong>.</p>
+<div class="flex-row">
+<div class="flex-col">
+<div class="codehilite"><pre><span></span><code><span class="k">class</span> <span class="nc">Mutex</span><span class="p">:</span>
+    <span class="n">flag</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>           <span class="c1"># 0: available, 1: unavailable</span>
+
+    <span class="k">def</span> <span class="nf">Lock</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>         <span class="c1"># Test and Set lock atomically</span>
+        <span class="k">while</span> <span class="n">TestAndSet</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">flag</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">pass</span>            <span class="c1"># Spin until lock is available</span>
+
+    <span class="k">def</span> <span class="nf">Unlock</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">flag</span> <span class="o">=</span> <span class="mi">0</span>       <span class="c1"># Clear lock</span>
+</code></pre></div>
+
+</div>
+<div class="flex-col-25">
+<p><strong class="danger">Problems</strong></p>
+<ol>
+<li>
+<p><strong class="success">Performance</strong></p>
+<p><em>Busy waiting</em></p>
+</li>
+</ol>
+</div>
+</div>
+<h2 id="locks-yielding-spin-lock">Locks: <span class="gold">Yielding</span> (<i class="muted">Spin Lock</i>)<a class="headerlink" href="#locks-yielding-spin-lock" title="Permanent link">&para;</a></h2>
+<p>One way to reduce the cost of <strong class="danger">busy waiting</strong> is
+to simply <strong class="caution">yield</strong> as we spin:</p>
+<div class="flex-row">
+<div class="flex-col">
+<div class="codehilite"><pre><span></span><code><span class="k">class</span> <span class="nc">Mutex</span><span class="p">:</span>
+    <span class="n">flag</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>           <span class="c1"># 0: available, 1: unavailable</span>
+
+    <span class="k">def</span> <span class="nf">Lock</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>         <span class="c1"># Test and Set lock atomically</span>
+        <span class="k">while</span> <span class="n">TestAndSet</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">flag</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">yield</span><span class="p">()</span>         <span class="c1"># Give up the CPU</span>
+
+    <span class="k">def</span> <span class="nf">Unlock</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">flag</span> <span class="o">=</span> <span class="mi">0</span>       <span class="c1"># Clear lock</span>
+</code></pre></div>
+
+</div>
+<div class="flex-col-25">
+<p><strong class="danger">Problems</strong></p>
+<ol>
+<li>
+<p><strong class="info">Fairness</strong></p>
+<p><em>Starvation</em></p>
+</li>
+<li>
+<p><strong class="success">Performance</strong></p>
+<p><em>Context switches</em></p>
+</li>
+</ol>
+</div>
+</div>
+<h2 id="example-slackline-locks-cvs">Example: <span class="gold">Slackline</span> (<i class="muted">Locks, CVs</i>)<a class="headerlink" href="#example-slackline-locks-cvs" title="Permanent link">&para;</a></h2>
+<div class="flex-row">
+<div class="flex-col">
+<div class="codehilite"><pre><span></span><code><span class="c1"># Global Variables</span>
+
+<span class="n">size_t</span>  <span class="n">CAPACITY</span> <span class="o">=</span> <span class="mi">3</span>   <span class="c1"># Max</span>
+<span class="n">size_t</span>  <span class="n">Slackers</span> <span class="o">=</span> <span class="mi">0</span>   <span class="c1"># Current</span>
+
+<span class="n">Mutex</span>   <span class="n">Lock</span>
+<span class="n">Cond</span>    <span class="n">Line</span>
+
+<span class="c1"># Threads</span>
+
+<span class="k">def</span> <span class="nf">thread_each_person</span><span class="p">():</span>
+    <span class="n">get_on</span><span class="p">()</span>
+    <span class="n">go_across_slackline</span><span class="p">()</span>
+    <span class="n">get_off</span><span class="p">()</span>
+</code></pre></div>
+
+</div>
+<div class="flex-col">
+<div class="codehilite"><pre><span></span><code><span class="c1"># Functions</span>
+
+<span class="k">def</span> <span class="nf">get_on</span><span class="p">():</span>
+    <span class="n">mutex_lock</span><span class="p">(</span><span class="n">Lock</span><span class="p">)</span>
+    <span class="k">while</span> <span class="n">Slackers</span> <span class="o">&gt;=</span> <span class="n">CAPACITY</span><span class="p">:</span>
+        <span class="n">cond_wait</span><span class="p">(</span><span class="n">Line</span><span class="p">,</span> <span class="n">Lock</span><span class="p">)</span>
+    <span class="n">Slackers</span><span class="o">++</span>
+    <span class="n">mutex_unlock</span><span class="p">(</span><span class="n">Lock</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">get_off</span><span class="p">():</span>
+    <span class="n">mutex_lock</span><span class="p">(</span><span class="n">Lock</span><span class="p">)</span>
+    <span class="n">Slackers</span><span class="o">--</span>
+    <span class="n">cond_signal</span><span class="p">(</span><span class="n">Line</span><span class="p">)</span>
+    <span class="n">mutex_unlock</span><span class="p">(</span><span class="n">Lock</span><span class="p">)</span>
+</code></pre></div>
+
+</div>
+</div>
+</main>
+<footer>
+Built using <a href="https://python.org">Python</a>
+and <a href="https://jinja.palletsprojects.com">Jinja</a>
+with colors from 
+<a href="https://onmessage.nd.edu/university-branding/colors/">Notre Dame</a>, 
+<a href="https://spreadsheet.dev/how-to-get-the-hexadecimal-codes-of-colors-in-google-sheets">Google Docs</a>, and 
+<a href="https://nordtheme.com">Nord Theme</a>,
+and icons from <a href="https://pictogrammers.com/library/mdi/">Material Design Icons</a>.</footer>
+</body>
+</html>
