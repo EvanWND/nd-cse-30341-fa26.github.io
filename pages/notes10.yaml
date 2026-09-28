@@ -1,0 +1,682 @@
+title:  "Notes 09: Condition Variables"
+body:   |
+
+  ## Review: <span class="gold">Locks</span>
+
+  - [Project 01]: We be **graded** soon...
+
+  -   <div class="flex-col" markdown="1">
+
+      What is a **lock**?
+
+      - Mechanism to prevent thread from accessing **critical section** (*shared
+        resource*).
+
+      - Helps avoid **race conditions**!
+
+  -   <div class="flex-col" markdown="1">
+
+      How do we use a **lock**?
+
+      - Parties agree to *acquire* lock before accessing *shared resource*.
+
+      - If can't *acquire*, then *wait* until it is available (*mutual exclusion*).
+
+  [Project 01]: project01.html
+
+  ## Project 02: <span class="gold">Pub / Sub</span>
+
+  > **Analogy**: Mobile phone subscribes to a **Pub/Sub** system to get
+  **notifications**.
+
+  <div class="centered">
+
+  <img src="static/img/notebook10-project02-pubsub.svg" class="transparent responsive">
+
+  </div>
+
+  <div class="alert warning-bg centered" markdown="1">
+
+  Need to use **library** to implement **chat application**.
+
+  </div>
+
+  ## Concurrent DS: <span class="gold">Producer / Consumer</span>
+
+  In this classic <strong class="success">concurrency</strong> problem, we have
+  one more <strong class="success">producers</strong> generating data that one or
+  more <strong class="danger">consumers</strong> must process:
+
+  ### Concurrent DS: <span class="gold">Producer / Consumer</span> (<i class="muted">Skit</i>)
+
+  -   <div class="flex-col" markdown="1">
+
+      **Producer** puts **balls** into **cups**.
+
+      - Performs **push** (*advance writer index/pointer*).
+
+      - Eventually runs out of space... or move back to from (*circular array*).
+
+      - Can't **push** if **full**.
+
+  -   <div class="flex-col" markdown="1">
+
+      **Consumer** retrieves **balls** from **cups**.
+
+      - Performs **pop** (*advance reader index/pointer*)
+
+      - Need to careful to not advance *reader* past *writer*.
+
+      - Can't **pop** if **empty**.
+
+  <div class="alert warning-bg centered" markdown="1">
+
+  If we have someone **consuming** and someone **producing**,<br>
+  then need to **synchronize** access to the resource!
+
+  </div>
+
+  ### Concurrent DS: <span class="gold">Producer / Consumer</span> (<i class="muted">Pseudo-Code</i>)
+
+  <div class="flex-row" markdown="1">
+
+  <div class="flex-col" markdown="1">
+
+  <img src="static/img/slides10-producer-consumer.svg" class="transparent responsive">
+
+  <br>
+
+  <div class="alert danger-bg centered" markdown="1">
+
+  This version is full of<br>**race conditions**!
+
+  </div>
+
+  </div>
+
+  <div class="flex-col" markdown="1">
+
+  ```python
+  # Version 0 - No checks
+
+  def Producer(queue):
+      while True:
+          data = produce()
+          queue.push(data)
+
+  def Consumer(queue):
+      while True:
+          data = queue.pop()
+          consume(data)
+
+  # Version 1 - If
+
+  def Producer(queue):
+      while True:
+          data = produce()
+          if not queue.full():    # Add check
+              queue.push(data)
+
+  def Consumer(queue):
+      while True:
+          if queue.empty():       # Add check
+              data = queue.pop()
+          consume(data)
+
+  # Version 2 - While
+
+  def Producer(queue):
+      while True:
+          data = produce()
+          while not queue.full(): # Add busy waiting
+              pass
+          queue.push(data)
+
+  def Consumer(queue):
+      while True:
+          while queue.empty():    # Add busy waiting
+              pass
+          data = queue.pop()
+          consume(data)
+
+  # Version 3 - Locks (Race Condition)
+
+  def Producer(queue):
+      while True:
+          data = produce()
+
+          while not queue.full():
+              pass
+
+          Lock()                  # Lock access to queue
+          queue.push(data)
+          Unlock()
+
+  def Consumer(queue):
+      while True:
+          while queue.empty():
+              pass
+
+          Lock()                  # Lock access to queue
+          data = queue.pop()
+          Unlock()
+          consume(data)
+
+  # Version 4 - Locks (Deadlock)
+
+  def Producer(queue):
+      while True:
+          data = produce()
+
+          Lock()                  # Move lock
+          while not queue.full():
+              pass
+
+          queue.push(data)
+          Unlock()
+
+  def Consumer(queue):
+      while True:
+          Lock()                  # Move lock
+          while queue.empty():
+              pass
+
+          data = queue.pop()
+          Unlock()
+          consume(data)
+  ```
+
+  </div>
+
+  </div>
+
+  ## Concurrent DS: <span class="gold">Monitor</span>
+
+  Solve this problem with a <strong class="primary">monitor</strong> that uses
+  <strong class="warning">locks</strong> and <strong class="caution">condition
+  variables</strong> internally to provide safe access to <strong
+  class="danger">shared resources</strong>.
+
+  <div class="flex-row" markdown="1">
+
+  <div class="flex-col" markdown="1">
+
+  <img src="static/img/slides10-monitor.svg" class="transparent responsive">
+
+  <br>
+
+  <div class="alert success-bg centered" markdown="1">
+
+  Abstract the details of **synchronization** behind the interface of a <strong
+  class="primary">concurrent data structure</strong>.
+
+  </div>
+
+  </div>
+
+  <div class="flex-col" markdown="1">
+
+  ```python
+    def push(self, data):
+        mutex.lock()
+
+        while queue.full():   # Busy Waiting
+            pass
+
+        queue.push(data)
+        produced.signal()
+        mutex.unlock()
+
+    def pop(self):
+        mutex.lock()
+
+        while queue.empty():  # Busy Waiting
+            pass
+
+        data = queue.pop()
+        mutex.unlock()
+
+        return data
+  ```
+
+  <div class="alert warning-bg" markdown="1">
+
+  **Observations**:
+
+  - **Producer** just uses `Push()`, **Consumer** just uses `Pop()`.
+
+  - **Problem 1**: Grab **lock** and stuck in while loop forever (*deadlock*).
+
+  - **Problem 2**: **Busy waiting**.
+
+  </div>
+
+  </div>
+
+  </div>
+
+  ## Concurrent DS: <span class="gold">Queue</span> (<i class="muted">comments</i>)
+
+  -   <div class="flex-col" markdown="1">
+
+      Annotate `pc.c` (*comments*).
+
+      - Review thread primitives (`thread.h`).
+      - Discuss **sentinel value** for terminating.
+
+  -   <div class="flex-col" markdown="1">
+
+      Discuss `queue.h` and `queue.c`.
+
+      - Review **circular array**.
+      - Discuss **sentinel** handling in `queue_pop()`.
+
+  ## Concurrent DS: <span class="gold">Queue</span> (<i class="muted">1</i>)
+
+  ```c
+  // queue.h
+  struct Queue {
+      ...
+      Mutex  lock;                        // Declare lock
+  };
+
+  // queue.c
+  Queue * queue_create(...) {
+      Queue *q = calloc(...);
+      if (q) {
+          ...
+          mutex_init(&q->lock, NULL);     // Initialize lock
+      }
+      return q;
+  }
+
+  void    queue_push(...) {
+      mutex_lock(&q->lock);               // Acquire lock
+      ...
+      mutex_unlock(&q->lock);             // Release lock
+  }
+
+  int     queue_pop(Queue *q) {
+      mutex_lock(&q->lock);               // Acquire lock
+      ...
+      mutex_unlock(&q->lock);             // Release lock
+      return value;
+  }
+  ```
+
+  <div class="alert warning-bg" markdown="1">
+
+  **Observations**:
+
+  - **Problem**: **Deadlock** due to **busy waiting**.
+
+  </div>
+
+  ## Concurrent DS: <span class="gold">Queue</span> (<i class="muted">2</i>)
+
+  ```c
+  // queue.h
+  struct Queue {
+      ...
+      Mutex  lock;
+      Cond   cond;                        // Declare condition variable
+  };
+
+  // queue.c
+  Queue * queue_create(...) {
+      Queue *q = calloc(...);
+      if (q) {
+          ...
+          mutex_init(&q->lock, NULL);
+          cond_init(&q->cond, NULL);      // Initialize condition variable
+      }
+      return q;
+  }
+
+  void    queue_push(...) {
+      mutex_lock(&q->lock);
+      while (q->size >= q->capacity) {
+          // 1. Give up lock
+          // 2. Go to sleep
+          cond_wait(&q->cond, &q->lock);  // Wait until condition changes
+          // 3. Wake up
+          // 4. Take the lock back
+      }
+
+      ...
+
+      cond_signal(&q->cond);              // Signal that condition has changed
+      mutex_unlock(&q->lock);
+  }
+
+  int     queue_pop(Queue *q) {
+      mutex_lock(&q->lock);
+      while (q->size == 0) {
+          cond_wait(&q->cond, &q->lock);  // Wait until condition changes
+      }
+
+      ...
+
+      cond_signal(&q->cond);              // Signal that condition has changed
+      mutex_unlock(&q->lock);
+      return value;
+  }
+
+  ```
+
+  <div class="alert warning-bg" markdown="1">
+
+  **Observations**:
+
+  - **Discuss**: Use `while` instead of `if` due to *spurious interrupts*
+  (*condition* may not have changed yet).
+
+  - **Problem**: **Hangs** if we don't call `cond_signal`.
+
+  - **Skit**: once **producer** becomes full, calls `cond_wait`... **consumer**
+  takes one item, wakes up, another **consumer**, who eats, wakes up another
+  **consumer**... OS may schedule **consumer** instead of **producer**!
+
+  </div>
+
+  ## Concurrent DS: <span class="gold">Queue</span> (<i class="muted">3</i>)
+
+  ```c
+  // queue.h
+  struct Queue {
+      ...
+      Mutex  lock;
+      Cond   consumed;                        // Declare condition variable
+      Cond   produced;                        // Declare condition variable
+  };
+
+  // queue.c
+  Queue * queue_create(...) {
+      Queue *q = calloc(...);
+      if (q) {
+          ...
+          mutex_init(&q->lock, NULL);
+          cond_init(&q->consumed, NULL);      // Initialize condition variable
+          cond_init(&q->produced, NULL);      // Initialize condition variable
+      }
+      return q;
+  }
+
+  void    queue_push(...) {
+      mutex_lock(&q->lock);
+      while (q->size >= q->capacity) {
+          cond_wait(&q->consumed, &q->lock);  // Wait for consumed
+      }
+
+      ...
+
+      cond_signal(&q->produced);              // Signal produced
+      mutex_unlock(&q->lock);
+  }
+
+
+  int     queue_pop(Queue *q) {
+      mutex_lock(&q->lock);
+      while (q->size == 0) {
+          cond_wait(&q->produced, &q->lock);  // Wait for produced
+      }
+
+      ...
+
+      cond_signal(&q->consumed);              // Signal consumed
+      mutex_unlock(&q->lock);
+      return value;
+  }
+  ```
+
+  ## Condition Variable: <span class="gold">Waiting</span>
+
+  > <strong class="primary">cond_wait</strong>(&cond, &lock);
+
+  1. <strong>Give up lock</strong>
+
+  2. <strong>Go to sleep</strong>
+
+  3. <strong>Wake up</strong>
+
+  4. <strong>Take back lock</strong>
+
+  ## Locks: <span class="gold">Evaluation</span>
+
+  To evaluate a <strong class="warning">lock</strong> implementation, we need to
+  consider the following three <strong class="special">metrics</strong>:
+
+  1. <strong class="caution">Correctness</strong>
+
+      Does it actually provide <strong class="warning">mutual exclusion</strong>?
+
+  2. <strong class="info">Fairness</strong>
+
+      Does it give each <strong class="primary">thread</strong> a fair shot at
+      acquiring the <strong class="warning">lock</strong>?
+
+  3. <strong class="success">Performance</strong>
+
+      How much overhead is added by using the <strong
+      class="warning">lock</strong>?
+
+  ## Locks: <span class="gold">Disabling Interrupts</span>
+
+  One way to implement <strong class="warning">locks</strong> is to simply
+  <strong class="danger">disable interrupts</strong>:
+
+  <div class="flex-row" markdown="1">
+
+  <div class="flex-col" markdown="1">
+
+  ```python
+  class Mutex:
+      def Lock(self):
+          DisableInterrupts()
+
+      def Unlock(self):
+          EnableInterrupts()
+  ```
+
+  </div>
+
+  <div class="flex-col-25" markdown="1">
+
+  <strong class="danger">Problems</strong>
+
+  1. <strong class="caution">Correctness</strong>
+
+      *Possibly lose interrupts.*
+
+  2. <strong class="info">Fairness</strong>
+
+      *Need to trust users.*
+
+  3. <strong class="success">Performance</strong>
+
+      *Doesn't scale to multiple processors.*
+
+  </div>
+
+  </div>
+
+  ## Locks: <span class="gold">Implementation</span> (<i class="muted">Spin Lock</i>)
+
+  A better way is to implement a <strong class="warning">spin lock</strong>:
+
+  <div class="flex-row" markdown="1">
+
+  <div class="flex-col" markdown="1">
+
+  ```python
+  class Mutex:
+      flag: int = 0             # 0: available, 1: unavailable
+
+      def Lock(self):
+          while self.flag == 1: # Test lock
+              pass              # Spin until lock is available
+          self.flag = 1         # Set lock
+
+      def Unlock(self):
+          self.flag = 0         # Clear lock
+  ```
+
+  </div>
+
+  <div class="flex-col-25" markdown="1">
+
+  <strong class="danger">Problems</strong>
+
+  1. <strong class="caution">Correctness</strong>
+
+      *Race condition*
+
+  2. <strong class="success">Performance</strong>
+
+      *Busy waiting*
+
+  </div>
+
+  </div>
+
+  ## Locks: <span class="gold">Test and Set</span>
+
+  To effectively implement a <strong class="warning">lock</strong>, we need
+  special <strong class="info">hardware instructions</strong> that provide
+  <strong class="special">atomic exchanges</strong>:
+
+  ```python
+  def TestAndSet(old_ptr: int*, new_value: int):
+      old_value = *old_ptr      # Fetch old value at old pointer
+      *old_ptr  = new_value     # Store new value into old pointer
+      return old_value          # Return old value
+  ```
+
+  <div class="alert info-bg centered" markdown="1">
+
+  The above three lines all happen in one instruction (<i
+  class="special">atomically</i>)
+
+  </div>
+
+  ## Locks: <span class="gold">Test and Set</span> (<i class="muted">Spin Lock</i>)
+
+  With the <strong class="info">TestAndSet</strong> instruction, we can implement
+  a better <strong class="warning">spin lock</strong>.
+
+  <div class="flex-row" markdown="1">
+
+  <div class="flex-col" markdown="1">
+
+  ```python
+  class Mutex:
+      flag: int = 0           # 0: available, 1: unavailable
+
+      def Lock(self):         # Test and Set lock atomically
+          while TestAndSet(self.flag, 1) == 1:
+              pass            # Spin until lock is available
+
+      def Unlock(self):
+          self.flag = 0       # Clear lock
+  ```
+
+  </div>
+
+  <div class="flex-col-25" markdown="1">
+
+  <strong class="danger">Problems</strong>
+
+  1. <strong class="success">Performance</strong>
+
+      *Busy waiting*
+
+  </div>
+
+  </div>
+
+  ## Locks: <span class="gold">Yielding</span> (<i class="muted">Spin Lock</i>)
+
+  One way to reduce the cost of <strong class="danger">busy waiting</strong> is
+  to simply <strong class="caution">yield</strong> as we spin:
+
+  <div class="flex-row" markdown="1">
+
+  <div class="flex-col" markdown="1">
+
+  ```python
+  class Mutex:
+      flag: int = 0           # 0: available, 1: unavailable
+
+      def Lock(self):         # Test and Set lock atomically
+          while TestAndSet(self.flag, 1) == 1:
+              yield()         # Give up the CPU
+
+      def Unlock(self):
+          self.flag = 0       # Clear lock
+  ```
+
+  </div>
+
+  <div class="flex-col-25" markdown="1">
+
+  <strong class="danger">Problems</strong>
+
+  1. <strong class="info">Fairness</strong>
+
+      *Starvation*
+
+  2. <strong class="success">Performance</strong>
+
+      *Context switches*
+
+  </div>
+
+  </div>
+
+  ## Example: <span class="gold">Slackline</span> (<i class="muted">Locks, CVs</i>)
+
+  <div class="flex-row" markdown="1">
+
+  <div class="flex-col" markdown="1">
+
+  ```python
+  # Global Variables
+
+  size_t  CAPACITY = 3   # Max
+  size_t  Slackers = 0   # Current
+
+  Mutex   Lock
+  Cond    Line
+
+  # Threads
+
+  def thread_each_person():
+      get_on()
+      go_across_slackline()
+      get_off()
+  ```
+
+  </div>
+
+  <div class="flex-col" markdown="1">
+
+  ```python
+  # Functions
+
+  def get_on():
+      mutex_lock(Lock)
+      while Slackers >= CAPACITY:
+          cond_wait(Line, Lock)
+      Slackers++
+      mutex_unlock(Lock)
+
+  def get_off():
+      mutex_lock(Lock)
+      Slackers--
+      cond_signal(Line)
+      mutex_unlock(Lock)
+  ```
+
+  </div>
+
+  </div>
