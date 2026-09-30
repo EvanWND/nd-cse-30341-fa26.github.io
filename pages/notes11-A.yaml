@@ -1,0 +1,529 @@
+title:  "Notes 11-A: Semaphores"
+body:   |
+
+  ## Review: <span class="gold">Locks</span>
+
+  -   <div class="flex-col" markdown="1">
+
+      What is the **producer/consumer** pattern?
+
+      > Multiple tasks using a **shared buffer** to coordinate work.
+
+  -   <div class="flex-col" markdown="1">
+
+      Why use **mutexes**?
+
+      > Avoid **race conditions**.
+
+  -   <div class="flex-col" markdown="1">
+
+      Why use **condition variables**?
+
+      > Avoid **dead lock** and **busy waiting**.
+
+  -   <div class="flex-col" markdown="1">
+
+      Did we need **locks** and **condition variables** in [Reading 04]?
+
+      > No, the problem is **data parallel** and there was no **sharing**.
+
+  -   <div class="flex-col" markdown="1">
+
+      What **concurrency patterns** in [Reading 05]?
+
+      > (1) **Producer/Consumer**, (2) **Monitor** (*queue*), (3) **Thread
+      Pool**.
+
+      - **Producer/Consumer**: Coordinate work.
+      - **Monitor**: Abstract synchronization to internal methods.
+      - **Thread Pool**: Restrict amount of resources/concurrency.
+
+      <div class="alert success-bg centered" markdown="1">
+
+      In [Project 02], you should not need to explicitly use **locks** and
+      **condition variables** if you created the library properly!
+
+      </div>
+
+  -   <div class="flex-col" markdown="1">
+
+      If you were a **web server** such as `Apache` or `NGINX`, which model
+      would you prefer? **(1)** One **thread** per **request** or **(2)** **Thread
+      Pool**.
+
+      >  **(1)** can lead to **DOS** or resource exhaustion, there is also
+      **startup** coast.  **(2)** might not be sufficient under **high load**,
+      but allows for **predictable performance**.
+      > <br><br>
+      > **Cite**: [Apache - Threadpool](https://httpd.apache.org/docs/current/mod/worker.html),
+      > [NGINX - Threadpool](https://nginx.org/en/docs/ngx_core_module.html#thread_pool)
+
+  [Reading 04]: reading04.html
+  [Reading 05]: reading05.html
+  [Project 02]: project02.html
+
+  ## Condition Variable: <span class="gold">Waiting</span>
+
+  > <strong class="primary">cond_wait</strong>(&cond, &lock);
+
+  1. <strong>Give up lock</strong>
+
+  2. <strong>Go to sleep</strong>
+
+  3. <strong>Wake up</strong>
+
+  4. <strong>Take back lock</strong>
+
+  <div class="alert warning-bg centered" markdown="1">
+
+  **Observation**: Put `cond_wait` under `while` loop because it is not
+  guaranteed that the **condition** has changed yet (*check again*).
+
+  </div>
+
+  ## Locks: <span class="gold">Evaluation</span>
+
+  To evaluate a <strong class="warning">lock</strong> implementation, we need to
+  consider the following three <strong class="special">metrics</strong>:
+
+  1.  <div class="flex-col" markdown="1">
+
+      <strong class="caution">Correctness</strong>
+
+      Does it actually provide <strong class="warning">mutual exclusion</strong>?
+
+  2.  <div class="flex-col" markdown="1">
+
+      <strong class="info">Fairness</strong>
+
+      Does it give each <strong class="primary">thread</strong> a fair shot at
+      acquiring the <strong class="warning">lock</strong>?
+
+  3.  <div class="flex-col" markdown="1">
+
+      <strong class="success">Performance</strong>
+
+      How much overhead is added by using the <strong
+      class="warning">lock</strong>?
+
+  <div class="alert caution-bg centered" markdown="1">
+
+  What would you prefer: **fairness** or **performance**?
+
+  **It depends**!
+
+  **Real-time**: **fairness**, **Linux**: **performance**.
+
+  </div>
+
+  ## Locks: <span class="gold">Disabling Interrupts</span>
+
+  One way to implement <strong class="warning">locks</strong> is to simply
+  <strong class="danger">disable interrupts</strong>:
+
+  <div class="flex-row" markdown="1">
+
+  <div class="flex-col" markdown="1">
+
+  ```python
+  class Mutex:
+      def Lock(self):
+          DisableInterrupts()
+
+      def Unlock(self):
+          EnableInterrupts()
+  ```
+
+  </div>
+
+  <div class="flex-col" markdown="1">
+
+  <strong class="danger">Problems</strong>
+
+  1. <strong class="caution">Correctness</strong> (*Possibly lose interrupts*)
+
+  2. <strong class="info">Fairness</strong> (*Need to trust users*)
+
+  3. <strong class="success">Performance</strong> (*Doesn't scale to multiple processors*)
+
+  </div>
+
+  </div>
+
+  <div class="alert warning-bg" markdown="1">
+
+  **Analogy**: What if working in **dorm kitchen** and **lock the door** to
+  prevent **interruptions**?
+
+  - What if there is a **fire** because of **microwaving** a cookie!?!?
+
+  - What if **fall asleep** in the **kitchen**?
+
+  </div>
+
+  ## Locks: <span class="gold">Implementation</span> (<i class="muted">Spin Lock</i>)
+
+  A better way is to implement a <strong class="warning">spin lock</strong>:
+
+  <div class="flex-row" markdown="1">
+
+  <div class="flex-col" markdown="1">
+
+  ```python
+  class Mutex:                  # 0: available
+      flag: int = 0             # 1: unavailable
+
+      def Lock(self):
+          while self.flag == 1: # Test lock
+              pass              # Spin until available
+          self.flag = 1         # Set lock
+
+      def Unlock(self):
+          self.flag = 0         # Clear lock
+  ```
+
+  </div>
+
+  <div class="flex-col" markdown="1">
+
+  <strong class="danger">Problems</strong>
+
+  1. <strong class="caution">Correctness</strong> (*Race condition*)
+
+  2. <strong class="success">Performance</strong> (*Busy waiting*)
+
+  </div>
+
+  </div>
+
+  ## Locks: <span class="gold">Test and Set</span>
+
+  To effectively implement a <strong class="warning">lock</strong>, we need
+  special <strong class="info">hardware instructions</strong> that provide
+  <strong class="special">atomic exchanges</strong>:
+
+  ```python
+  def TestAndSet(old_ptr: int*, new_value: int):
+      old_value = *old_ptr  # Fetch old value at pointer
+      *old_ptr  = new_value # Store new value into pointer
+      return old_value      # Return old value
+  ```
+
+  <div class="alert info-bg centered" markdown="1">
+
+  The above three lines all happen in one instruction (<i
+  class="special">atomically</i>)
+
+
+  **Symbiosis**: **OS** is **constrained** by **hardware**, but is also given
+  **opportunities** by **hardware**.
+
+  </div>
+
+  ## Locks: <span class="gold">Test and Set</span> (<i class="muted">Spin Lock</i>)
+
+  With the <strong class="info">TestAndSet</strong> instruction, we can implement
+  a better <strong class="warning">spin lock</strong>.
+
+  <div class="flex-row" markdown="1">
+
+  <div class="flex-col" markdown="1">
+
+  ```python
+  class Mutex:
+      flag: int = 0     # 0: available, 1: unavailable
+
+      def Lock(self):   # Test and Set lock atomically
+          while TestAndSet(self.flag, 1) == 1:
+              pass      # Spin until is available
+
+      def Unlock(self):
+          self.flag = 0 # Clear lock
+  ```
+
+  </div>
+
+  <div class="flex-col" markdown="1">
+
+  <strong class="danger">Problems</strong>
+
+  1. <strong class="success">Performance</strong> (*Busy waiting*)
+
+  </div>
+
+  </div>
+
+  ## Locks: <span class="gold">Yielding</span> (<i class="muted">Spin Lock</i>)
+
+  One way to reduce the cost of <strong class="danger">busy waiting</strong> is
+  to simply <strong class="caution">yield</strong> as we spin:
+
+  <div class="flex-row" markdown="1">
+
+  <div class="flex-col" markdown="1">
+
+  ```python
+  class Mutex:
+      flag: int = 0     # 0: available, 1: unavailable
+
+      def Lock(self):   # Test and Set lock atomically
+          while TestAndSet(self.flag, 1) == 1:
+              yield()   # Give up the CPU
+
+      def Unlock(self):
+          self.flag = 0 # Clear lock
+  ```
+
+  </div>
+
+  <div class="flex-col" markdown="1">
+
+  <strong class="danger">Problems</strong>
+
+  1. <strong class="info">Fairness</strong> (*Starvation*)
+
+  2. <strong class="success">Performance</strong> (*Context switches*)
+
+  </div>
+
+  </div>
+
+  <div class="alert warning-bg" markdown="1">
+
+  [Fastest Mutexes](https://justine.lol/mutex/)
+
+  - **Benchmark**: `counter` example!
+
+  - Uses `CAS (Compare and swap)` as **atomic instruction**.
+
+  - When `yielding` add thread to **queue** of *waiters*.
+
+  - Mentions **starvation**.
+
+  **Observations**:
+
+  - **Learning Outcome**: One of the goals is to enable you to make sense of
+  what you see and read about (*build a foundation*).
+
+  - **Unsolved Problems**: Even as something as old as **OS**, there are still
+  **unsolved problems** and room for **improvement**.
+
+  </div>
+
+  ## Example: <span class="gold">Slackline</span> (<i class="muted">Locks, CVs</i>)
+
+  > **Skit**: Need `4` people to walk across the **slackline**.
+
+  <div class="flex-row" markdown="1">
+
+  <div class="flex-col" markdown="1">
+
+  ```python
+  # Global Variables
+
+  size_t  CAPACITY = 3   # Max
+  size_t  Slackers = 0   # Current
+
+  Mutex   Lock
+  Cond    Line
+
+  # Threads
+
+  def thread_each_person():
+      step_on()
+      go_across_slackline()
+      step_off()
+  ```
+
+  </div>
+
+  <div class="flex-col" markdown="1">
+
+  ```python
+  # Functions
+
+  def step_on():
+      mutex_lock(Lock)
+
+      while Slackers >= CAPACITY:
+          cond_wait(Line, Lock)
+
+      Slackers++
+      mutex_unlock(Lock)
+
+  def step_off():
+      mutex_lock(Lock)
+      Slackers--
+      cond_signal(Line)
+      mutex_unlock(Lock)
+  ```
+
+  </div>
+
+  </div>
+
+  <div class="alert success-bg centered" markdown="1">
+
+  An example of **throttling** or **rate-limiting**.
+
+  </div>
+
+  ## Semaphores: <span class="gold">Overview</span>
+
+  A <strong class="special">semaphore</strong> is a synchronization primitive
+  that consists of an <strong class="caution">integer</strong> that we can
+  manipulate with two <strong class="success">operations</strong>:
+
+  <div class="flex-row" markdown="1">
+
+  <div class="flex-col" markdown="1">
+
+  ```python
+  def sem_wait(s):
+      s.value--
+      if s.value < 0:
+          thread_wait()
+  ```
+
+  </div>
+
+  <div class="flex-col" markdown="1">
+
+  ```python
+  def sem_post(s):
+      s.value++
+      if threads_waiting():
+          threads_wakeup_next()
+  ```
+
+  </div>
+
+  </div>
+
+  <div class="alert warning-bg centered" markdown="1">
+
+  **Semaphores** combine the **mutual exclusion** of a **lock** and the
+  **signaling** of a **condition variable**.
+
+  </div>
+
+  ## Example: <span class="gold">Slackline</span> (<i class="muted">Semaphores</i>)
+
+  <div class="flex-row" markdown="1">
+
+  <div class="flex-col" markdown="1">
+
+  ```python
+  # Global Variables
+
+  Semaphore Line = 3  # Max
+
+  # Threads
+
+  def thread_each_person():
+      step_on()
+      go_across_slackline()
+      step_off()
+  ```
+
+  </div>
+
+  <div class="flex-col" markdown="1">
+
+  ```python
+  # Functions
+
+  def step_on():
+      sem_wait(Line)
+
+  def step_off():
+      sem_post(Line)
+  ```
+
+  </div>
+
+  </div>
+
+  <div class="alert success-bg centered" markdown="1">
+
+  An example of **throttling** or **rate-limiting**.
+
+  </div>
+
+  ## Semaphores: <span class="gold">Lock</span>
+
+  <div class="flex-row" markdown="1">
+
+  <div class="flex-col" markdown="1">
+
+  To use a <strong class="special">semaphore</strong> as a <strong
+  class="warning">lock</strong>:
+
+  - Initialize the <strong class="special">semaphore</strong> to `1`.
+
+  - Perform a <strong class="success">Wait</strong> to *acquire* the <strong
+    class="warning">lock</strong>.
+
+  - Perform a <strong class="success">Post</strong> to *release* the <strong
+    class="warning">lock</strong>.
+
+  </div>
+
+  <div class="flex-col" markdown="1">
+
+  ```c
+  // Initialize lock
+  sem_t m;
+  sem_init(&m, 0, 1);
+
+
+  // Perform Lock
+  sem_wait(&m);
+  // Do critical section
+  sem_post(&m);
+  ```
+
+  </div>
+
+  </div>
+
+  ## Semaphores: <span class="gold">Condition Variable</span>
+
+  <div class="flex-row" markdown="1">
+
+  <div class="flex-col" markdown="1">
+
+  To use a <strong class="special">semaphore</strong> as a <strong
+  class="caution">condition variable</strong>:
+
+  - Initialize the <strong class="special">semaphore</strong> to `0`.
+
+  - Perform a <strong class="success">Wait</strong> to *wait* on the <strong
+    class="caution">condition variable</strong>.
+
+  - Perform a <strong class="success">Post</strong> to *signal* the <strong
+    class="caution">condition variable</strong>.
+
+  </div>
+
+  <div class="flex-col" markdown="1">
+
+  ```c
+  // Initialize cond var
+  sem_t cv;
+  sem_init(&cv, 0, 0);
+
+
+  // Thread 1: Wait
+  sem_wait(&cv);
+  do_the_thing();
+
+
+  // Thread 2: Signal
+  do_another_thing();
+  sem_post(&cv);
+  ```
+
+  </div>
+
+  </div>
