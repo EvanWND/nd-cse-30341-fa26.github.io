@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Favicon -->
+<link rel="icon" type="image/png" sizes="32x32" href="static/ico/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="static/ico/favicon-16x16.png">
+<link rel="manifest" href="static/ico/site.webmanifest">
+<!-- Stylesheets -->
+<link rel="stylesheet" href="static/css/domer.css">
+<title>Notes 11-A: Semaphores</title>
+</head>
+<body>
+<header>
+<a class="logo" href="notes11-A.html">
+    <h1>Notes 11-A: Semaphores</h1>
+</a>
+<nav>
+    <ul>
+        <li><a href="index.html"><h4>Home</h4></a></li>
+        </ul>
+</nav></header>
+<main>
+<h2 id="review-locks">Review: <span class="gold">Locks</span><a class="headerlink" href="#review-locks" title="Permanent link">&para;</a></h2>
+<ul>
+<li>
+<div class="flex-col" markdown="1">
+<p>What is the <strong>producer/consumer</strong> pattern?</p>
+<blockquote>
+<p>Multiple tasks using a <strong>shared buffer</strong> to coordinate work.</p>
+</blockquote>
+</li>
+<li>
+<div class="flex-col" markdown="1">
+<p>Why use <strong>mutexes</strong>?</p>
+<blockquote>
+<p>Avoid <strong>race conditions</strong>.</p>
+</blockquote>
+</li>
+<li>
+<div class="flex-col" markdown="1">
+<p>Why use <strong>condition variables</strong>?</p>
+<blockquote>
+<p>Avoid <strong>dead lock</strong> and <strong>busy waiting</strong>.</p>
+</blockquote>
+</li>
+<li>
+<div class="flex-col" markdown="1">
+<p>Did we need <strong>locks</strong> and <strong>condition variables</strong> in <a href="reading04.html">Reading 04</a>?</p>
+<blockquote>
+<p>No, the problem is <strong>data parallel</strong> and there was no <strong>sharing</strong>.</p>
+</blockquote>
+</li>
+<li>
+<div class="flex-col" markdown="1">
+<p>What <strong>concurrency patterns</strong> in <a href="reading05.html">Reading 05</a>?</p>
+<blockquote>
+<p>(1) <strong>Producer/Consumer</strong>, (2) <strong>Monitor</strong> (<em>queue</em>), (3) <strong>Thread
+Pool</strong>.</p>
+</blockquote>
+<ul>
+<li><strong>Producer/Consumer</strong>: Coordinate work.</li>
+<li><strong>Monitor</strong>: Abstract synchronization to internal methods.</li>
+<li><strong>Thread Pool</strong>: Restrict amount of resources/concurrency.</li>
+</ul>
+<div class="alert success-bg centered" markdown="1">
+<p>In <a href="project02.html">Project 02</a>, you should not need to explicitly use <strong>locks</strong> and
+<strong>condition variables</strong> if you created the library properly!</p>
+</div>
+</li>
+<li>
+<div class="flex-col" markdown="1">
+<p>If you were a <strong>web server</strong> such as <code>Apache</code> or <code>NGINX</code>, which model
+would you prefer? <strong>(1)</strong> One <strong>thread</strong> per <strong>request</strong> or <strong>(2)</strong> <strong>Thread
+Pool</strong>.</p>
+<blockquote>
+<p><strong>(1)</strong> can lead to <strong>DOS</strong> or resource exhaustion, there is also
+<strong>startup</strong> coast.  <strong>(2)</strong> might not be sufficient under <strong>high load</strong>,
+but allows for <strong>predictable performance</strong>.
+<br><br>
+<strong>Cite</strong>: <a href="https://httpd.apache.org/docs/current/mod/worker.html">Apache - Threadpool</a>,
+<a href="https://nginx.org/en/docs/ngx_core_module.html#thread_pool">NGINX - Threadpool</a></p>
+</blockquote>
+</li>
+</ul>
+<h2 id="condition-variable-waiting">Condition Variable: <span class="gold">Waiting</span><a class="headerlink" href="#condition-variable-waiting" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p><strong class="primary">cond_wait</strong>(&amp;cond, &amp;lock);</p>
+</blockquote>
+<ol>
+<li>
+<p><strong>Give up lock</strong></p>
+</li>
+<li>
+<p><strong>Go to sleep</strong></p>
+</li>
+<li>
+<p><strong>Wake up</strong></p>
+</li>
+<li>
+<p><strong>Take back lock</strong></p>
+</li>
+</ol>
+<div class="alert warning-bg centered">
+<p><strong>Observation</strong>: Put <code>cond_wait</code> under <code>while</code> loop because it is not
+guaranteed that the <strong>condition</strong> has changed yet (<em>check again</em>).</p>
+</div>
+<h2 id="locks-evaluation">Locks: <span class="gold">Evaluation</span><a class="headerlink" href="#locks-evaluation" title="Permanent link">&para;</a></h2>
+<p>To evaluate a <strong class="warning">lock</strong> implementation, we need to
+consider the following three <strong class="special">metrics</strong>:</p>
+<ol>
+<li>
+<div class="flex-col" markdown="1">
+<p><strong class="caution">Correctness</strong></p>
+<p>Does it actually provide <strong class="warning">mutual exclusion</strong>?</p>
+</li>
+<li>
+<div class="flex-col" markdown="1">
+<p><strong class="info">Fairness</strong></p>
+<p>Does it give each <strong class="primary">thread</strong> a fair shot at
+acquiring the <strong class="warning">lock</strong>?</p>
+</li>
+<li>
+<div class="flex-col" markdown="1">
+<p><strong class="success">Performance</strong></p>
+<p>How much overhead is added by using the <strong
+class="warning">lock</strong>?</p>
+</li>
+</ol>
+<div class="alert caution-bg centered">
+<p>What would you prefer: <strong>fairness</strong> or <strong>performance</strong>?</p>
+<p><strong>It depends</strong>!</p>
+<p><strong>Real-time</strong>: <strong>fairness</strong>, <strong>Linux</strong>: <strong>performance</strong>.</p>
+</div>
+<h2 id="locks-disabling-interrupts">Locks: <span class="gold">Disabling Interrupts</span><a class="headerlink" href="#locks-disabling-interrupts" title="Permanent link">&para;</a></h2>
+<p>One way to implement <strong class="warning">locks</strong> is to simply
+<strong class="danger">disable interrupts</strong>:</p>
+<div class="flex-row">
+<div class="flex-col">
+<div class="codehilite"><pre><span></span><code><span class="k">class</span> <span class="nc">Mutex</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">Lock</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">DisableInterrupts</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">Unlock</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">EnableInterrupts</span><span class="p">()</span>
+</code></pre></div>
+
+</div>
+<div class="flex-col">
+<p><strong class="danger">Problems</strong></p>
+<ol>
+<li>
+<p><strong class="caution">Correctness</strong> (<em>Possibly lose interrupts</em>)</p>
+</li>
+<li>
+<p><strong class="info">Fairness</strong> (<em>Need to trust users</em>)</p>
+</li>
+<li>
+<p><strong class="success">Performance</strong> (<em>Doesn't scale to multiple processors</em>)</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="alert warning-bg">
+<p><strong>Analogy</strong>: What if working in <strong>dorm kitchen</strong> and <strong>lock the door</strong> to
+prevent <strong>interruptions</strong>?</p>
+<ul>
+<li>
+<p>What if there is a <strong>fire</strong> because of <strong>microwaving</strong> a cookie!?!?</p>
+</li>
+<li>
+<p>What if <strong>fall asleep</strong> in the <strong>kitchen</strong>?</p>
+</li>
+</ul>
+</div>
+<h2 id="locks-implementation-spin-lock">Locks: <span class="gold">Implementation</span> (<i class="muted">Spin Lock</i>)<a class="headerlink" href="#locks-implementation-spin-lock" title="Permanent link">&para;</a></h2>
+<p>A better way is to implement a <strong class="warning">spin lock</strong>:</p>
+<div class="flex-row">
+<div class="flex-col">
+<div class="codehilite"><pre><span></span><code><span class="k">class</span> <span class="nc">Mutex</span><span class="p">:</span>                  <span class="c1"># 0: available</span>
+    <span class="n">flag</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>             <span class="c1"># 1: unavailable</span>
+
+    <span class="k">def</span> <span class="nf">Lock</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">flag</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span> <span class="c1"># Test lock</span>
+            <span class="k">pass</span>              <span class="c1"># Spin until available</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">flag</span> <span class="o">=</span> <span class="mi">1</span>         <span class="c1"># Set lock</span>
+
+    <span class="k">def</span> <span class="nf">Unlock</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">flag</span> <span class="o">=</span> <span class="mi">0</span>         <span class="c1"># Clear lock</span>
+</code></pre></div>
+
+</div>
+<div class="flex-col">
+<p><strong class="danger">Problems</strong></p>
+<ol>
+<li>
+<p><strong class="caution">Correctness</strong> (<em>Race condition</em>)</p>
+</li>
+<li>
+<p><strong class="success">Performance</strong> (<em>Busy waiting</em>)</p>
+</li>
+</ol>
+</div>
+</div>
+<h2 id="locks-test-and-set">Locks: <span class="gold">Test and Set</span><a class="headerlink" href="#locks-test-and-set" title="Permanent link">&para;</a></h2>
+<p>To effectively implement a <strong class="warning">lock</strong>, we need
+special <strong class="info">hardware instructions</strong> that provide
+<strong class="special">atomic exchanges</strong>:</p>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">TestAndSet</span><span class="p">(</span><span class="n">old_ptr</span><span class="p">:</span> <span class="nb">int</span><span class="o">*</span><span class="p">,</span> <span class="n">new_value</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="n">old_value</span> <span class="o">=</span> <span class="o">*</span><span class="n">old_ptr</span>  <span class="c1"># Fetch old value at pointer</span>
+    <span class="o">*</span><span class="n">old_ptr</span>  <span class="o">=</span> <span class="n">new_value</span> <span class="c1"># Store new value into pointer</span>
+    <span class="k">return</span> <span class="n">old_value</span>      <span class="c1"># Return old value</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdatomic.h&gt;</span><span class="c1">    // Requires C11</span>
+
+<span class="k">struct</span><span class="w"> </span><span class="nc">SMQ</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kt">atomic_bool</span><span class="w"> </span><span class="n">running</span><span class="p">;</span><span class="w">  </span><span class="c1">// Atomic boolean value</span>
+<span class="p">}</span>
+
+<span class="n">SMQ</span><span class="w"> </span><span class="o">*</span><span class="n">smq_create</span><span class="p">(</span><span class="n">SMQ</span><span class="w"> </span><span class="o">*</span><span class="n">smq</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="p">...</span>
+<span class="w">    </span><span class="n">atomic_store</span><span class="p">(</span><span class="o">&amp;</span><span class="n">smq</span><span class="o">-&gt;</span><span class="n">running</span><span class="p">,</span><span class="w"> </span><span class="nb">true</span><span class="p">);</span>
+<span class="w">    </span><span class="p">...</span>
+<span class="p">}</span>
+
+<span class="kt">void</span><span class="w"> </span><span class="n">smq_shutdown</span><span class="p">(</span><span class="n">SMQ</span><span class="w"> </span><span class="o">*</span><span class="n">smq</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">atomic_store</span><span class="p">(</span><span class="o">&amp;</span><span class="n">smq</span><span class="o">-&gt;</span><span class="n">running</span><span class="p">,</span><span class="w"> </span><span class="nb">false</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">smq_puller</span><span class="p">(</span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">arg</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">atomic_load</span><span class="p">(</span><span class="o">&amp;</span><span class="n">smq</span><span class="o">-&gt;</span><span class="n">running</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="p">...</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<div class="alert info-bg centered">
+<p>The above three lines all happen in one instruction (<i
+class="special">atomically</i>)</p>
+<p><strong>Symbiosis</strong>: <strong>OS</strong> is <strong>constrained</strong> by <strong>hardware</strong>, but is also given
+<strong>opportunities</strong> by <strong>hardware</strong>.</p>
+</div>
+<h2 id="locks-test-and-set-spin-lock">Locks: <span class="gold">Test and Set</span> (<i class="muted">Spin Lock</i>)<a class="headerlink" href="#locks-test-and-set-spin-lock" title="Permanent link">&para;</a></h2>
+<p>With the <strong class="info">TestAndSet</strong> instruction, we can implement
+a better <strong class="warning">spin lock</strong>.</p>
+<div class="flex-row">
+<div class="flex-col">
+<div class="codehilite"><pre><span></span><code><span class="k">class</span> <span class="nc">Mutex</span><span class="p">:</span>
+    <span class="n">flag</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>     <span class="c1"># 0: available, 1: unavailable</span>
+
+    <span class="k">def</span> <span class="nf">Lock</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>   <span class="c1"># Test and Set lock atomically</span>
+        <span class="k">while</span> <span class="n">TestAndSet</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">flag</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">pass</span>      <span class="c1"># Spin until is available</span>
+
+    <span class="k">def</span> <span class="nf">Unlock</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">flag</span> <span class="o">=</span> <span class="mi">0</span> <span class="c1"># Clear lock</span>
+</code></pre></div>
+
+</div>
+<div class="flex-col">
+<p><strong class="danger">Problems</strong></p>
+<ol>
+<li><strong class="success">Performance</strong> (<em>Busy waiting</em>)</li>
+</ol>
+</div>
+</div>
+<h2 id="locks-yielding-spin-lock">Locks: <span class="gold">Yielding</span> (<i class="muted">Spin Lock</i>)<a class="headerlink" href="#locks-yielding-spin-lock" title="Permanent link">&para;</a></h2>
+<p>One way to reduce the cost of <strong class="danger">busy waiting</strong> is
+to simply <strong class="caution">yield</strong> as we spin:</p>
+<div class="flex-row">
+<div class="flex-col">
+<div class="codehilite"><pre><span></span><code><span class="k">class</span> <span class="nc">Mutex</span><span class="p">:</span>
+    <span class="n">flag</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>     <span class="c1"># 0: available, 1: unavailable</span>
+
+    <span class="k">def</span> <span class="nf">Lock</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>   <span class="c1"># Test and Set lock atomically</span>
+        <span class="k">while</span> <span class="n">TestAndSet</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">flag</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">yield</span><span class="p">()</span>   <span class="c1"># Give up the CPU</span>
+
+    <span class="k">def</span> <span class="nf">Unlock</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">flag</span> <span class="o">=</span> <span class="mi">0</span> <span class="c1"># Clear lock</span>
+</code></pre></div>
+
+</div>
+<div class="flex-col">
+<p><strong class="danger">Problems</strong></p>
+<ol>
+<li>
+<p><strong class="info">Fairness</strong> (<em>Starvation</em>)</p>
+</li>
+<li>
+<p><strong class="success">Performance</strong> (<em>Context switches</em>)</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="alert warning-bg">
+<p><a href="https://justine.lol/mutex/">Fastest Mutexes</a></p>
+<ul>
+<li>
+<p><strong>Benchmark</strong>: <code>counter</code> example!</p>
+</li>
+<li>
+<p>Uses <code>CAS (Compare and swap)</code> as <strong>atomic instruction</strong>.</p>
+</li>
+<li>
+<p>When <code>yielding</code> add thread to <strong>queue</strong> of <em>waiters</em>.</p>
+</li>
+<li>
+<p>Mentions <strong>starvation</strong>.</p>
+</li>
+</ul>
+<p><strong>Observations</strong>:</p>
+<ul>
+<li>
+<p><strong>Learning Outcome</strong>: One of the goals is to enable you to make sense of
+what you see and read about (<em>build a foundation</em>).</p>
+</li>
+<li>
+<p><strong>Unsolved Problems</strong>: Even as something as old as <strong>OS</strong>, there are still
+<strong>unsolved problems</strong> and room for <strong>improvement</strong>.</p>
+</li>
+</ul>
+</div>
+<h2 id="example-slackline-locks-cvs">Example: <span class="gold">Slackline</span> (<i class="muted">Locks, CVs</i>)<a class="headerlink" href="#example-slackline-locks-cvs" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p><strong>Skit</strong>: Need <code>4</code> people to walk across the <strong>slackline</strong>.</p>
+</blockquote>
+<div class="flex-row">
+<div class="flex-col">
+<div class="codehilite"><pre><span></span><code><span class="c1"># Global Variables</span>
+
+<span class="n">size_t</span>  <span class="n">CAPACITY</span> <span class="o">=</span> <span class="mi">3</span>   <span class="c1"># Max</span>
+<span class="n">size_t</span>  <span class="n">Slackers</span> <span class="o">=</span> <span class="mi">0</span>   <span class="c1"># Current</span>
+
+<span class="n">Mutex</span>   <span class="n">Lock</span>
+<span class="n">Cond</span>    <span class="n">Line</span>
+
+<span class="c1"># Threads</span>
+
+<span class="k">def</span> <span class="nf">thread_each_person</span><span class="p">():</span>
+    <span class="n">step_on</span><span class="p">()</span>
+    <span class="n">go_across_slackline</span><span class="p">()</span>
+    <span class="n">step_off</span><span class="p">()</span>
+</code></pre></div>
+
+</div>
+<div class="flex-col">
+<div class="codehilite"><pre><span></span><code><span class="c1"># Functions</span>
+
+<span class="k">def</span> <span class="nf">step_on</span><span class="p">():</span>
+    <span class="n">mutex_lock</span><span class="p">(</span><span class="n">Lock</span><span class="p">)</span>
+
+    <span class="k">while</span> <span class="n">Slackers</span> <span class="o">&gt;=</span> <span class="n">CAPACITY</span><span class="p">:</span>
+        <span class="n">cond_wait</span><span class="p">(</span><span class="n">Line</span><span class="p">,</span> <span class="n">Lock</span><span class="p">)</span>
+
+    <span class="n">Slackers</span><span class="o">++</span>
+    <span class="n">mutex_unlock</span><span class="p">(</span><span class="n">Lock</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">step_off</span><span class="p">():</span>
+    <span class="n">mutex_lock</span><span class="p">(</span><span class="n">Lock</span><span class="p">)</span>
+    <span class="n">Slackers</span><span class="o">--</span>
+    <span class="n">cond_signal</span><span class="p">(</span><span class="n">Line</span><span class="p">)</span>
+    <span class="n">mutex_unlock</span><span class="p">(</span><span class="n">Lock</span><span class="p">)</span>
+</code></pre></div>
+
+</div>
+</div>
+<div class="alert success-bg centered">
+<p>An example of <strong>throttling</strong> or <strong>rate-limiting</strong>.</p>
+</div>
+<h2 id="semaphores-overview">Semaphores: <span class="gold">Overview</span><a class="headerlink" href="#semaphores-overview" title="Permanent link">&para;</a></h2>
+<p>A <strong class="special">semaphore</strong> is a synchronization primitive
+that consists of an <strong class="caution">integer</strong> that we can
+manipulate with two <strong class="success">operations</strong>:</p>
+<div class="flex-row">
+<div class="flex-col">
+<div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">sem_wait</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">value</span><span class="o">--</span>
+    <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">value</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">thread_wait</span><span class="p">()</span>
+</code></pre></div>
+
+</div>
+<div class="flex-col">
+<div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">sem_post</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">value</span><span class="o">++</span>
+    <span class="k">if</span> <span class="n">threads_waiting</span><span class="p">():</span>
+        <span class="n">threads_wakeup_next</span><span class="p">()</span>
+</code></pre></div>
+
+</div>
+</div>
+<div class="alert warning-bg centered">
+<p><strong>Semaphores</strong> combine the <strong>mutual exclusion</strong> of a <strong>lock</strong> and the
+<strong>signaling</strong> of a <strong>condition variable</strong>.</p>
+</div>
+<h2 id="example-slackline-semaphores">Example: <span class="gold">Slackline</span> (<i class="muted">Semaphores</i>)<a class="headerlink" href="#example-slackline-semaphores" title="Permanent link">&para;</a></h2>
+<div class="flex-row">
+<div class="flex-col">
+<div class="codehilite"><pre><span></span><code><span class="c1"># Global Variables</span>
+
+<span class="n">Semaphore</span> <span class="n">Line</span> <span class="o">=</span> <span class="mi">3</span>  <span class="c1"># Max</span>
+
+<span class="c1"># Threads</span>
+
+<span class="k">def</span> <span class="nf">thread_each_person</span><span class="p">():</span>
+    <span class="n">step_on</span><span class="p">()</span>
+    <span class="n">go_across_slackline</span><span class="p">()</span>
+    <span class="n">step_off</span><span class="p">()</span>
+</code></pre></div>
+
+</div>
+<div class="flex-col">
+<div class="codehilite"><pre><span></span><code><span class="c1"># Functions</span>
+
+<span class="k">def</span> <span class="nf">step_on</span><span class="p">():</span>
+    <span class="n">sem_wait</span><span class="p">(</span><span class="n">Line</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">step_off</span><span class="p">():</span>
+    <span class="n">sem_post</span><span class="p">(</span><span class="n">Line</span><span class="p">)</span>
+</code></pre></div>
+
+</div>
+</div>
+<div class="alert success-bg centered">
+<p>An example of <strong>throttling</strong> or <strong>rate-limiting</strong>.</p>
+</div>
+<h2 id="semaphores-lock">Semaphores: <span class="gold">Lock</span><a class="headerlink" href="#semaphores-lock" title="Permanent link">&para;</a></h2>
+<div class="flex-row">
+<div class="flex-col">
+<p>To use a <strong class="special">semaphore</strong> as a <strong
+class="warning">lock</strong>:</p>
+<ul>
+<li>
+<p>Initialize the <strong class="special">semaphore</strong> to <code>1</code>.</p>
+</li>
+<li>
+<p>Perform a <strong class="success">Wait</strong> to <em>acquire</em> the <strong
+  class="warning">lock</strong>.</p>
+</li>
+<li>
+<p>Perform a <strong class="success">Post</strong> to <em>release</em> the <strong
+  class="warning">lock</strong>.</p>
+</li>
+</ul>
+</div>
+<div class="flex-col">
+<div class="codehilite"><pre><span></span><code><span class="c1">// Initialize lock</span>
+<span class="n">sem_t</span><span class="w"> </span><span class="n">m</span><span class="p">;</span>
+<span class="n">sem_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">);</span>
+
+
+<span class="c1">// Perform Lock</span>
+<span class="n">sem_wait</span><span class="p">(</span><span class="o">&amp;</span><span class="n">m</span><span class="p">);</span>
+<span class="c1">// Do critical section</span>
+<span class="n">sem_post</span><span class="p">(</span><span class="o">&amp;</span><span class="n">m</span><span class="p">);</span>
+</code></pre></div>
+
+</div>
+</div>
+<h2 id="semaphores-condition-variable">Semaphores: <span class="gold">Condition Variable</span><a class="headerlink" href="#semaphores-condition-variable" title="Permanent link">&para;</a></h2>
+<div class="flex-row">
+<div class="flex-col">
+<p>To use a <strong class="special">semaphore</strong> as a <strong
+class="caution">condition variable</strong>:</p>
+<ul>
+<li>
+<p>Initialize the <strong class="special">semaphore</strong> to <code>0</code>.</p>
+</li>
+<li>
+<p>Perform a <strong class="success">Wait</strong> to <em>wait</em> on the <strong
+  class="caution">condition variable</strong>.</p>
+</li>
+<li>
+<p>Perform a <strong class="success">Post</strong> to <em>signal</em> the <strong
+  class="caution">condition variable</strong>.</p>
+</li>
+</ul>
+</div>
+<div class="flex-col">
+<div class="codehilite"><pre><span></span><code><span class="c1">// Initialize cond var</span>
+<span class="n">sem_t</span><span class="w"> </span><span class="n">cv</span><span class="p">;</span>
+<span class="n">sem_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">cv</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+
+
+<span class="c1">// Thread 1: Wait</span>
+<span class="n">sem_wait</span><span class="p">(</span><span class="o">&amp;</span><span class="n">cv</span><span class="p">);</span>
+<span class="n">do_the_thing</span><span class="p">();</span>
+
+
+<span class="c1">// Thread 2: Signal</span>
+<span class="n">do_another_thing</span><span class="p">();</span>
+<span class="n">sem_post</span><span class="p">(</span><span class="o">&amp;</span><span class="n">cv</span><span class="p">);</span>
+</code></pre></div>
+
+</div>
+</div>
+</main>
+<footer>
+Built using <a href="https://python.org">Python</a>
+and <a href="https://jinja.palletsprojects.com">Jinja</a>
+with colors from 
+<a href="https://onmessage.nd.edu/university-branding/colors/">Notre Dame</a>, 
+<a href="https://spreadsheet.dev/how-to-get-the-hexadecimal-codes-of-colors-in-google-sheets">Google Docs</a>, and 
+<a href="https://nordtheme.com">Nord Theme</a>,
+and icons from <a href="https://pictogrammers.com/library/mdi/">Material Design Icons</a>.</footer>
+</body>
+</html>

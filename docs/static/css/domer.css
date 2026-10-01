@@ -678,8 +678,12 @@ div.footnote > hr {
     color: var(--nord14);
 }
 
-.nv {
+.cp, .nv {
     color: var(--nord15);
+}
+
+.cpf {
+    color: var(--nord07);
 }
 
 .mi, .s, .s2 {
