@@ -107,7 +107,10 @@
             link:       https://notredame.hosted.panopto.com/Panopto/Pages/Viewer.aspx?id=0e29d246-9256-4faf-ad52-b4d400f98cec
 
       - date:           Thu 10/01
-        topics:         Structures
+        topics:         Patterns
+        items:
+          - name:       Panopto
+            link:       https://notredame.hosted.panopto.com/Panopto/Pages/Viewer.aspx?id=66881be2-9ea5-45c4-85dd-b4d600ff51d6
 
 - name:     Semaphores
   days:
