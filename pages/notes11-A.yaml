@@ -209,6 +209,30 @@ body:   |
       return old_value      # Return old value
   ```
 
+  ```c
+  #include <stdatomic.h>    // Requires C11
+  
+  struct SMQ {
+      atomic_bool running;  // Atomic boolean value
+  }
+
+  SMQ *smq_create(SMQ *smq) {
+      ...
+      atomic_store(&smq->running, true);
+      ...
+  }
+
+  void smq_shutdown(SMQ *smq) {
+      atomic_store(&smq->running, false);
+  }
+
+  void *smq_puller(void *arg) {
+      while (atomic_load(&smq->running)) {
+          ...
+      }
+  }
+  ```
+
   <div class="alert info-bg centered" markdown="1">
 
   The above three lines all happen in one instruction (<i
