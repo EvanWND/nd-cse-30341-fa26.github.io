@@ -120,6 +120,8 @@
           - Reading 06
         items:
           - name:       Slides 11
+          - name:       Panopto
+            link:       https://notredame.hosted.panopto.com/Panopto/Pages/Viewer.aspx?id=016aed0e-ab0d-4cae-9d0e-b4db01016961
 
       - date:           Thu 10/08
         topics:         Patterns
