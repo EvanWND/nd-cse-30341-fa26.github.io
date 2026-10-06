@@ -1,0 +1,544 @@
+
+title:  "Notes 11-A: Semaphores"
+body:   |
+
+  ## Review: <span class="gold">Synchronization Primitives</span>
+
+  - [Project 02]: Should have everything you need... but will discuss overall
+  **structure** towards the end of class.
+
+  - [Interview 02]: Signups out by **Thursday**.
+
+  -   <div class="flex-col" markdown="1">
+
+      **Synchronization Primitives**:
+
+      - <strong class="warning">Mutexes</strong>: Avoid <strong
+      class="danger">race conditions</strong>
+
+      - <strong class="caution">Condition Variables</strong>: Avoid <strong
+      class="caution">busy waiting</strong> and <strong
+      class="danger">deadlock</strong>
+
+  [Project 02]: project02.html
+  [Interview 02]: interview02.html
+
+  ## Semaphores: <span class="gold">Overview</span>
+
+  A <strong class="special">semaphore</strong> is a synchronization primitive
+  that consists of an <strong class="caution">integer</strong> that we can
+  manipulate with two <strong class="success">operations</strong>:
+
+  <div class="flex-row" markdown="1">
+
+  <div class="flex-col" markdown="1">
+
+  ```python
+  def sem_wait(s):
+      s.value--
+      if s.value < 0:
+          thread_wait()
+  ```
+
+  </div>
+
+  <div class="flex-col" markdown="1">
+
+  ```python
+  def sem_post(s):
+      s.value++
+      if threads_waiting():
+          threads_wakeup_next()
+  ```
+
+  </div>
+
+  </div>
+
+  <div class="alert warning-bg centered" markdown="1">
+
+  **Semaphores** combine the **mutual exclusion** of a **lock** and the
+  **signaling** of a **condition variable**.
+
+  </div>
+
+  <div class="alert caution-bg centered" markdown="1">
+
+  **Observations**: Typically we do **locks** and **condition variables**
+  togather and **semaphores** separately (*don't mix*).
+
+  </div>
+
+  ## Semaphores: <span class="gold">Lock</span>
+
+  <div class="flex-row" markdown="1">
+
+  <div class="flex-col" markdown="1">
+
+  To use a <strong class="special">semaphore</strong> as a <strong
+  class="warning">lock</strong>:
+
+  - Initialize the <strong class="special">semaphore</strong> to `1`.
+
+  - Perform a <strong class="success">Wait</strong> to *acquire* the <strong
+    class="warning">lock</strong>.
+
+  - Perform a <strong class="success">Post</strong> to *release* the <strong
+    class="warning">lock</strong>.
+
+  </div>
+
+  <div class="flex-col" markdown="1">
+
+  ```c
+  // Initialize lock
+  sem_t m;
+  sem_init(&m, 0, 1);
+
+
+  // Perform Lock
+  sem_wait(&m);
+  // Do critical section
+  sem_post(&m);
+  ```
+
+  </div>
+
+  </div>
+
+  ## Semaphores: <span class="gold">Condition Variable</span>
+
+  <div class="flex-row" markdown="1">
+
+  <div class="flex-col" markdown="1">
+
+  To use a <strong class="special">semaphore</strong> as a <strong
+  class="caution">condition variable</strong>:
+
+  - Initialize the <strong class="special">semaphore</strong> to `0`.
+
+  - Perform a <strong class="success">Wait</strong> to *wait* on the <strong
+    class="caution">condition variable</strong>.
+
+  - Perform a <strong class="success">Post</strong> to *signal* the <strong
+    class="caution">condition variable</strong>.
+
+  </div>
+
+  <div class="flex-col" markdown="1">
+
+  ```c
+  // Initialize cond var
+  sem_t cv;
+  sem_init(&cv, 0, 0);
+
+
+  // Thread 1: Wait
+  sem_wait(&cv);
+  do_the_thing();
+
+
+  // Thread 2: Signal
+  do_another_thing();
+  sem_post(&cv);
+  ```
+
+  </div>
+
+  </div>
+
+  ## Reading 05: <span class="gold">sha1sum</span> (<i class="muted">queue.h</i>)
+
+  ```c
+  // queue.h
+  struct Queue {
+      const char **data;
+      const char  *sentinel;
+      size_t       capacity;
+      ...
+  };
+
+  Queue *       queue_create(char * sentinel, size_t capacity);
+  void          queue_delete(Queue *q);
+
+  void          queue_push(Queue *q, const char *value);
+  const char *  queue_pop(Queue *q);
+  ```
+
+  <div class="alert warning-bg" markdown="1">
+
+  **Review**:
+
+  - Why two **condition variables**? *Signal correct thread*.
+
+  - Why while loops in methods? *Condition may not have changed*.
+
+  -   <div class="flex-col" markdown="1">
+
+      Which **concurrency patterns**?
+
+      - **Producer/Consumer** (*organize work*)
+
+      - **Monitor** (*abstract synchronization*)
+
+      - **Threadpool** (*limit concurrency*)
+
+  </div>
+
+  ## Reading 05: <span class="gold">sha1sum</span> (<i class="muted">main</i>)
+
+  ```c
+  int main(int argc, char *argv[]) {
+      Queue *q = queue_create(SENTINEL, QSIZE);
+      Thread thread[MAX_THREADS];
+
+      /* Create MAX_THREADS consumer threads */
+      for (int t = 0; t < MAX_THREADS; t++) {
+          thread_create(&thread[t], NULL, sha1sum_thread, (void *)q);
+      }
+
+      /* Put all arguments into queue */
+      for (int i = 1; i < argc; i++) {
+          queue_push(q, argv[i]);
+      }
+
+      queue_push(q, q->sentinel);   // Leave out to demonstrate hang
+
+      /* Join each consumer thread */
+      size_t pstatus = 0;
+      size_t tstatus = 0;
+      for (int t = 0; t < MAX_THREADS; t++) {
+          thread_join(thread[t], (void **)&tstatus);
+          pstatus += tstatus;
+      }
+
+      queue_delete(q);
+
+      return pstatus;
+  }
+  ```
+
+  ## Reading 05: <span class="gold">sha1sum</span> (<i class="muted">thread</i>)
+
+  ```c
+  void *sha1sum_thread(void *arg) {
+      Queue *q = (Queue *)arg;
+      size_t failures = 0;
+      const char *path = queue_pop(q);
+
+      // Loop until we see sentinel (just compare pointers)
+      while (path != q->sentinel) {
+          char cksum[SHA_DIGEST_LENGTH*2 + 1];
+          if (sha1sum_file(path, cksum)) {
+              printf("%s  %s\n", cksum, path);
+          } else {
+              failures++;
+          }
+          path = queue_pop(q);
+      }
+
+      return (void *)failures;
+  }
+  ```
+
+  <div class="alert caution-bg" markdown="1">
+
+  **Discussion**:
+
+  - **Threadpool** starts `N` threads that constantly fetch work from **queue**.
+
+  - Similar to **Process Pool** in **Hulk**.
+
+  - Need to modify `queue_pop` to signal **consumer** if **sentinel** in place.
+
+  </div>
+
+  ## Reading 05: <span class="gold">Semaphore</span>
+
+  > Let's do the exact same probems... with <strong
+  class="special">semaphores</strong>.
+
+  ```c
+  // queue.h
+
+  struct Queue {
+      ...
+      sem_t	lock;
+      sem_t	produced;
+      sem_t   consumed;
+  };
+  ```
+
+  ```c
+  // queue.c
+
+  queue_create(...) {
+      Queue *q = calloc(1, sizeof(Queue));
+
+      if (q) {
+          sem_init(&q->lock    , 0, 1);
+          sem_init(&q->produced, 0, 0);
+          sem_init(&q->consumed, 0, q->capacity); // Start with 0
+
+      }
+      return q;
+  }
+  ```
+
+  ```c
+  // queue.c
+
+  queue_push(Queue *q, int value) {
+      sem_wait(&q->consumed);
+      sem_wait(&q->lock);
+      ...
+      sem_wait(&q->lock);
+      sem_wait(&q->produced);
+  }
+
+  queue_pop(Queue *q) {
+      sem_wait(&q->produced);
+      sem_wait(&q->lock);
+      int value = q->data[q->reader];
+      ...
+      sem_post(&q->lock);
+
+      if (value != q->sentinel) {
+          sem_post(&q->consumed);
+      } else {
+          sem_post(&q->produced);
+      }
+  }
+  ```
+
+  <div class="alert warning-bg" markdown="1">
+
+  Do not **sleep** with the **lock**!!!
+
+  </div>
+
+  <div class="alert info-bg" markdown="1">
+
+  Similar to **slacklining** example... **rate-limiting** / **throttling**.
+
+  </div>
+
+  ## Project 02: <span class="gold">Pub / Sub</span>
+
+  <div class="centered">
+
+  <img src="static/img/project02-client.svg" class="transparent responsive">
+
+  </div>
+
+  <div class="alert caution-bg" markdown="1">
+
+  **Observations**:
+
+  - **Queue** in **Project 02** uses **linked list**, therefore is
+  **unbounded** (`queue_pop` should **block**).
+
+  - We have both **incoming** and **outgoing** becuase we are synchronizing
+  between **internal library **threads** and the **application** thread!
+
+  </div>
+
+  ## Project 02: <span class="gold">Chat Application</span>
+
+  <div class="centered">
+
+  <img src="static/img/project02-chat-application.svg" class="transparent responsive">
+
+  </div>
+
+  <div class="alert caution-bg" markdown="1">
+
+  **Observations**:
+
+  - Look through documentation of `libcurl` (checkout **Slack**)... OK to copy
+  and paste from documentation.
+
+  - Simple **skeleton** provided.
+  - **Application protocol** is up to you.
+
+  </div>
+
+  ## Project 02: <span class="gold">Pusher / Puller</span>
+
+  <div class="centered">
+
+  <img src="static/img/project02-client-simplified.svg" class="transparent responsive">
+
+  </div>
+
+  <div class="flex-row" markdown="1">
+
+  <div class="flex-col" markdown="1">
+
+  <strong class="success">Pusher</strong>():
+
+  <strong class="caution">while</strong> <strong class="info">smq_running</strong>():
+
+  1. **Pop** request from <strong class="caution">outgoing</strong>.
+
+  2. **Perform** request.
+
+  3. **Verify** response (*don't care*)
+
+  </div>
+
+  <div class="flex-col" markdown="1">
+
+  <strong class="danger">Puller</strong>():
+
+  0. **Create** request.
+
+  <strong class="caution">while</strong> <strong class="info">smq_running</strong>():
+
+  1. **Perform** request.
+
+  2. **Verify** response.
+
+  3. **Push** request with **body** into <strong class="warning">incoming</strong>.
+
+  </div>
+
+  </div>
+
+  <div class="alert success-bg" markdown="1">
+
+  **Hint**: To test/debug run `mq_server.py` manually in a separate window.
+
+  </div>
+
+  ## Semaphores: <span class="gold">Reader-Writer Locks</span>
+
+  With <strong class="special">semaphores</strong>, we can create interesting
+  synchronization objects such as <strong class="danger">reader-writer
+  locks</strong>:
+
+  - Once <strong class="success">readers</strong> acquire the <strong
+    class="warning">writelock</strong>, as many <strong
+    class="success">readers</strong> as possible can read the data.
+
+  - Once a <strong class="danger">writer</strong> acquires the <strong
+    class="warning">writelock</strong>, no one else can access the data.
+
+  - Unfortunately, this can add <strong class="caution">overhead</strong> and is
+    prone to <strong class="danger">starvation</strong>.
+
+  ## Semaphores: <span class="gold">Reader Preference</span>
+
+  <div class="flex-row" markdown="1">
+
+  <div class="flex-col" markdown="1">
+
+  ```c
+  size_t Readers    = 0
+  sem_t  WriterLock = 1
+  sem_t  ReaderLock = 1
+
+  Writer():
+      sem_wait(&WriterLock)
+      do_write()
+      sem_post(&WriterLock)
+  ```
+
+  - <strong class="success">Pro</strong>: Allows multiple readers
+  - <strong class="danger">Con</strong>: Writer may starve
+
+  </div>
+
+  <div class="flex-col" markdown="1">
+
+  ```c
+  Reader():
+      sem_wait(&ReaderLock)
+      if Readers == 0:
+          sem_wait(WriterLock)
+      Readers++
+      sem_post(&ReaderLock)
+
+      do_read()
+
+      sem_wait(&ReaderLock)
+      Readers--
+      if Readers == 0:
+          sem_post(WriterLock)
+      sem_post(&ReaderLock)
+  ```
+
+  </div>
+
+  </div>
+
+  <div class="alert caution-bg" markdown="1">
+
+  *A bunch of people want to go party, once people with gold shirts go in...
+  you don't allow blue shirts… so what do you do?*
+
+  **Force a queue with a semaphore!**
+
+  </div>
+
+  ## Semaphores: <span class="gold">Fair</span>
+
+  <div class="flex-row" markdown="1">
+
+  <div class="flex-col" markdown="1">
+
+  ```c
+  size_t Readers      = 0
+  sem_t  WriterLock   = 1
+  sem_t  ReaderLock   = 1
+  sem_t  ServiceQueue = 1     //
+
+  Writer():
+      sem_wait(&ServiceQueue) //
+      sem_wait(&WriterLock)
+      sem_post(&ServiceQueue) //
+      do_write()
+      sem_post(&WriterLock)
+  ```
+
+  </div>
+
+  <div class="flex-col" markdown="1">
+
+  ```c
+  Reader():
+      sem_wait(&ServiceQueue) //
+      sem_wait(&ReaderLock)
+      if Readers == 0:
+          sem_wait(WriterLock)
+      Readers++
+      sem_post(&ServiceQueue) //
+      sem_post(&ReaderLock)
+
+      do_read()
+
+      sem_wait(&ReaderLock)
+      Readers--
+      if Readers == 0:
+          sem_post(WriterLock)
+      sem_post(&ReaderLock)
+  ```
+
+  </div>
+
+  </div>
+  
+  ## Semaphores: <span class="gold">Summary</span>
+
+  <strong class="special">Semaphores</strong> are another useful and flexible
+  synchronization primitive:
+
+  - Good when you need a <strong class="danger">barrier</strong> or want to have
+    <strong class="danger">bounded</strong> access to a resource.
+
+  - Unlike <strong class="warning">locks</strong> and <strong
+    class="caution">condition variables</strong>, there is no notion of <strong
+    class="primary">ownership</strong>.
+
+  - Can avoid using <strong class="warning">locks</strong> and <strong
+    class="caution">condition variables</strong> if desired.
