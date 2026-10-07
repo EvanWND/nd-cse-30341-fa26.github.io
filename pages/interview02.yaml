@@ -1,0 +1,57 @@
+title:      Interview 02
+body:       |
+
+    Next week, you will have the opportunity to demonstrate your mastery of the
+    concepts explored in [Project 02: Simple Message Queue] to the instructor or a
+    teaching assistant in a `20` minute in-person **interview**.
+
+    This interview will require you to demonstrate your [Project 02] artifacts,
+    discuss the lessons you learned, and then design and analyze a hypothetical
+    modification to the project.
+
+    [Project 02: Simple Message Queue]: project02.html
+    [Project 02]: project02.html
+
+    ## Scheduling
+
+    To schedule an **interview** appointment, put your **netid** (ie.  `pbui`)
+    in an open cell in a timeslot with an interviewer in the following:
+
+    <div class="centered">
+      <a href="https://docs.google.com/spreadsheets/d/1evqcAHo56_f3nFrBGxGBDY5rV1rHLIepA1HWtgtYyik/edit?usp=sharing" class="badge warning-btn" target="_new" style="font-size: 150%;">Interview 02 Spreadsheet</a>
+    </div>
+
+    The location of the interviewer can be found in the **Locations** tab of
+    the [Interview 02 Spreadsheet].
+
+    <div class="alert warning-bg" markdown="1">
+
+    ### <i class="icon icon-medium">{{ "calendar-clock" | embed_icon }}</i> Scheduling Deadline
+
+    For planning purposes, please schedule your **Interview 02** appointment by
+    **midnight, Friday, October 9**.
+
+    You may only signup for **one** appointment timeslot.
+
+    </div>
+
+    [Interview 02 Spreadsheet]: https://docs.google.com/spreadsheets/d/1evqcAHo56_f3nFrBGxGBDY5rV1rHLIepA1HWtgtYyik/edit?usp=sharing
+
+    <div class="alert danger-bg" markdown="1">
+
+    ### <i class="icon icon-medium">{{ "alert" | embed_icon }}</i> Allowed Resources
+
+    While discussing the project, you may look at the code in your [git]
+    repository and the project write-up, but you **may not consult** any other
+    resources including slides, texts, notes, or **AI Tools**.
+
+    The **interview** is meant to be a conversation and so you should be
+    familiar with your work.
+
+    That said, it may be helpful to bring **paper** and something to **write**
+    with in case you want to draw pictures or make notes during the
+    **interview**.
+
+    </div>
+
+    [git]: https://git-scm.com/
