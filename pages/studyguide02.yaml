@@ -1,0 +1,255 @@
+title:  "Exam 02: Study Guide"
+body:   |
+
+  ## Definitions
+
+  <div class="flex-row" markdown="1">
+
+  <div class="flex-col" markdown="1">
+
+  - Event-based programming
+  - Callback
+  - Select/poll
+  - Concurrency
+  - Parallelism
+  - Task Parallelism
+  - Data Parallelism
+  - One-to-one
+  - One-to-many
+  - Many-to-many
+  - Starvation
+
+  </div>
+
+  <div class="flex-col" markdown="1">
+
+  - Thread
+  - Critical Section
+  - Race Condition
+  - Mutual Exclusion
+  - Lock
+  - Producer/Consumer
+  - TestAndSet
+  - Condition variable
+  - Monitor
+  - Spin lock
+  - Busy waiting
+
+  </div>
+
+  <div class="flex-col" markdown="1">
+
+  - Semaphore
+  - Reader-writer locks
+  - Atomicity violation
+  - Order violation
+  - Deadlock
+  - Livelock
+  - Circular wait
+  - Threadpool
+  - Rate Limiting / Throttling
+  - Barrier
+
+  </div>
+
+  </div>
+
+  ### Examples
+
+  For each **description**, **identify** the appropriate corresponding **term**.
+
+  <table class="bordered" markdown="1">
+  <thead>
+    <th class="info-bg">Description</th>
+    <th class="caution-bg">Term</th>
+  </thead>
+  <tbody>
+  <tr>
+    <td class="info-bg">
+
+    In this <b>thread model</b> used by programming languages such as
+    <b>Go</b>, multiple user threads map to several kernel threads (e.g.
+    <i>lightweight processes</i>).
+
+    </td>
+    <td class="caution-bg" width="50%"></td>
+  </tr>
+  <tr>
+    <td class="info-bg">
+
+    This <b>system call</b> allows us to <b>check if I/O is ready or not</b>
+    before performing the blocking call.
+
+    </td>
+    <td class="caution-bg" width="50%"></td>
+  </tr>
+  </tbody>
+  </table>
+
+  ## Concurrency and Parallelism
+
+  <div class="flex-row" markdown="1">
+
+  <div class="flex-col" markdown="1">
+
+  ### Key Conceptual Questions:
+
+  1. What is **concurrency**? **parallelism**?
+
+  2. How do **processes**, **threads**, and **event-based I/O** support
+  **concurrency**? **parallelism**?
+
+  </div>
+
+  <div class="flex-col" markdown="1">
+
+  ### Examples
+
+  How did you implement **sha1sum** using **processes** and **threads**?
+
+  - What are the **advantages** and **disadvantages** of each approach?
+
+  - Should you use **event-based I/O** for **sha1sum**? Why or why not?
+
+  </div>
+
+  </div>
+
+  ## Locks and Condition Variables
+
+  <div class="flex-row" markdown="1">
+
+  <div class="flex-col" markdown="1">
+
+  ### Key Conceptual Questions:
+
+  1. Why do we need **locks**?
+
+  2. When should we use **locks**?
+
+  3. How is a **lock** implemented?
+
+  4. How do we use **locks** and **condition variables** to solve
+  **concurrency** problems?
+
+  </div>
+
+  <div class="flex-col" markdown="1">
+
+  ### Examples
+
+  Model a given scenario using **threads**, **locks**, and **condition
+  variables**.  Identify which **concurrency pattern** is demonstrated by this
+  implementation.
+
+  - **Slacklining** (*Reading 06*)
+  - **DPAC** (*Project 02*)
+  - **Salsa Night** (*Lecture 12*)
+
+  </div>
+
+  </div>
+
+  ## Semaphores
+
+  <div class="flex-row" markdown="1">
+
+  <div class="flex-col" markdown="1">
+
+  ### Key Conceptual Questions:
+
+  1. What is a **semaphore**?
+
+  2. What **operations** can we perform on a **semaphore**?
+
+  3. How do we use **semaphores** to model either **locks** or **condition variables**?
+
+  4. How do we use **semaphores** to solve **concurrency** problems?
+
+  </div>
+
+  <div class="flex-col" markdown="1">
+
+  ### Examples
+
+  Model a given scenario using **threads** and **semaphores**.  Identify which
+  **concurrency pattern** is demonstrated by this implementation.
+
+  - **Slacklining** (*Reading 06*)
+  - **DPAC** (*Project 02*)
+  - **Salsa Night** (*Lecture 12*)
+
+  </div>
+
+  </div>
+
+  ## Concurrency Bugs
+
+  <div class="flex-row" markdown="1">
+
+  <div class="flex-col" markdown="1">
+
+  ### Key Conceptual Questions:
+
+  1. What are some common **concurrency bugs**?
+
+  2. What are some ways to prevent or avoid **race conditions**?
+
+  3. What are some ways to prevent or avoid **deadlock**?
+
+  </div>
+
+  <div class="flex-col" markdown="1">
+
+  ### Examples
+
+  Which of the following statements are **true**?
+
+  - Using **mutexes** prevents **busy waiting**.
+
+  - Using **condition variables** prevents **race conditions**.
+
+  - Using **semaphores** prevents **starvation**.
+
+  </div>
+
+  </div>
+
+  ## Project 02
+
+  ### Key Conceptual Questions:
+
+  <div class="flex-row" markdown="1">
+
+  <div class="flex-col" markdown="1">
+
+  Considering the **SMQ client library** and **chat application** in **Project
+  02**:
+
+  1. How did you use **threads** in **Project 02**?
+
+  2. How did you synchronize those **threads** in **Project 02**?
+
+  3. How did you prevent or avoid **concurrency bugs** in **Project 02**?
+
+  4. What **concurrency patterns** did you implement in **Project 02**?
+
+  </div>
+
+  <div class="flex-col" markdown="1">
+
+  ### Examples
+
+  1. Describe each of the **threads** of the **chat application** and how each
+  thread interacted with the **SMQ client library**.
+
+  2. Describe each of the **internal threads** of the **SMQ client library**
+  and how each **thread** interacted with the internal **incoming** and
+  **outgoing** queues.
+
+  3. Could you implement this project without **threads**?  If so, explain how
+  you would implement this.  Otherwise, explain why it is not possible.
+
+  </div>
+
+  </div>
