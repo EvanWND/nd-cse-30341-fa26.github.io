@@ -1,0 +1,439 @@
+title:  "Notes 11-B: Semaphores"
+body:   |
+
+  ## Logistics
+
+  - [Interview 02] and [Study Guide 02] are out.
+
+  [Project 02]: project02.html
+  [Interview 02]: interview02.html
+  [Study Guide 02]: studyguide02.html
+
+  ## Review: <span class="gold">Synchronization Primitives</span>
+
+  > Issue with <strong class="success">Concurrency</strong> is that we need to
+  perform **synchronization**.
+
+  <table>
+  <thead>
+    <th class="info-bg">Synchronization Primitives</th>
+    <th class="info-bg">Problem</th>
+    <th class="info-bg">Approach</th>
+  </thead>
+  <tbody>
+  <tr class="warning-bg">
+    <td>Lock</td>
+    <td>Race Condition</td>
+    <td>Ownership</td>
+  </tr>
+  <tr class="caution-bg">
+    <td>Condition Variables</td>
+    <td>Busy Waiting, <strike>Deadlock</strike></td>
+    <td>Ownership</td>
+  </tr>
+  <tr class="special-bg">
+    <td>Semaphores</td>
+    <td>Race Condition, Busy Waiting, <strike>Deadlock</strike></td>
+    <td>Signaling</td>
+  </tr>
+  </tbody>
+  </table>
+
+  <div class="alert warning-bg" markdown="1">
+
+  <strong class="caution">Condition variables</strong> and <strong
+  class="special">semaphores</strong> can both help prevent <strong
+  class="danger">deadlock</strong> in some cases, but they can also cause it as
+  well.
+
+  </div>
+
+  <div class="alert success-bg" markdown="1">
+
+  These **primitives** are like `malloc` and `free` in **data structures**...
+  they are low-level mechanisms for managing resources, but they don't tell us
+  how they should be used.  Therefore, we should study **patterns**.
+
+  </div>
+
+  ## Review: <span class="gold">Concurrency Patterns</span>
+
+  > Which of the following [concurrency patterns] have we explored?
+
+  <table>
+  <thead>
+    <th class="special-bg">Concurrency Pattern</th>
+    <th class="info-bg">Description</th>
+  </thead>
+  <tbody>
+  <tr>
+    <td class="special-bg">Scheduler</td>
+    <td class="info-bg">Ordering tasks</td>
+  </tr>
+  <tr>
+    <td class="special-bg">Thread Pool</td>
+    <td class="info-bg">Control/limit amount of concurrency</td>
+  </tr>
+  <tr>
+    <td class="special-bg">Monitor</td>
+    <td class="info-bg">Abstract synchronization (internally)</td>
+  </tr>
+  <tr>
+    <td class="special-bg">Barrier</td>
+    <td class="info-bg">All tasks stop at a certain point before proceeding</td>
+  </tr>
+  <tr>
+    <td class="special-bg">Readers-Writer Lock</td>
+    <td class="info-bg">Allow multiple readings, and one writer</td>
+  </tr>
+  <tr>
+    <td class="special-bg">Producer / Consumer</td>
+    <td class="info-bg">Some jobs produce data, others consume data</td>
+  </tr>
+  <tr>
+    <td class="special-bg">Rate Limiting / Throttling</td>
+    <td class="info-bg">Allow for up to N active tasks before forcing wait</td>
+  </tr>
+  </tbody>
+  </table>
+
+  [concurrency patterns]: https://en.wikipedia.org/wiki/Concurrency_pattern
+
+  ## Project 02: <span class="gold">Chat Application</span>
+
+  <div class="centered">
+
+  <img src="static/img/project02-chat-application.svg" class="transparent responsive">
+
+  </div>
+
+  <div class="alert caution-bg" markdown="1">
+
+  **Video Demonstrations**: [Emmalyn and
+  Lucia](https://drive.google.com/file/d/19ybcHkRPJRVGYG_LrNB0NgOn5oIUrKEW/view),
+  [Leo and Sam](https://www.youtube.com/watch?v=qIHVa9ap_vY), [Norah and
+  Katie](https://drive.google.com/file/d/1oiIufR-F4peW9BD3dVVwkCSxgzS7oXhK/view)
+
+  </div>
+
+  ## Semaphores: <span class="gold">Overview</span>
+
+  A <strong class="special">semaphore</strong> is a synchronization primitive
+  that consists of an <strong class="caution">integer</strong> that we can
+  manipulate with two <strong class="success">operations</strong>:
+
+  <div class="flex-row" markdown="1">
+
+  <div class="flex-col" markdown="1">
+
+  ```python
+  def sem_wait(s):
+      s.value--
+      if s.value < 0:
+          thread_wait()
+  ```
+
+  </div>
+
+  <div class="flex-col" markdown="1">
+
+  ```python
+  def sem_post(s):
+      s.value++
+      if threads_waiting():
+          threads_wakeup_next()
+  ```
+
+  </div>
+
+  </div>
+
+  <div class="alert warning-bg centered" markdown="1">
+
+  **Semaphores** combine the **mutual exclusion** of a **lock** and the
+  **signaling** of a **condition variable**.
+
+  </div>
+
+  <div class="alert caution-bg centered" markdown="1">
+
+  **Observations**: Typically we do **locks** and **condition variables**
+  togather and **semaphores** separately (*don't mix*).
+
+  </div>
+
+  ## Reading 06: <span class="gold">Rate-Limiting / Throttling</span>
+
+  ```c
+  /* Global variables */
+
+  sem_t  Lock;
+  sem_t  Running;
+  size_t Failures = 0;
+
+  int main(int argc, char *argv[]) {
+      /* Initialize Semaphores */
+      sem_init(&Lock, 0, 1);
+      sem_init(&Running, 0, MAX_THREADS);
+
+      /* For each argument, create thread to compute sha1sum */
+      pthread_t thread[argc - 1];
+
+      for (int i = 1; i < argc; i++) {
+          // Discuss: mq_start
+          pthread_create(&thread[i - 1], NULL, sha1sum_thread, argv[i]);
+      }
+
+      /* For each argument, join thread */
+      for (int i = 1; i < argc; i++) {
+          pthread_join(thread[i - 1], NULL);
+      }
+
+      return Failures;
+  }
+
+  void *sha1sum_thread(void *arg) {
+      sem_wait(&Running);
+
+      char cksum[SHA_DIGEST_LENGTH*2 + 1];
+      char *path = (char *)arg;
+
+      if (!sha1sum_file(path, cksum)) {
+          sem_wait(&Lock);
+          Failures++;
+          sem_post(&Lock);
+      } else {
+          printf("%s  %s\n", cksum, path);
+      }
+
+      sem_post(&Running);
+      return NULL;
+
+  }
+  ```
+
+  <div class="alert warning-bg" markdown="1">
+
+  **Observations**:
+
+  - <strong class="danger">Critical section</strong> is region with shared data
+  (`Failures`)
+
+  - <strong class="special">Semaphores</strong> have an implicit queueing
+  system (ie. *waiting*)
+
+  -   <div class="flex-col" markdown="1">
+
+      Can use only one <strong class="special">semaphore</strong> by:
+
+      - Guard `thread_create` with `Running`
+      - But still have dead **threads** that haven't joined... perhaps
+      `pthread_detach` to allow the threads to cleanup automatically when they
+      exit
+      - Return `failures` to get rid of `Lock`
+
+  </div>
+
+  ## Semaphores: <span class="gold">Reader-Writer Locks</span>
+
+  With <strong class="special">semaphores</strong>, we can create interesting
+  synchronization objects such as <strong class="danger">reader-writer
+  locks</strong>:
+
+  - Once <strong class="success">readers</strong> acquire the <strong
+    class="warning">writelock</strong>, as many <strong
+    class="success">readers</strong> as possible can read the data.
+
+  - Once a <strong class="danger">writer</strong> acquires the <strong
+    class="warning">writelock</strong>, no one else can access the data.
+
+  - Unfortunately, this can add <strong class="caution">overhead</strong> and is
+    prone to <strong class="danger">starvation</strong>.
+
+  <div class="alert success-bg" markdown="1">
+
+  **Example**: **databases**, **GrubHub**.
+
+  </div>
+
+  ## Semaphores: <span class="gold">Reader Preference</span>
+
+  <div class="flex-row" markdown="1">
+
+  <div class="flex-col" markdown="1">
+
+  ```c
+  size_t Readers    = 0
+  sem_t  WriterLock = 1
+  sem_t  ReaderLock = 1
+
+  Writer():
+      sem_wait(&WriterLock)
+      do_write()
+      sem_post(&WriterLock)
+  ```
+
+  - <strong class="success">Pro</strong>: Allows multiple readers
+  - <strong class="danger">Con</strong>: Writer may starve
+
+  </div>
+
+  <div class="flex-col" markdown="1">
+
+  ```c
+  Reader():
+      sem_wait(&ReaderLock)
+      if Readers == 0:
+          sem_wait(WriterLock)
+      Readers++
+      sem_post(&ReaderLock)
+
+      do_read()
+
+      sem_wait(&ReaderLock)
+      Readers--
+      if Readers == 0:
+          sem_post(WriterLock)
+      sem_post(&ReaderLock)
+  ```
+
+  </div>
+
+  </div>
+
+  <div class="alert caution-bg" markdown="1">
+
+  *A bunch of people want to go party, once people with gold shirts go in...
+  you don't allow blue shirts… so what do you do?*
+
+  **Force a queue with a semaphore!**
+
+  </div>
+
+  ## Semaphores: <span class="gold">Fair</span>
+
+  <div class="flex-row" markdown="1">
+
+  <div class="flex-col" markdown="1">
+
+  ```c
+  size_t Readers      = 0
+  sem_t  WriterLock   = 1
+  sem_t  ReaderLock   = 1
+  sem_t  ServiceQueue = 1     //
+
+  Writer():
+      sem_wait(&ServiceQueue) //
+      sem_wait(&WriterLock)
+      sem_post(&ServiceQueue) //
+      do_write()
+      sem_post(&WriterLock)
+  ```
+
+  </div>
+
+  <div class="flex-col" markdown="1">
+
+  ```c
+  Reader():
+      sem_wait(&ServiceQueue) //
+      sem_wait(&ReaderLock)
+      if Readers == 0:
+          sem_wait(WriterLock)
+      Readers++
+      sem_post(&ServiceQueue) //
+      sem_post(&ReaderLock)
+
+      do_read()
+
+      sem_wait(&ReaderLock)
+      Readers--
+      if Readers == 0:
+          sem_post(WriterLock)
+      sem_post(&ReaderLock)
+  ```
+
+  </div>
+
+  </div>
+
+  ## Semaphores: <span class="gold">Summary</span>
+
+  <strong class="special">Semaphores</strong> are another useful and flexible
+  synchronization primitive:
+
+  - Good when you need a <strong class="danger">barrier</strong> or want to have
+    <strong class="danger">bounded</strong> access to a resource.
+
+  - Unlike <strong class="warning">locks</strong> and <strong
+    class="caution">condition variables</strong>, there is no notion of <strong
+    class="primary">ownership</strong>.
+
+  - Can avoid using <strong class="warning">locks</strong> and <strong
+    class="caution">condition variables</strong> if desired.
+
+  ## Example: <span class="gold">Salsa Night</span> (<i class="muted">Locks and Condition Variable</i>)
+
+  ```python
+  # Global Variables
+  size_t MIN_FRIENDS = 2  # Minimum number of friends before we have courage
+  size_t Friends     = 0  # Current number of friends brave enough
+
+  Mutex Lock
+  Cond  Dancing
+
+  # Threads
+
+  def thread_you_dance():
+      mutex_lock(Lock)
+      while Friends < MIN_FRIENDS:
+          cond_wait(Dancing, Lock)
+      mutex_unlock(Lock)
+
+      dance()
+
+  def thread_friend_dance():
+      mutex_lock(Lock)
+      Friends++
+      cond_signal(Dancing)
+      mutex_unlock(Lock)
+
+      dance()
+  ```
+
+  <div class="alert caution-bg" markdown="1">
+
+  **Skit**: `3` dancers...
+
+  - Each person describes what they do
+  - Act out when done
+  - **Alternative**: only signal last friend
+
+  </div>
+
+  ## Example: <span class="gold">Salsa Night</span> (<i class="muted">Semaphores</i>)
+
+  ```python
+  # Global Variables
+  size_t MIN_FRIENDS = 2  # Minimum number of friends before we have courage
+  size_t Friends     = 0  # Current number of friends brave enough
+
+  Semaphore Lock     = 1
+  Semaphore Dancing  = 0
+
+  # Threads
+
+  def thread_you_dance():
+      sem_wait(Dancing)
+
+      dance()
+
+  def thread_friend_dance():
+      sem_wait(Lock)
+      Friends++
+      if Friends == MIN_FRIENDS:
+          sem_post(Dancing)
+      sem_post(Lock)
+
+      dance()
+  ```
