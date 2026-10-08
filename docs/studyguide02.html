@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Favicon -->
+<link rel="icon" type="image/png" sizes="32x32" href="static/ico/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="static/ico/favicon-16x16.png">
+<link rel="manifest" href="static/ico/site.webmanifest">
+<!-- Stylesheets -->
+<link rel="stylesheet" href="static/css/domer.css">
+<title>Exam 02: Study Guide</title>
+</head>
+<body>
+<header>
+<a class="logo" href="studyguide02.html">
+    <h1>Exam 02: Study Guide</h1>
+</a>
+<nav>
+    <ul>
+        <li><a href="index.html"><h4>Home</h4></a></li>
+        </ul>
+</nav></header>
+<main>
+<h2 id="definitions">Definitions<a class="headerlink" href="#definitions" title="Permanent link">&para;</a></h2>
+<div class="flex-row">
+<div class="flex-col">
+<ul>
+<li>Event-based programming</li>
+<li>Callback</li>
+<li>Select/poll</li>
+<li>Concurrency</li>
+<li>Parallelism</li>
+<li>Task Parallelism</li>
+<li>Data Parallelism</li>
+<li>One-to-one</li>
+<li>One-to-many</li>
+<li>Many-to-many</li>
+<li>Starvation</li>
+</ul>
+</div>
+<div class="flex-col">
+<ul>
+<li>Thread</li>
+<li>Critical Section</li>
+<li>Race Condition</li>
+<li>Mutual Exclusion</li>
+<li>Lock</li>
+<li>Producer/Consumer</li>
+<li>TestAndSet</li>
+<li>Condition variable</li>
+<li>Monitor</li>
+<li>Spin lock</li>
+<li>Busy waiting</li>
+</ul>
+</div>
+<div class="flex-col">
+<ul>
+<li>Semaphore</li>
+<li>Reader-writer locks</li>
+<li>Atomicity violation</li>
+<li>Order violation</li>
+<li>Deadlock</li>
+<li>Livelock</li>
+<li>Circular wait</li>
+<li>Threadpool</li>
+<li>Rate Limiting / Throttling</li>
+<li>Barrier</li>
+</ul>
+</div>
+</div>
+<h3 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">&para;</a></h3>
+<p>For each <strong>description</strong>, <strong>identify</strong> the appropriate corresponding <strong>term</strong>.</p>
+<table class="bordered">
+<thead>
+<th class="info-bg">Description</th>
+<th class="caution-bg">Term</th>
+</thead>
+<tbody>
+<tr>
+<td class="info-bg">
+
+  In this <b>thread model</b> used by programming languages such as
+  <b>Go</b>, multiple user threads map to several kernel threads (e.g.
+  <i>lightweight processes</i>).
+
+  </td>
+<td class="caution-bg" width="50%"></td>
+</tr>
+<tr>
+<td class="info-bg">
+
+  This <b>system call</b> allows us to <b>check if I/O is ready or not</b>
+  before performing the blocking call.
+
+  </td>
+<td class="caution-bg" width="50%"></td>
+</tr>
+</tbody>
+</table>
+<h2 id="concurrency-and-parallelism">Concurrency and Parallelism<a class="headerlink" href="#concurrency-and-parallelism" title="Permanent link">&para;</a></h2>
+<div class="flex-row">
+<div class="flex-col">
+<h3 id="key-conceptual-questions">Key Conceptual Questions:<a class="headerlink" href="#key-conceptual-questions" title="Permanent link">&para;</a></h3>
+<ol>
+<li>
+<p>What is <strong>concurrency</strong>? <strong>parallelism</strong>?</p>
+</li>
+<li>
+<p>How do <strong>processes</strong>, <strong>threads</strong>, and <strong>event-based I/O</strong> support
+<strong>concurrency</strong>? <strong>parallelism</strong>?</p>
+</li>
+</ol>
+</div>
+<div class="flex-col">
+<h3 id="examples_1">Examples<a class="headerlink" href="#examples_1" title="Permanent link">&para;</a></h3>
+<p>How did you implement <strong>sha1sum</strong> using <strong>processes</strong> and <strong>threads</strong>?</p>
+<ul>
+<li>
+<p>What are the <strong>advantages</strong> and <strong>disadvantages</strong> of each approach?</p>
+</li>
+<li>
+<p>Should you use <strong>event-based I/O</strong> for <strong>sha1sum</strong>? Why or why not?</p>
+</li>
+</ul>
+</div>
+</div>
+<h2 id="locks-and-condition-variables">Locks and Condition Variables<a class="headerlink" href="#locks-and-condition-variables" title="Permanent link">&para;</a></h2>
+<div class="flex-row">
+<div class="flex-col">
+<h3 id="key-conceptual-questions_1">Key Conceptual Questions:<a class="headerlink" href="#key-conceptual-questions_1" title="Permanent link">&para;</a></h3>
+<ol>
+<li>
+<p>Why do we need <strong>locks</strong>?</p>
+</li>
+<li>
+<p>When should we use <strong>locks</strong>?</p>
+</li>
+<li>
+<p>How is a <strong>lock</strong> implemented?</p>
+</li>
+<li>
+<p>How do we use <strong>locks</strong> and <strong>condition variables</strong> to solve
+<strong>concurrency</strong> problems?</p>
+</li>
+</ol>
+</div>
+<div class="flex-col">
+<h3 id="examples_2">Examples<a class="headerlink" href="#examples_2" title="Permanent link">&para;</a></h3>
+<p>Model a given scenario using <strong>threads</strong>, <strong>locks</strong>, and <strong>condition
+variables</strong>.  Identify which <strong>concurrency pattern</strong> is demonstrated by this
+implementation.</p>
+<ul>
+<li><strong>Slacklining</strong> (<em>Reading 06</em>)</li>
+<li><strong>DPAC</strong> (<em>Project 02</em>)</li>
+<li><strong>Salsa Night</strong> (<em>Lecture 12</em>)</li>
+</ul>
+</div>
+</div>
+<h2 id="semaphores">Semaphores<a class="headerlink" href="#semaphores" title="Permanent link">&para;</a></h2>
+<div class="flex-row">
+<div class="flex-col">
+<h3 id="key-conceptual-questions_2">Key Conceptual Questions:<a class="headerlink" href="#key-conceptual-questions_2" title="Permanent link">&para;</a></h3>
+<ol>
+<li>
+<p>What is a <strong>semaphore</strong>?</p>
+</li>
+<li>
+<p>What <strong>operations</strong> can we perform on a <strong>semaphore</strong>?</p>
+</li>
+<li>
+<p>How do we use <strong>semaphores</strong> to model either <strong>locks</strong> or <strong>condition variables</strong>?</p>
+</li>
+<li>
+<p>How do we use <strong>semaphores</strong> to solve <strong>concurrency</strong> problems?</p>
+</li>
+</ol>
+</div>
+<div class="flex-col">
+<h3 id="examples_3">Examples<a class="headerlink" href="#examples_3" title="Permanent link">&para;</a></h3>
+<p>Model a given scenario using <strong>threads</strong> and <strong>semaphores</strong>.  Identify which
+<strong>concurrency pattern</strong> is demonstrated by this implementation.</p>
+<ul>
+<li><strong>Slacklining</strong> (<em>Reading 06</em>)</li>
+<li><strong>DPAC</strong> (<em>Project 02</em>)</li>
+<li><strong>Salsa Night</strong> (<em>Lecture 12</em>)</li>
+</ul>
+</div>
+</div>
+<h2 id="concurrency-bugs">Concurrency Bugs<a class="headerlink" href="#concurrency-bugs" title="Permanent link">&para;</a></h2>
+<div class="flex-row">
+<div class="flex-col">
+<h3 id="key-conceptual-questions_3">Key Conceptual Questions:<a class="headerlink" href="#key-conceptual-questions_3" title="Permanent link">&para;</a></h3>
+<ol>
+<li>
+<p>What are some common <strong>concurrency bugs</strong>?</p>
+</li>
+<li>
+<p>What are some ways to prevent or avoid <strong>race conditions</strong>?</p>
+</li>
+<li>
+<p>What are some ways to prevent or avoid <strong>deadlock</strong>?</p>
+</li>
+</ol>
+</div>
+<div class="flex-col">
+<h3 id="examples_4">Examples<a class="headerlink" href="#examples_4" title="Permanent link">&para;</a></h3>
+<p>Which of the following statements are <strong>true</strong>?</p>
+<ul>
+<li>
+<p>Using <strong>mutexes</strong> prevents <strong>busy waiting</strong>.</p>
+</li>
+<li>
+<p>Using <strong>condition variables</strong> prevents <strong>race conditions</strong>.</p>
+</li>
+<li>
+<p>Using <strong>semaphores</strong> prevents <strong>starvation</strong>.</p>
+</li>
+</ul>
+</div>
+</div>
+<h2 id="project-02">Project 02<a class="headerlink" href="#project-02" title="Permanent link">&para;</a></h2>
+<h3 id="key-conceptual-questions_4">Key Conceptual Questions:<a class="headerlink" href="#key-conceptual-questions_4" title="Permanent link">&para;</a></h3>
+<div class="flex-row">
+<div class="flex-col">
+<p>Considering the <strong>SMQ client library</strong> and <strong>chat application</strong> in <strong>Project
+02</strong>:</p>
+<ol>
+<li>
+<p>How did you use <strong>threads</strong> in <strong>Project 02</strong>?</p>
+</li>
+<li>
+<p>How did you synchronize those <strong>threads</strong> in <strong>Project 02</strong>?</p>
+</li>
+<li>
+<p>How did you prevent or avoid <strong>concurrency bugs</strong> in <strong>Project 02</strong>?</p>
+</li>
+<li>
+<p>What <strong>concurrency patterns</strong> did you implement in <strong>Project 02</strong>?</p>
+</li>
+</ol>
+</div>
+<div class="flex-col">
+<h3 id="examples_5">Examples<a class="headerlink" href="#examples_5" title="Permanent link">&para;</a></h3>
+<ol>
+<li>
+<p>Describe each of the <strong>threads</strong> of the <strong>chat application</strong> and how each
+thread interacted with the <strong>SMQ client library</strong>.</p>
+</li>
+<li>
+<p>Describe each of the <strong>internal threads</strong> of the <strong>SMQ client library</strong>
+and how each <strong>thread</strong> interacted with the internal <strong>incoming</strong> and
+<strong>outgoing</strong> queues.</p>
+</li>
+<li>
+<p>Could you implement this project without <strong>threads</strong>?  If so, explain how
+you would implement this.  Otherwise, explain why it is not possible.</p>
+</li>
+</ol>
+</div>
+</div>
+</main>
+<footer>
+Built using <a href="https://python.org">Python</a>
+and <a href="https://jinja.palletsprojects.com">Jinja</a>
+with colors from 
+<a href="https://onmessage.nd.edu/university-branding/colors/">Notre Dame</a>, 
+<a href="https://spreadsheet.dev/how-to-get-the-hexadecimal-codes-of-colors-in-google-sheets">Google Docs</a>, and 
+<a href="https://nordtheme.com">Nord Theme</a>,
+and icons from <a href="https://pictogrammers.com/library/mdi/">Material Design Icons</a>.</footer>
+</body>
+</html>
