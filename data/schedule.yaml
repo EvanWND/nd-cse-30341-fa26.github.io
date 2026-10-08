@@ -125,6 +125,9 @@
 
       - date:           Thu 10/08
         topics:         Patterns
+        items:
+          - name:       Panopto
+            link:       https://notredame.hosted.panopto.com/Panopto/Pages/Viewer.aspx?id=964aceb4-6392-470a-af91-b4dd00ff4da1
 
 - name:     Exam 02
   days:
