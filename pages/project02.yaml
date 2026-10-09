@@ -36,8 +36,8 @@ body:       |
 
     Note, clients can **subscribe** to as many **topics** as they wish.
     However, they will only receive messages after they have **subscribed**
-    (any messages sent to the **topic** before they **subscribe**) will not be
-    accessible.
+    (any messages sent to the **topic** before they **subscribe** will not be
+    accessible).
 
     > **(2)** `PUBLISH`: This posts a **message** to a particular **topic**.
 
@@ -837,6 +837,7 @@ body:       |
     [GitHub]: https://github.com
     [Coding Style]: static/img/coding-style.png
     [message queue]: https://en.wikipedia.org/wiki/Message_queue
+    [monitor]: https://en.wikipedia.org/wiki/Monitor_(synchronization)
     [RESTful]: https://en.wikipedia.org/wiki/Representational_state_transfer
     [HTTP]: https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol
     [Python]: https://www.python.org/
